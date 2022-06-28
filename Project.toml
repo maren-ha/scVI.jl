@@ -1,0 +1,13 @@
+name = "scVI"
+uuid = "add38077-30a9-4b2d-9db0-9e8e6622f11b"
+authors = ["Maren Hackenberg"]
+version = "0.1.0"
+
+[compat]
+julia = "1.7"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
