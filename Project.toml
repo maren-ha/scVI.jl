@@ -3,6 +3,19 @@ uuid = "add38077-30a9-4b2d-9db0-9e8e6622f11b"
 authors = ["Maren Hackenberg"]
 version = "0.1.0"
 
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+UMAP = "c4f8c510-2410-5be4-91d7-4fbaeb39457e"
+VegaLite = "112f6efa-9a02-5b7d-90c0-432ed331239a"
+
 [compat]
 julia = "1.7"
 
