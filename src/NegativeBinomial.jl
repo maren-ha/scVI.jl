@@ -6,7 +6,7 @@ using SpecialFunctions # for loggamma
 
 LogGammaTerms(x, theta) = @. loggamma(x + theta) - loggamma(theta) - loggamma(one(eltype(theta)) + x)
 
-function log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVector{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
+function log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
     """
     Log likelihood (scalar) of a minibatch according to a zinb model.
 
@@ -38,7 +38,7 @@ function log_nb_positive_julia(x, mu, theta)
     return logpdf.(NegativeBinomial.(r, p), x)
 end
 
-function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
+function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, eps::S=S(1e-8)) where S <: Real
     """
     Log likelihood (scalar) of a minibatch according to a nb model.
 
