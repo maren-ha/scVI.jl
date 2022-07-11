@@ -94,7 +94,7 @@ function init_library_size(adata::AnnData, n_batch::Int)
     library_log_vars = ones(n_batch)
 
     for i_batch in unique(batch_indices)
-        @info size(data,2)  
+        # @info size(data,2)  
         idx_batch = findall(batch_indices.==i_batch)
         data_batch = data[idx_batch,:]
         sum_counts = vec(sum(data_batch, dims=2))
