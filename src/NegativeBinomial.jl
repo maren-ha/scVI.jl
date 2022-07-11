@@ -4,31 +4,9 @@
 
 using SpecialFunctions # for loggamma
 
-"""
-# to check zero-inflated negative binomial 
-juliazinbres = log_zinb_positive(x, mu, theta, zi)
-pyx = torch.Tensor(x')
-pymu = torch.Tensor(mu')
-pytheta = torch.Tensor(theta')
-pypi = torch.Tensor(zi')
-pyzinbres = scvi.distributions._negative_binomial.log_zinb_positive(pyx, pymu, pytheta, pypi)
-sum(transpose(pyzinbres.numpy()) .-juliazinbres)
-"""
-
 LogGammaTerms(x, theta) = @. loggamma(x + theta) - loggamma(theta) - loggamma(one(eltype(theta)) + x)
 
 function log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVector{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
-    softplus_zi = @fastmath softplus.(-zi);    
-    log_thetha_mu_eps = @fastmath log.(theta .+ mu .+ eps)
-    GammaTerms = @fastmath LogGammaTerms(x, theta)
-    @fastmath @. (
-       (x .< eps) .* (softplus.(-zi .+ theta .* (log.(theta .+ eps) .- log_thetha_mu_eps)) .- softplus_zi)
-    .+ (x .> eps) .* (-softplus_zi .- zi .+ theta .* (log.(theta .+ eps) .- log_thetha_mu_eps)
-                    .+ x .* (log.(mu .+ eps) .- log_thetha_mu_eps) .+ GammaTerms)
-    )
-end
-
-function log_zinb_positive_old(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractMatrix{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
     """
     Log likelihood (scalar) of a minibatch according to a zinb model.
 
@@ -44,29 +22,14 @@ function log_zinb_positive_old(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, thet
     -----
     We parametrize the bernoulli using the logits, hence the softplus functions appearing.
     """
-    if length(size(theta)) == 1
-        # do some shit, might be handled automatically in Julia 
-    end
-    softplus_zi = softplus.(-zi) # ≈ -log.(sigmoid.(zi))
-    # zi = logit(p) --> zi = log(p/1-p)
-    # case_zero = log(prob_0) = log(p + (1-p)*pdf_negbin(0))
-    #   = lop(p + (1-p)*exp(theta*(log(theta/(theta+mu)))))
-    case_zero = softplus.(-zi .+ theta .* (log.(theta .+eps) .- log.(theta .+ mu .+eps))) .- softplus_zi
-    mul_case_zero = (x .< eps) .* case_zero
-
-    #log_theta_eps = log.(theta .+ eps)
-    #log_theta_mu_eps = log.(theta .+ mu .+ eps)
-    #pi_theta_log = -zi .+ theta .* (log(theta .+eps) .- log(theta .+mu .+eps))
-    # case_zero = softplus.(pi_theta_log) .- softplus_pi
-    case_non_zero = (-softplus_zi 
-                    .- zi .+ theta .* (log.(theta .+ eps) .- log.(theta .+mu .+ eps)) 
-                    .+ x .* (log.(mu .+ eps) .- log.(theta .+ mu .+ eps)) 
-                    .+ loggamma.(x .+ theta) 
-                    .- loggamma.(theta) 
-                    .- loggamma.(x .+ 1)
+    softplus_zi = @fastmath softplus.(-zi);    
+    log_thetha_mu_eps = @fastmath log.(theta .+ mu .+ eps)
+    GammaTerms = @fastmath LogGammaTerms(x, theta)
+    @fastmath @. (
+       (x .< eps) .* (softplus.(-zi .+ theta .* (log.(theta .+ eps) .- log_thetha_mu_eps)) .- softplus_zi)
+    .+ (x .> eps) .* (-softplus_zi .- zi .+ theta .* (log.(theta .+ eps) .- log_thetha_mu_eps)
+                    .+ x .* (log.(mu .+ eps) .- log_thetha_mu_eps) .+ GammaTerms)
     )
-    mul_case_non_zero = (x .> eps) .* case_non_zero
-    return mul_case_zero .+ mul_case_non_zero
 end
 
 function log_nb_positive_julia(x, mu, theta)
