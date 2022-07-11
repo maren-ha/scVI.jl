@@ -1,5 +1,7 @@
 # README
 
+![](../logo/scvi-julia-logo.jpg)
+
 ## TODO 
 
 - [x] add PBMC8k data 
