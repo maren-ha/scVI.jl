@@ -8,7 +8,6 @@ function register_umap_on_latent!(adata::AnnData, m::scVAE)
     if isnothing(adata.scVI_latent)
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
         register_latent_representation!(adata, m)
-        @info "latent representation added"
     end
     adata.scVI_latent_umap = umap(adata.scVI_latent, 2; min_dist=0.3)
     @info "UMAP of latent representation added"
@@ -20,14 +19,12 @@ function plot_umap_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=false, se
     if isnothing(adata.scVI_latent) 
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
         register_latent_representation!(adata, m)
-        @info "latent representation added"
     end
 
     if isnothing(adata.scVI_latent_umap)
         @info "no UMAP of latent representation saved in AnnData object, calculating it now..."
         Random.seed!(seed)
         register_umap_on_latent!(adata, m)
-        @info "UMAP of latent representation added"
     end
 
     umap_plot = @vlplot(:point, 
