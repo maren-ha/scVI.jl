@@ -4,6 +4,7 @@ Base.@kwdef mutable struct scLinearDecoder <: AbstractDecoder
     n_output::Int
     factor_regressor
     px_dropout_decoder
+    px_r_decoder
     use_batch_norm::Bool=true
     use_layer_norm::Bool=false 
 end
@@ -32,7 +33,6 @@ function scLinearDecoder(n_input, n_output;
         px_dropout_decoder = FCLayers(n_input, n_output; 
             bias=bias,
             dropout_rate=dropout_rate,
-            n_hidden=n_hidden,
             n_layers=1,
             use_activation=false,
             use_batch_norm=use_batch_norm,
@@ -59,6 +59,7 @@ function scLinearDecoder(n_input, n_output;
             n_output=n_output,
             factor_regressor=factor_regressor,
             px_dropout_decoder=px_dropout_decoder,
+            px_r_decoder=px_r_decoder,
             use_batch_norm=use_batch_norm,
             use_layer_norm=use_layer_norm,
     )
