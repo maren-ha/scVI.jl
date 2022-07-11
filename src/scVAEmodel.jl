@@ -19,12 +19,12 @@ Base.@kwdef mutable struct scVAE
     use_observed_lib_size::Bool=true
     z_encoder::scEncoder
     l_encoder::Union{Nothing, scEncoder}
-    decoder::scDecoder
+    decoder::AbstractDecoder
 end
 
 function scVAE(n_input::Int;
     activation_fn::Function=relu, # to be used in all FC_layers instances
-    bias::Bool=true, # whether to use bias in all linear layers of all FC instances 
+    bias::Symbol=:both, # whether to use bias in all linear layers of all FC instances 
     dispersion::Symbol=:gene,
     dropout_rate::Float32=0.1f0,
     gene_likelihood::Symbol=:zinb,
@@ -36,8 +36,7 @@ function scVAE(n_input::Int;
     n_hidden::Int=128,
     n_latent::Int=10,
     n_layers::Int=1,
-    use_activation_encoder::Bool=true, 
-    use_activation_decoder::Bool=true,
+    use_activation::Symbol=:both, 
     use_batch_norm::Symbol=:both,
     use_layer_norm::Symbol=:none,
     use_observed_lib_size::Bool=true,
@@ -59,8 +58,15 @@ function scVAE(n_input::Int;
         @warn "gene likelihood has to be one of `:zinb`, `:nb`, or `:poisson`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
     end
 
+    use_activation_encoder = (use_activation == :encoder || use_activation == :both) # true
+    use_activation_decoder = (use_activation == :decoder || use_activation == :both) # true
+
+    bias_encoder = (bias == :encoder || bias == :both) # true
+    bias_decoder = (bias == :decoder || bias == :both) # true
+
     use_batch_norm_encoder = (use_batch_norm == :encoder || use_batch_norm == :both) # true
     use_batch_norm_decoder = (use_batch_norm == :decoder || use_batch_norm == :both) # true
+
     use_layer_norm_encoder = (use_layer_norm == :encoder || use_layer_norm == :both) # false 
     use_layer_norm_decoder = (use_layer_norm == :decoder || use_layer_norm == :both) # false
 
@@ -71,7 +77,7 @@ function scVAE(n_input::Int;
         n_input_encoder, 
         n_latent; 
         activation_fn=activation_fn, 
-        bias=bias, 
+        bias=bias_encoder, 
         n_hidden=n_hidden,
         n_layers=n_layers,
         dropout_rate=dropout_rate,
@@ -90,7 +96,7 @@ function scVAE(n_input::Int;
             n_input_encoder,
             1;
             activation_fn=activation_fn, 
-            bias=bias, 
+            bias=bias_encoder, 
             n_hidden=n_hidden,
             n_layers=1,
             dropout_rate=dropout_rate,
@@ -104,9 +110,10 @@ function scVAE(n_input::Int;
     n_input_decoder = n_latent
     decoder = scDecoder(n_input_decoder, n_input;
         activation_fn=activation_fn, 
-        bias=bias, 
+        bias=bias_decoder, 
         dispersion=dispersion, 
         dropout_rate=dropout_rate,
+        gene_likelihood=gene_likelihood,
         n_hidden=n_hidden,
         n_layers=n_layers,
         use_activation=use_activation_decoder,
