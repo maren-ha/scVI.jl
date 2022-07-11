@@ -2,16 +2,16 @@
 
 ## TODO 
 
-- [ ] add other datasets from scVI repo (https://github.com/scverse/scvi-tools/tree/master/scvi/data/_built_in_data)
-- [x] add PBMC4k data 
+- [x] add PBMC8k data 
+- [x] add linearly decoded VAE functionality 
 - [ ] add checks to data loading (dimensions etc. )
 - [ ] actually support more than one layer! 
-- [ ] support gene_batch dispersion 
 - [ ] support Poisson likelihood 
-- [ ] add docstrings 
 - [ ] add supervised AE functionality 
-- [ ] add linearly decoded VAE functionality 
+- [ ] add docstrings 
+- [ ] add other datasets from scVI repo (https://github.com/scverse/scvi-tools/tree/master/scvi/data/_built_in_data)
 - [ ] add docs with `Documenter.jl`
+- [ ] support gene_batch and gene_label dispersion 
 
 
 ## To test 
@@ -36,7 +36,7 @@ Pkg.add(["Random", "Flux", "Distributions", "SpecialFunctions", "ProgressMeter",
 using Pkg;
 Pkg.activate("scVI")
 using scVI 
-using VegaLite
+Pkg.test()
 
 adata = load_cortex("scVI/data/")
 n_batch = adata.summary_stats["n_batch"]
@@ -52,17 +52,33 @@ training_args = TrainingArgs(
     max_epochs=50, # 50 for 10-dim 
     weight_decay=Float32(1e-6),
 )
+
 train_model!(m, adata, training_args)
-register_umap_on_latent!(adata, m)
 plot_umap_on_latent(m, adata; save_plot=true)
 
-# PBMC 
+# LDVAE 
+m = scLDVAE(size(adata.countmatrix,2);
+        n_batch=n_batch,
+        library_log_means=library_log_means,
+        use_activation=:encoder,
+)
+print(summary(m))
+training_args = TrainingArgs(
+    max_epochs=50, # 50 for 10-dim 
+    weight_decay=Float32(1e-6),
+)
+train_model!(m, adata, training_args)
+plot_umap_on_latent(m, adata; save_plot=true)
+
+# PBMC dataset 
 adata = load_pbmc("scVI/data/")
 library_log_means, library_log_vars = init_library_size(adata, 1) 
 m = scVAE(size(adata.countmatrix,2);
         library_log_means=library_log_means,
-        n_latent=2
-)
+        n_latent=2,
+        dispersion=:gene_cell,
+        gene_likelihood=:zinb
+);
 print(summary(m))
 
 training_args = TrainingArgs(
@@ -72,5 +88,6 @@ training_args = TrainingArgs(
 )
 train_model!(m, adata, training_args)
 register_latent_representation!(adata, m)
+using VegaLite
 @vlplot(:point, x=adata.scVI_latent[1,:], y=adata.scVI_latent[2,:], color=adata.celltypes, title="scVI latent representation")
 ```
