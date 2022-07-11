@@ -1,6 +1,6 @@
 # README
 
-![](../logo/scvi-julia-logo.jpg)
+![](logo/scvi-julia-logo.jpg)
 
 ## TODO 
 
