@@ -4,9 +4,10 @@ using Test
 @testset "scVI.jl" begin
     # Write your tests here.
     # PBMC 
-    @info loading data...
+    using scVI
+    @info "loading data..."
     adata = load_pbmc()
-    @info data loaded, initialising object... 
+    @info "data loaded, initialising object... "
     library_log_means, library_log_vars = init_library_size(adata, 1) 
     m = scVAE(size(adata.countmatrix,2);
             library_log_means=library_log_means,
