@@ -29,6 +29,7 @@ include("Evaluate.jl")
 export 
     init_data_from_h5ad, init_library_size,
     load_cortex, load_pbmc,
+    AnnData,
     scVAE, scEncoder, scDecoder, scLinearDecoder, scLDVAE,
     TrainingArgs, 
     train_model!, 
