@@ -20,6 +20,7 @@ include("DataProcessing.jl")
 include("Utils.jl")
 include("EncoderDecoder.jl")
 include("scVAEmodel.jl")
+include("scLDVAE.jl")
 include("NegativeBinomial.jl")
 include("ModelFunctions.jl")
 include("Training.jl")
@@ -28,10 +29,10 @@ include("Evaluate.jl")
 export 
     init_data_from_h5ad, init_library_size,
     load_cortex, load_pbmc,
-    scVAE, 
+    scVAE, scEncoder, scDecoder, scLinearDecoder, 
     TrainingArgs, 
     train_model!, 
-    get_latent_representation, 
+    get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!
     plot_umap_on_latent, 
     plot_pca_on_latent
