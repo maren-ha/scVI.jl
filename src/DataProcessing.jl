@@ -106,7 +106,7 @@ function init_library_size(adata::AnnData, n_batch::Int)
     return library_log_means, library_log_vars
 end # to check: scvi.model._utils._init_library_size(pydata, n_batch)
 
-function load_pbmc(path::String = "data/")
+function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
     counts = CSV.read(string(path, "PBMC_counts.csv"), DataFrame)
     celltypes = vec(string.(CSV.read(string(path, "PBMC_annotation.csv"), DataFrame)[:,:x]))
     genenames = string.(counts[:,1])
@@ -124,7 +124,7 @@ function load_pbmc(path::String = "data/")
 end
 
 
-function load_cortex(path::String="data/")
+function load_cortex(path::String=joinpath(@__DIR__, "../data/"))
     adata = init_data_from_h5ad(string(path, "cortex_anndata.h5ad"))
     return adata 
 end
