@@ -58,7 +58,7 @@ function loss(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S 
     return lossval
 end
 
-function get_reconstruction_loss(m::scVAE, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::AbstractArray{S}, px_dropout::AbstractMatrix{S}) where S <: Real 
+function get_reconstruction_loss(m::scVAE, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}, Nothing}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
     return get_reconstruction_loss(Val(m.gene_likelihood), x, px_rate, px_r, px_dropout)
 end
 
@@ -67,12 +67,12 @@ function get_reconstruction_loss(::Val{:zinb}, x::AbstractMatrix{S}, px_rate::Ab
     return reconst_loss
 end
 
-function get_reconstruction_loss(::Val{:nb}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::AbstractArray{S}, px_dropout::AbstractMatrix{S}) where S <: Real 
-    reconst_loss = sum(-log_zinb_positive(x, px_rate, px_r, px_dropout), dims=1)
+function get_reconstruction_loss(::Val{:nb}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::AbstractArray{S}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
+    reconst_loss = sum(-log_nb_positive(x, px_rate, px_r), dims=1)
     return reconst_loss
 end
 
-function get_reconstruction_loss(::Val{:poisson}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::AbstractArray{S}, px_dropout::AbstractMatrix{S}) where S <: Real 
+function get_reconstruction_loss(::Val{:poisson}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}}, px_dropout::Union{AbstractMatrix{S}}) where S <: Real 
     error("not yet implemented")
 end
 
