@@ -71,7 +71,7 @@ function (LinearDecoder::scLinearDecoder)(z, library)
     px_scale = softmax(raw_px_scale, dims=1)
     px_dropout = LinearDecoder.px_dropout_decoder(z)
     px_rate = exp.(library) .* px_scale
-    px_r = LinearDecoder.px_r_decoder(px)
+    px_r = LinearDecoder.px_r_decoder(z)
     return px_scale, px_r, px_rate, px_dropout
 end
 
