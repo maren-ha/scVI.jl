@@ -163,9 +163,9 @@ end
 #-------------------------------------------------------------------------------------
 # Decoder
 #-------------------------------------------------------------------------------------
+abstract type AbstractDecoder end 
 
-Base.@kwdef mutable struct scDecoder
-    dispersion::Symbol=:gene
+Base.@kwdef mutable struct scDecoder <: AbstractDecoder
     n_input::Int
     n_output::Int
     n_hidden::Int=128
@@ -185,6 +185,7 @@ function scDecoder(n_input, n_output;
     bias::Bool=true,
     dispersion::Symbol=:gene,
     dropout_rate::Float32=0.0f0,
+    gene_likelihood::Symbol=:zinb,
     n_hidden::Int=128,
     n_layers::Int=1, 
     use_activation::Bool=true,
@@ -209,22 +210,25 @@ function scDecoder(n_input, n_output;
         x -> softmax(x, dims=1)
     )
 
-    if dispersion == :gene
-        px_r_decoder = randn(Float32, n_output)
-        #px_r= torch.nn.Parameter(torch.randn(n_input)) # 1200-element vector
-        #px_r_ps = px_r.detach().numpy()
-    elseif dispersion == :gene_cell
-        px_r_decoder = Dense(n_hidden, n_output)
+    if gene_likelihood ∈ [:nb, :zinb]
+        if dispersion == :gene
+            px_r_decoder = randn(Float32, n_output)
+            #px_r= torch.nn.Parameter(torch.randn(n_input)) # 1200-element vector
+            #px_r_ps = px_r.detach().numpy()
+        elseif dispersion == :gene_cell
+            px_r_decoder = Dense(n_hidden, n_output)
+        else
+            @warn "dispersion has to be one of `:gene` or `:gene_cell`. Your choice $(dispersion) is currently not supported, defaulting to `:gene`."
+            dispersion = :gene
+            px_r_decoder = randn(Float32, n_output)
+        end
     else
-        @warn "dispersion has to be one of `:gene` or `:gene_cell`. Your choice $(dispersion) is currently not supported, defaulting to `:gene`."
-        dispersion = :gene
-        px_r_decoder = randn(Float32, n_output)
+        px_r_decoder = nothing 
     end
 
-    px_dropout_decoder = Dense(n_hidden, n_output)
+    px_dropout_decoder = (gene_likelihood == :zinb) ? Dense(n_hidden, n_output) : nothing
 
     return scDecoder(
-            dispersion=dispersion,
             n_input=n_input, 
             n_output=n_output,
             n_hidden=n_hidden,
@@ -238,13 +242,16 @@ function scDecoder(n_input, n_output;
     )
 end
 
+(n::Nothing)(x) = nothing 
+(v::Vector{Float32})(x) = v
+
 function (Decoder::scDecoder)(z, library)
     #z = randn(10,1200)
     px = Decoder.px_decoder(z)
     px_scale = Decoder.px_scale_decoder(px)
     px_dropout = Decoder.px_dropout_decoder(px)
     px_rate = exp.(library) .* px_scale # # Clamp to high value: exp(12) ~ 160000 to avoid nans (computational stability) # torch.clamp(, max=12)
-    px_r = Decoder.dispersion == :gene ? Decoder.px_r_decoder : Decoder.px_r_decoder(px)
+    px_r = Decoder.px_r_decoder(px)
     return px_scale, px_r, px_rate, px_dropout
 end
 
