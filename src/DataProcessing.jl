@@ -38,7 +38,7 @@ function load_data_from_h5ad(anndata::HDF5.File)
 end
 
 # assumes Python adata object 
-function init_data_from_h5ad(filename::String=joinpath(@__DIR__, "data/cortex_anndata.h5ad"))
+function init_data_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
     anndata = open_h5_data(filename)
     countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_data_from_h5ad(anndata)
     ncells, ngenes = size(countmatrix)
@@ -122,7 +122,6 @@ function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
     )
     return adata
 end
-
 
 function load_cortex(path::String=joinpath(@__DIR__, "../data/"))
     adata = init_data_from_h5ad(string(path, "cortex_anndata.h5ad"))
