@@ -242,10 +242,29 @@ function scDecoder(n_input, n_output;
     )
 end
 
+function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S}) where S <: Real
+    #z = randn(10,1200)
+    px = Decoder.px_decoder(z)
+    px_scale = Decoder.px_scale_decoder(px)
+    px_dropout = apply_px_dropout_decoder(Decoder.px_dropout_decoder, px)
+    px_rate = exp.(library) .* px_scale # # Clamp to high value: exp(12) ~ 160000 to avoid nans (computational stability) # torch.clamp(, max=12)
+    px_r = apply_px_r_decoder(Decoder.px_r_decoder, px)
+    return px_scale, px_r, px_rate, px_dropout
+end
+
+apply_px_dropout_decoder(px_dropout_decoder::Nothing, px::AbstractVecOrMat{S}) where S <: Real = nothing 
+apply_px_dropout_decoder(px_dropout_decoder::Dense, px::AbstractVecOrMat{S}) where S <: Real = px_dropout_decoder(px)
+
+apply_px_r_decoder(px_r_decoder::Nothing, px::AbstractVecOrMat{S}) where S <: Real = nothing 
+apply_px_r_decoder(px_r_decoder::AbstractVecOrMat, px::AbstractVecOrMat{S}) where S <: Real = px_r_decoder
+apply_px_r_decoder(px_r_decoder::Dense, px::AbstractVecOrMat{S}) where S <: Real = px_r_decoder(px)
+
+#= 
+# previous version based on making types callable 
 (n::Nothing)(x) = nothing 
 (v::Vector{Float32})(x) = v
 
-function (Decoder::scDecoder)(z, library)
+function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S}) where S <: Real
     #z = randn(10,1200)
     px = Decoder.px_decoder(z)
     px_scale = Decoder.px_scale_decoder(px)
@@ -254,4 +273,4 @@ function (Decoder::scDecoder)(z, library)
     px_r = Decoder.px_r_decoder(px)
     return px_scale, px_r, px_rate, px_dropout
 end
-
+=# 
