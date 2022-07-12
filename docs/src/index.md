@@ -20,5 +20,5 @@ This is the documentation for the Julia version implementing basic functionality
 ## Docs
 
 ```@contents 
-Pages = ["DataProcessing.md", "scVAE.md", "ModelFunctions.jl", "Distributions.md", "scLDVAE.md", "Training.md", "Evaluation.md", "Utils.md"]
+Pages = ["DataProcessing.md", "scVAE.md", "ModelFunctions.md", "Distributions.md", "scLDVAE.md", "Training.md", "Evaluation.md", "Utils.md"]
 ```
