@@ -13,7 +13,7 @@
 - [ ] add supervised AE functionality 
 - [ ] add docstrings 
 - [ ] add other datasets from scVI repo (https://github.com/scverse/scvi-tools/tree/master/scvi/data/_built_in_data)
--  [ ] support gene_batch and gene_label dispersion 
+- [ ] support gene_batch and gene_label dispersion 
 
 ## Docs 
 
