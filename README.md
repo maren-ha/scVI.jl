@@ -6,15 +6,18 @@
 
 - [x] add PBMC8k data 
 - [x] add linearly decoded VAE functionality 
+- [x] add docs with `Documenter.jl`
 - [ ] add checks to data loading (dimensions etc. )
 - [ ] actually support more than one layer! 
 - [ ] support Poisson likelihood 
 - [ ] add supervised AE functionality 
 - [ ] add docstrings 
 - [ ] add other datasets from scVI repo (https://github.com/scverse/scvi-tools/tree/master/scvi/data/_built_in_data)
-- [ ] add docs with `Documenter.jl`
-- [ ] support gene_batch and gene_label dispersion 
+-  [ ] support gene_batch and gene_label dispersion 
 
+## Docs 
+
+[docs](docs/build/index.html)
 
 ## To test 
 
