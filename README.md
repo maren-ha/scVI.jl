@@ -8,13 +8,15 @@
 - [x] add linearly decoded VAE functionality 
 - [x] add docs with `Documenter.jl`
 - [x] add other datasets from scVI repo (https://github.com/scverse/scvi-tools/tree/master/scvi/data/_built_in_data)
-- [ ] change data loading to separate functions for each dataset, including highly variable gene handling 
+- [ ] add cortex data from download link 
+- [ ] add in Tasic data + download script 
 - [ ] add checks to data loading (dimensions etc. )
 - [ ] actually support more than one layer! 
 - [ ] support Poisson likelihood 
 - [ ] add supervised AE functionality 
 - [ ] add docstrings 
 - [ ] support gene_batch and gene_label dispersion 
+- [ ] think about data loading, potentially including highly variable gene handling 
 
 ## Docs 
 
