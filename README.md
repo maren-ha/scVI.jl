@@ -8,15 +8,16 @@
 - [x] add linearly decoded VAE functionality 
 - [x] add docs with `Documenter.jl`
 - [x] add other datasets from scVI repo (https://github.com/scverse/scvi-tools/tree/master/scvi/data/_built_in_data)
-- [ ] add cortex data from download link 
-- [ ] add in Tasic data + download script 
-- [ ] add checks to data loading (dimensions etc. )
+- [x] add cortex data from download link 
+- [x] implement highly variable gene filtering accoding to scanpy/Seuratv3 function 
+- [x] add checks to data loading (dimensions etc. )
 - [ ] actually support more than one layer! 
 - [ ] support Poisson likelihood 
 - [ ] add supervised AE functionality 
 - [ ] add docstrings 
 - [ ] support gene_batch and gene_label dispersion 
-- [ ] think about data loading, potentially including highly variable gene handling 
+- [ ] add in Tasic data + download script (?)
+- [ ] think about data loading (separate package? etc.)
 
 ## Docs 
 
@@ -39,12 +40,17 @@ scvi_template = Template(;
 scvi_template("scVI")
 using Pkg;
 Pkg.activate("scVI")
-Pkg.add(["Random", "Flux", "Distributions", "SpecialFunctions", "ProgressMeter", "DataFrames", "CSV", "LinearAlgebra", "HDF5", "VegaLite", "UMAP"])
+Pkg.add(["Random", "Flux", "Distributions", "SpecialFunctions", "ProgressMeter", "DataFrames", "CSV", "DelimitedFiles", "Loess", "LinearAlgebra", "HDF5", "VegaLite", "UMAP"])
 """
 using Pkg;
 Pkg.activate("scVI")
 using scVI 
 Pkg.test()
+
+adata = load_cortex(@__DIR__)
+hvgdict = highly_variable_genes(adata, n_top_genes=1200)
+highly_variable_genes!(adata, n_top_genes=1200)
+adata.vars
 
 adata = load_cortex("scVI/data/")
 n_batch = adata.summary_stats["n_batch"]
