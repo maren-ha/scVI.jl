@@ -4,12 +4,15 @@ module scVI
 using CSV
 using DataFrames
 using HDF5
+using DelimitedFiles
 
 # core package functionality 
 using Distributions
 using Flux
 using Random 
 using ProgressMeter
+using SpecialFunctions # for loggamma
+using Statistics
 
 # evaluation: UMAP, PCA and plots  
 using LinearAlgebra
@@ -27,8 +30,9 @@ include("Training.jl")
 include("Evaluate.jl")
 
 export 
-    init_data_from_h5ad, init_library_size,
+    init_cortex_from_h5ad, init_library_size,
     load_cortex, load_pbmc,
+    highly_variable_genes, highly_variable_genes!,
     AnnData,
     scVAE, scEncoder, scDecoder, scLinearDecoder, scLDVAE,
     TrainingArgs, 
