@@ -12,7 +12,7 @@ using Flux
 using Random 
 using ProgressMeter
 using SpecialFunctions # for loggamma
-using Statistics
+using StatsBase
 
 # evaluation: UMAP, PCA and plots  
 using LinearAlgebra
@@ -20,6 +20,9 @@ using UMAP
 using VegaLite
 
 include("DataProcessing.jl")
+include("Cortex.jl")
+include("PBMC.jl")
+include("Tasic.jl")
 include("Utils.jl")
 include("EncoderDecoder.jl")
 include("scVAEmodel.jl")
@@ -30,10 +33,11 @@ include("Training.jl")
 include("Evaluate.jl")
 
 export 
-    init_cortex_from_h5ad, init_library_size,
-    load_cortex, load_pbmc,
-    highly_variable_genes, highly_variable_genes!,
     AnnData,
+    init_cortex_from_h5ad, init_library_size,
+    highly_variable_genes, highly_variable_genes!,
+    estimatesizefactorsformatrix, normalizecountdata,
+    load_cortex, load_pbmc, load_tasic, subset_tasic!,
     scVAE, scEncoder, scDecoder, scLinearDecoder, scLDVAE,
     TrainingArgs, 
     train_model!, 
