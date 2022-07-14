@@ -92,7 +92,7 @@ end # to check: scvi.model._utils._init_library_size(pydata, n_batch)
 #-------------------------------------------------------------------------------------
 
 using Loess
-using Statistics
+using StatsBase
 
 function check_nonnegative_integers(X::AbstractArray) 
     if eltype(X) == Integer
