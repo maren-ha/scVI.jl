@@ -128,7 +128,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
         y = Float64.(log10.(v[not_const]))
         x = Float64.(log10.(m[not_const]))
         loess_model = loess(x, y, span=span, degree=2);
-        fitted_values = predict(loess_model,x)
+        fitted_values = Loess.predict(loess_model,x)
         estimat_var[not_const] = fitted_values
         reg_std = sqrt.(10 .^estimat_var)
 
