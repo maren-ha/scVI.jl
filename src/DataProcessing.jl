@@ -214,6 +214,35 @@ function highly_variable_genes(adata::AnnData;
     )
 end
 
+function subset_to_hvg!(adata::AnnData;
+    layer::Union{String,Nothing} = nothing,
+    n_top_genes::Int=2000,
+    batch_key::Union{String,Nothing} = nothing,
+    span::Float64=0.3
+    )
+    if !haskey(adata.vars,"highly_variable")
+        highly_variable_genes!(adata; 
+            layer=layer, 
+            n_top_genes=n_top_genes,
+            batch_key=batch_key,
+            span=span
+        )
+    end
+
+    hvgs = adata.vars["highly_variable"]
+    @assert size(adata.countmatrix,2) == length(hvgs)
+    adata.countmatrix = adata.countmatrix[:,hvgs]
+    adata.ngenes = size(adata.countmatrix,2)
+    for key in keys(adata.vars)
+        if length(adata.vars[key]) == length(hvgs)
+            adata.vars[key] = adata.vars[key][hvgs]
+        end
+    end
+    # some basic checks 
+    @assert sum(adata.vars["highly_variable"]) == adata.ngenes
+    @assert !any(isnan.(adata.vars["highly_variable_rank"]))
+    return adata
+end
 
 #-------------------------------------------------------------------------------------
 # estimate size factors and normalize (based on Seurat)
