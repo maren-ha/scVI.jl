@@ -21,6 +21,7 @@
 
 ## Docs 
 
+(only works locally, not deployed yet)
 [docs](docs/build/index.html)
 
 ## To test 
@@ -51,7 +52,19 @@ Pkg.test()
 adata = load_cortex(@__DIR__) # (or init_cortex_from_url())
 hvgdict = highly_variable_genes(adata, n_top_genes=1200)
 highly_variable_genes!(adata, n_top_genes=1200)
-adata.vars
+subset_to_hvg!(adata, n_top_genes=1200)
+library_log_means, library_log_vars = init_library_size(adata, 1)
+
+m = scVAE(size(adata.countmatrix,2);
+        n_batch=n_batch,
+        library_log_means=library_log_means,
+)
+training_args = TrainingArgs(
+    max_epochs=50, # 50 for 10-dim 
+    weight_decay=Float32(1e-6),
+)
+train_model!(m, adata, training_args)
+plot_umap_on_latent(m, adata; save_plot=true)
 
 # Tasic data 
 adata = load_tasic(joinpath(@__DIR__,"../data/"))
