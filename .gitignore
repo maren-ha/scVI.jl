@@ -5,3 +5,5 @@ scvitoolsDatasets.py
 datastuff.jl
 expression.bin
 test_hvg.py
+python_loess_predictions_cortex.csv
+UMAP_on_latent.pdf
