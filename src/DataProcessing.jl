@@ -107,6 +107,8 @@ function check_nonnegative_integers(X::AbstractArray)
 end
 
 # expects batch key in "obs" Dict
+# results are comparable to scanpy.highly_variable_genes, but differ slightly. 
+# when using the Python results of the Loess fit though, genes are identical. 
 function _highly_variable_genes_seurat_v3(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
@@ -150,7 +152,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     # this is done in SelectIntegrationFeatures() in Seurat v3
     num_batches_high_var = sum(mapslices(row -> row .< n_top_genes, ranked_norm_gene_vars, dims=2), dims=1)
     ranked_norm_gene_vars = Float32.(ranked_norm_gene_vars)
-    ranked_norm_gene_vars[findall(x -> x >= n_top_genes, ranked_norm_gene_vars)] .= NaN
+    ranked_norm_gene_vars[findall(x -> x > n_top_genes, ranked_norm_gene_vars)] .= NaN
     median_ranked = mapslices(col -> mymedian(col[findall(x -> !isnan(x), col)]), ranked_norm_gene_vars, dims=1)
 
     sortdf = DataFrame(row = collect(1:length(vec(median_ranked))),
@@ -211,6 +213,7 @@ function highly_variable_genes(adata::AnnData;
                 inplace=false
     )
 end
+
 
 #-------------------------------------------------------------------------------------
 # estimate size factors and normalize (based on Seurat)
