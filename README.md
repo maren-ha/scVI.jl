@@ -12,6 +12,7 @@
 - [x] implement highly variable gene filtering accoding to scanpy/Seuratv3 function 
 - [x] add checks to data loading (dimensions etc. )
 - [x] add in Tasic data + download script (?)
+- [ ] fix `init_library_size` function 
 - [ ] actually support more than one layer! 
 - [ ] support Poisson likelihood 
 - [ ] add supervised AE functionality 
