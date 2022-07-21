@@ -15,7 +15,7 @@
 - [x] add in Tasic data + download script (?)
 - [x] fix `init_library_size` function 
 - [x] actually support more than one layer! 
-- [ ] support Poisson likelihood 
+- [x] support Poisson likelihood 
 - [ ] add supervised AE functionality 
 - [ ] add docstrings (0/25)
 -------
