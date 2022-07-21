@@ -4,6 +4,7 @@
 
 ## TODO 
 
+*for workshop*
 - [x] add PBMC8k data 
 - [x] add linearly decoded VAE functionality 
 - [x] add docs with `Documenter.jl`
@@ -13,10 +14,12 @@
 - [x] add checks to data loading (dimensions etc. )
 - [x] add in Tasic data + download script (?)
 - [x] fix `init_library_size` function 
-- [ ] actually support more than one layer! 
+- [x] actually support more than one layer! 
 - [ ] support Poisson likelihood 
 - [ ] add supervised AE functionality 
-- [ ] add docstrings 
+- [ ] add docstrings (0/25)
+-------
+*for later*
 - [ ] support gene_batch and gene_label dispersion 
 - [ ] think about data loading (separate package? etc.)
 
