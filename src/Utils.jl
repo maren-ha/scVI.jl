@@ -21,21 +21,30 @@ function FCLayers(
     use_activation::Bool=true,
     )
 
-    if n_layers != 1 
-        @warn "n_layers > 1 currently not supported; model initialization will default to one hidden layer only"
-    end
+    #if n_layers != 1 
+    #    @warn "n_layers > 1 currently not supported; model initialization will default to one hidden layer only"
+    #end
 
     activation_fn = use_activation ? activation_fn : identity
 
     batchnorm = use_batch_norm ? BatchNorm(n_out, momentum = Float32(0.01), ϵ = Float32(0.001)) : identity
     layernorm = use_layer_norm ? LayerNorm(n_out, affine=false) : identity
 
-    fc_layers = Chain(
-        Dense(n_in, n_out, bias=bias),
-        batchnorm, 
-        layernorm,
-        x -> activation_fn.(x),
-        Dropout(dropout_rate) # if dropout_rate > 0 
-    )
+    innerdims = [n_hidden for _ in 1:n_layers-1]
+    layerdims = [n_in, innerdims..., n_out]
+    
+    layerlist = [
+        Chain(
+            Dense(layerdims[i], layerdims[i+1], bias=bias),
+            batchnorm, 
+            layernorm,
+            x -> activation_fn.(x),
+            Dropout(dropout_rate) # if dropout_rate > 0 
+        ) 
+        for i in 1:n_layers
+    ]
+
+    fc_layers = n_layers == 1 ? layerlist[1] : Chain(layerlist...)
+
     return fc_layers
 end
