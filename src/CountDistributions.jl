@@ -67,7 +67,7 @@ function log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)
     mu: mean=variance of the Poisson distribution (has to be positive support) (shape: minibatch x vars)
     eps: numerical stability constant
     """
-    # TODO! 
+    return logpdf.(Poisson.(mu), x)
 end
 
 function _convert_mean_disp_to_counts_logits(mu, theta, eps=1e-6)

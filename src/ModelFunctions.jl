@@ -73,7 +73,9 @@ function get_reconstruction_loss(::Val{:nb}, x::AbstractMatrix{S}, px_rate::Abst
 end
 
 function get_reconstruction_loss(::Val{:poisson}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}}, px_dropout::Union{AbstractMatrix{S}}) where S <: Real 
-    error("not yet implemented")
+    #error("not yet implemented")
+    reconst_loss = sum(-log_poisson(x, px_rate), dims=1)
+    return reconst_loss
 end
 
 function get_kl_weight(n_epochs_kl_warmup, n_steps_kl_warmup, current_epoch, global_step)
