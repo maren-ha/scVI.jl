@@ -12,7 +12,7 @@
 - [x] implement highly variable gene filtering accoding to scanpy/Seuratv3 function 
 - [x] add checks to data loading (dimensions etc. )
 - [x] add in Tasic data + download script (?)
-- [ ] fix `init_library_size` function 
+- [x] fix `init_library_size` function 
 - [ ] actually support more than one layer! 
 - [ ] support Poisson likelihood 
 - [ ] add supervised AE functionality 
@@ -45,19 +45,19 @@ Pkg.activate("scVI")
 Pkg.add(["Random", "Flux", "Distributions", "SpecialFunctions", "ProgressMeter", "DataFrames", "CSV", "DelimitedFiles", "Loess", "LinearAlgebra", "HDF5", "VegaLite", "UMAP"])
 """
 using Pkg;
-Pkg.activate("scVI")
+Pkg.develop(path=string(@__DIR__))
+#Pkg.activate("scVI")
 using scVI 
-Pkg.test()
+Pkg.test("scVI")
 
 # load cortex and try HVG selection 
 adata = load_cortex(@__DIR__) # (or init_cortex_from_url())
 hvgdict = highly_variable_genes(adata, n_top_genes=1200)
 highly_variable_genes!(adata, n_top_genes=1200)
 subset_to_hvg!(adata, n_top_genes=1200)
-library_log_means, library_log_vars = init_library_size(adata, 1)
+library_log_means, library_log_vars = init_library_size(adata)
 
 m = scVAE(size(adata.countmatrix,2);
-        n_batch=n_batch,
         library_log_means=library_log_means,
 )
 training_args = TrainingArgs(
@@ -74,7 +74,7 @@ subset_tasic!(adata)
 # load cortex and train model 
 adata = load_cortex("scVI/data/")
 n_batch = adata.summary_stats["n_batch"]
-library_log_means, library_log_vars = init_library_size(adata, n_batch) 
+library_log_means, library_log_vars = init_library_size(adata) 
 
 m = scVAE(size(adata.countmatrix,2);
         n_batch=n_batch,
@@ -105,7 +105,7 @@ plot_umap_on_latent(m, adata; save_plot=true)
 
 # PBMC dataset 
 adata = load_pbmc("scVI/data/")
-library_log_means, library_log_vars = init_library_size(adata, 1) 
+library_log_means, library_log_vars = init_library_size(adata) 
 m = scVAE(size(adata.countmatrix,2);
         library_log_means=library_log_means,
         n_latent=2,

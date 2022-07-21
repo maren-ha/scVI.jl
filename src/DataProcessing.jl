@@ -41,7 +41,7 @@ function get_from_registry(adata::AnnData, key)
     return data
 end
 
-function init_library_size(adata::AnnData, n_batch::Int)
+function init_library_size(adata::AnnData)
     """
     Computes and returns library size.
     Parameters
@@ -57,17 +57,19 @@ function init_library_size(adata::AnnData, n_batch::Int)
     and the variance defaults to 1. These defaults are arbitrary placeholders which
     should not be used in any downstream computation.
     """
-    data = try
-        Matrix(get_from_registry(adata, "X")') # countmatrix: gene x cell
-    catch
-        adata.countmatrix
-    end
+    data = adata.countmatrix
     #
-    batch_indices = try 
-        get_from_registry(adata, "batch_indices") .+ 1
-    catch
-        zeros(Int,size(data,1)) .+ 1
+    if !isnothing(adata.obs) && haskey(adata.obs, "batch")
+        batch_indices = adata.obs["batch"]
+    else
+        batch_indices = try 
+            get_from_registry(adata, "batch_indices") .+ 1 # for Python-Julia index conversion 
+        catch
+            ones(Int,size(data,1)) 
+        end
     end
+
+    n_batch = length(unique(batch_indices))
 
     library_log_means = zeros(n_batch)
     library_log_vars = ones(n_batch)

@@ -8,7 +8,7 @@ using Test
     @info "loading data..."
     adata = load_pbmc()
     @info "data loaded, initialising object... "
-    library_log_means, library_log_vars = init_library_size(adata, 1) 
+    library_log_means, library_log_vars = init_library_size(adata) 
     m = scVAE(size(adata.countmatrix,2);
             library_log_means=library_log_means,
             n_latent=2
