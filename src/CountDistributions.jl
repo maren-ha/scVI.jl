@@ -52,9 +52,22 @@ function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::Abs
     if length(size(theta)) == 1
         # do some shit 
     end
-    log_theta_mu_eps = log.(theta .+ mu .+ eps)
-    res = theta .* (log.(theta .+ eps) .- log_theta_mu_eps) .+ x .* (log.(mu .+ eps) .- log_theta_mu_eps) .+ loggamma.(x .+ theta) .- loggamma.(theta) .- loggamma.(x .+ 1)
+    log_theta_mu_eps = @fastmath log.(theta .+ mu .+ eps)
+    res = @fastmath theta .* (log.(theta .+ eps) .- log_theta_mu_eps) .+ x .* (log.(mu .+ eps) .- log_theta_mu_eps) .+ loggamma.(x .+ theta) .- loggamma.(theta) .- loggamma.(x .+ 1)
     return res 
+end
+
+function log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
+    """
+    Log likelihood (scalar) of a minibatch according to a Poisson model.
+
+    Parameters
+    ----------
+    x: Data
+    mu: mean=variance of the Poisson distribution (has to be positive support) (shape: minibatch x vars)
+    eps: numerical stability constant
+    """
+    # TODO! 
 end
 
 function _convert_mean_disp_to_counts_logits(mu, theta, eps=1e-6)
