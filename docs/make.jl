@@ -3,7 +3,8 @@ using scVI
 
 makedocs(
     sitename = "scVI",
-    format = Documenter.HTML(),
+    authors = "Maren Hackenberg",
+    format = Documenter.HTML(prettyurls=false, edit_link="github/main"),
     modules = [scVI]
 )
 
