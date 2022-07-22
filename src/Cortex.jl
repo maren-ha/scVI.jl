@@ -2,6 +2,19 @@
 # cortex data 
 #-------------------------------------------------------------------------------------
 
+"""
+    load_cortex_from_h5ad(anndata::HDF5.File)
+
+Reads cortex data from an `AnnData` object created and used with the Python `scvi-tools` and saved as HDF5 file. 
+
+Returns 
+    the count matrix \n
+    the contents of `adata.layers` \n
+    the contents of `adata.obs` \n
+    the contents of `adata["uns"]["_scvi"]["summary_stats"]` \n
+    the contents of `adata["uns"]["_scvi"]["data_registry"]` \n
+    the cell type information in `adata["obs"]["__categories"]["cell_type"]`
+"""
 function load_cortex_from_h5ad(anndata::HDF5.File)
     countmatrix = read(anndata, "layers")["counts"]' # shape: cell x gene 
     summary_stats = read(anndata, "uns")["_scvi"]["summary_stats"]
@@ -15,6 +28,14 @@ function load_cortex_from_h5ad(anndata::HDF5.File)
 end
 
 # assumes Python adata object 
+"""
+    init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
+
+Opens a connection to the HDF5 file saved at `filename` that stores the corresponding Python `AnnData` object created and used with `scvi-tools`. \n
+Reads cortex data from an `AnnData` object created and used with the Python scVI and saved as HDF5 file. \n
+Information is extracted from the file with the `load_cortex_from_h5ad` function. \n
+Uses this information to fill the fields of a Julia `AnnData` object; returns the Julia `AnnData`` object.
+"""
 function init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
     anndata = open_h5_data(filename)
     countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_cortex_from_h5ad(anndata)
