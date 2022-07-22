@@ -17,9 +17,10 @@
 - [x] actually support more than one layer! 
 - [x] support Poisson likelihood 
 - [ ] add supervised AE functionality 
-- [ ] add docstrings (0/25)
+- [ ] add docstrings (9/26)
 -------
 *for later*
+- [ ] repo with data and preprocessing script for Tasic publically available 
 - [ ] support gene_batch and gene_label dispersion 
 - [ ] think about data loading (separate package? etc.)
 
