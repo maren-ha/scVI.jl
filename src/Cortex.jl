@@ -34,7 +34,7 @@ end
 Opens a connection to the HDF5 file saved at `filename` that stores the corresponding Python `AnnData` object created and used with `scvi-tools`. \n
 Reads cortex data from an `AnnData` object created and used with the Python scVI and saved as HDF5 file. \n
 Information is extracted from the file with the `load_cortex_from_h5ad` function. \n
-Uses this information to fill the fields of a Julia `AnnData` object; returns the Julia `AnnData`` object.
+Uses this information to fill the fields of a Julia `AnnData` object and returns it.
 """
 function init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
     anndata = open_h5_data(filename)
@@ -104,6 +104,35 @@ function init_cortex_from_url(save_path::String=joinpath(@__DIR__, "../data/"))
     return adata
 end
 
+"""
+    load_cortex(path::String=joinpath(@__DIR__, "../data/"))
+
+Loads build-in cortex dataset. Looks for a file `cortex_anndata.h5ad` in the `path` given as input argument. 
+Defaults to `path` pointing to the `data` subfolder. 
+This file can be downloaded from the repo using [Git LFS](https://git-lfs.github.com) and running `git-lfs checkout`
+after cloning the repository. 
+The file is the `h5` export of the Python `AnnData` object provided as [built-in `cortex` dataset from `scvi-tools`](https://github.com/scverse/scvi-tools/blob/master/scvi/data/_built_in_data/_cortex.py), 
+data is from [Zeisel et al. 2015](https://www.science.org/doi/10.1126/science.aaa1934).
+
+If the file is present, the data is loaded from the Python `AnnData` object and stored in an analogous Julia `AnnData` object. 
+This is handled by the functions `init_cortex_from_h5ad` and `load_cortex_from_h5ad`. 
+
+Alternatively, if the `h5ad` file is not found in the folder, the data is downloaded directly 
+[from the original authors]("https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt") and 
+processed analogous to the [`scvi-tools` processing](https://github.com/scverse/scvi-tools/blob/master/scvi/data/_built_in_data/_cortex.py), 
+and subsequently stored to a Julia `AnnData` object. This is handled by the function `init_cortex_from_url`. 
+
+Returns the Julia `AnnData` object.
+
+**Example** 
+---------------------------
+    julia> load_cortex()
+        AnnData object with a countmatrix with 3005 cells and 1200 genes
+        layers dict with the following keys: ["counts"]
+        summary statistics dict with the following keys: ["n_labels", "n_vars", "n_batch", "n_continuous_covs", "n_cells", "n_proteins"]
+        unique celltypes: ["interneurons", "pyramidal SS", "pyramidal CA1", "oligodendrocytes", "microglia", "endothelial-mural", "astrocytes_ependymal"]
+        training status: not trained
+"""
 function load_cortex(path::String=joinpath(@__DIR__, "../data/"))
     if isfile(string(path, "cortex_anndata.h5ad"))
         adata = init_cortex_from_h5ad(string(path, "cortex_anndata.h5ad"))
