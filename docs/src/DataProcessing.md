@@ -69,6 +69,18 @@ They are stored in the repository using [Git LFS](https://git-lfs.github.com). A
 init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
 ```
 
+```@docs 
+load_cortex(path::String=joinpath(@__DIR__, "../data/"))
+```
+
 ### PBMC data 
 
 ### Tasic data 
+
+```@docs 
+load_tasic(path::String = joinpath(@__DIR__, "../data/"))
+```
+
+```@docs 
+subset_tasic!(adata::AnnData)
+```
