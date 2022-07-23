@@ -2,7 +2,38 @@
 # Tasic data 
 # for complete preprocessing: see Moritz' notebook and files
 #-------------------------------------------------------------------------------------
+"""
+    load_tasic(path::String = joinpath(@__DIR__, "../data/"))
 
+Loads build-in `tasic` dataset from [Tasic et al. (2016)](https://www.nature.com/articles/nn.4216). 
+
+Loads the following files from the folder passed as `path` (default: `data` subfolder of scVI repo.)
+ - `Tasic_countmat.txt`: countmatrix  
+ - `Tasic_celltypes.txt`: cell types
+ - `Tasic_genenames.txt`: gene names 
+ - `Tasic_receptorandmarkers.txt`: List of receptor and marker genes 
+These files can be downloaded from the repo using [Git LFS](https://git-lfs.github.com) and running `git-lfs checkout`
+after cloning the repository. The original data is available at [Gene expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) under accession number GSE71585. 
+Preprocessing and annotation has been prepared according to the original manuscript. 
+
+From these input files, a Julia `AnnData` object is created. The list of receptor and marker genes is used 
+to annotate cells as neural vs. non-neural, and annotate the neural cells as  GABA- or Glutamatergic. 
+
+These annotations together with the cell type information and the gene names and receptor/marker list are stored in Dictionaries 
+in the `obs` and `vars` fields of the `AnnData` obejct. 
+
+Additionally, size factors are calculated and used for normalizing the counts. 
+The normalized counts are stored in an additional `layer` named `normalized_counts`.
+
+Returns the Julia `AnnData` object.
+
+**Example** 
+---------------------------
+    julia> load_tasic()
+        AnnData object with a countmatrix with 1679 cells and 15119 genes
+        layers dict with the following keys: ["normalized_counts", "counts"]
+        unique celltypes: ["Vip", "L4", "L2/3", "L2", "Pvalb", "Ndnf", "L5a", "SMC", "Astro", "L5", "Micro", "Endo", "Sst", "L6b", "Sncg", "Igtp", "Oligo", "Smad3", "OPC", "L5b", "L6a"]
+        training status: not trained"""
 function load_tasic(path::String = joinpath(@__DIR__, "../data/"))
 
     countmat = readdlm(string(path, "Tasic_countmat.txt"))
@@ -74,6 +105,17 @@ function load_tasic(path::String = joinpath(@__DIR__, "../data/"))
     return adata
 end
 
+"""
+    subset_tasic!(adata::AnnData)
+
+Subsets an input `AnnData` object initialized from the Tasic data according `load_tasic` to the neural cells 
+and the receptor and marker genes provided as annotation. 
+
+Specifically, the count matrix and the normalized count matrix are subset to these cells and genes, 
+and the dictionaries with information about cells and genes in `adata.obs` and `adata.vars` are also subset accordingly. 
+
+Returns the modified `AnnData` object. 
+"""
 function subset_tasic!(adata::AnnData)
     # subset to receptors and markers and neural cells only. 
     receptorandmarker_inds = adata.vars["receptorandmarker_inds"]
