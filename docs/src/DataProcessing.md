@@ -75,6 +75,10 @@ load_cortex(path::String=joinpath(@__DIR__, "../data/"))
 
 ### PBMC data 
 
+```@docs 
+load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
+```
+
 ### Tasic data 
 
 ```@docs 
