@@ -33,7 +33,8 @@ Returns the Julia `AnnData` object.
         AnnData object with a countmatrix with 1679 cells and 15119 genes
         layers dict with the following keys: ["normalized_counts", "counts"]
         unique celltypes: ["Vip", "L4", "L2/3", "L2", "Pvalb", "Ndnf", "L5a", "SMC", "Astro", "L5", "Micro", "Endo", "Sst", "L6b", "Sncg", "Igtp", "Oligo", "Smad3", "OPC", "L5b", "L6a"]
-        training status: not trained"""
+        training status: not trained
+"""
 function load_tasic(path::String = joinpath(@__DIR__, "../data/"))
 
     countmat = readdlm(string(path, "Tasic_countmat.txt"))
@@ -114,7 +115,7 @@ and the receptor and marker genes provided as annotation.
 Specifically, the count matrix and the normalized count matrix are subset to these cells and genes, 
 and the dictionaries with information about cells and genes in `adata.obs` and `adata.vars` are also subset accordingly. 
 
-Returns the modified `AnnData` object. 
+Returns the modified `AnnData` object.
 """
 function subset_tasic!(adata::AnnData)
     # subset to receptors and markers and neural cells only. 
