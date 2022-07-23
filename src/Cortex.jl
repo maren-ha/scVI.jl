@@ -118,7 +118,7 @@ If the file is present, the data is loaded from the Python `AnnData` object and 
 This is handled by the functions `init_cortex_from_h5ad` and `load_cortex_from_h5ad`. 
 
 Alternatively, if the `h5ad` file is not found in the folder, the data is downloaded directly 
-[from the original authors]("https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt") and 
+[from the original authors](https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt) and 
 processed analogous to the [`scvi-tools` processing](https://github.com/scverse/scvi-tools/blob/master/scvi/data/_built_in_data/_cortex.py), 
 and subsequently stored to a Julia `AnnData` object. This is handled by the function `init_cortex_from_url`. 
 
