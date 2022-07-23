@@ -5,7 +5,7 @@
     AnnData
 
 Minimal Julia implementation of the Python `AnnData` object (see [package documentation](https://anndata.readthedocs.io/en/latest/)
-and [Github repository[(https://github.com/scverse/anndata)]).
+and [Github repository](https://github.com/scverse/anndata)).
 
 **Keyword arguments** 
 ---------------------
