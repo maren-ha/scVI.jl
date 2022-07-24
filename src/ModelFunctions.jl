@@ -91,6 +91,9 @@ function get_kl_weight(n_epochs_kl_warmup, n_steps_kl_warmup, current_epoch, glo
     return kl_weight 
 end
 
+"""
+    get_latent_representation(m::scVAE, countmatrix::Matrix; cellindices=nothing, give_mean::Bool=true)
+"""
 function get_latent_representation(m::scVAE, countmatrix::Matrix; cellindices=nothing, give_mean::Bool=true)
     # countmatrix assumes cells x genes 
     if !isnothing(cellindices)

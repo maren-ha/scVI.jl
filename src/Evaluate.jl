@@ -1,9 +1,15 @@
+"""
+    register_latent_representation!(adata::AnnData, m::scVAE)
+"""
 function register_latent_representation!(adata::AnnData, m::scVAE)
     adata.scVI_latent = get_latent_representation(m, adata.countmatrix)
     @info "latent representation added"
     return adata 
 end
 
+"""
+    register_umap_on_latent!(adata::AnnData, m::scVAE)
+"""
 function register_umap_on_latent!(adata::AnnData, m::scVAE)
     if isnothing(adata.scVI_latent)
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
@@ -14,6 +20,9 @@ function register_umap_on_latent!(adata::AnnData, m::scVAE)
     return adata
 end
 
+"""
+    plot_umap_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=false, seed::Int=987, filename::String="UMAP_on_latent.pdf")
+"""
 function plot_umap_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=false, seed::Int=987, filename::String="UMAP_on_latent.pdf")
 
     if isnothing(adata.scVI_latent) 
@@ -51,6 +60,9 @@ function prcomps(mat, standardizeinput = true)
     return prcomps
 end
 
+"""
+    plot_pca_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=false, filename::String="PCA_on_latent.pdf")
+"""
 function plot_pca_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=false, filename::String="PCA_on_latent.pdf")
 
     if isnothing(adata.scVI_latent)

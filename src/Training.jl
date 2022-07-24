@@ -1,3 +1,6 @@
+"""
+    mutable struct TrainingArgs
+"""
 Base.@kwdef mutable struct TrainingArgs
     trainsize::Float32 = 0.9f0
     train_test_split::Bool=false
@@ -14,6 +17,9 @@ end
 
 Flux.params(m::scVAE) = Flux.params(m.z_encoder, m.l_encoder, m.decoder)
 
+"""
+    train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
+"""
 function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
