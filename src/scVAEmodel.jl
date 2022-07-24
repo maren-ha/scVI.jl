@@ -8,7 +8,7 @@
 """
     mutable struct scVAE
 
-Julia implementation of the single-cell Variational Autoencoder model from [`scvi-tools`]()
+Julia implementation of the single-cell Variational Autoencoder model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L22)
 Collects all information on the model parameters such as distribution choices and stores the model encoder and decoder. 
 Can be constructed using keywords. 
 
@@ -70,7 +70,7 @@ end
     )
 
 Constructor for the `scVAE` model struct. Initialises an `scVAE` model with the parameters specified in the input arguments. 
-Basic Julia implementation of the `scvi-tools` VAE object. 
+Basic Julia implementation of the [`scvi-tools` VAE object](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L22). 
 
 **Arguments:**
 ------------------------
@@ -78,7 +78,7 @@ Basic Julia implementation of the `scvi-tools` VAE object.
 
 **Keyword arguments**
 -------------------------
- - `actication_fn`: function to use as activation in all neural network layers of encoder and decoder 
+ - `activation_fn`: function to use as activation in all neural network layers of encoder and decoder 
  - `bias`: whether or not to use bias parameters in the neural network layers of encoder and decoder
  - `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
  - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
@@ -156,8 +156,8 @@ function scVAE(n_input::Int;
         bias=bias_encoder, 
         n_hidden=n_hidden,
         n_layers=n_layers,
-        dropout_rate=dropout_rate,
         distribution=latent_distribution,
+        dropout_rate=dropout_rate,
         use_activation=use_activation_encoder, 
         use_batch_norm=use_batch_norm_encoder,
         use_layer_norm=use_layer_norm_encoder,
