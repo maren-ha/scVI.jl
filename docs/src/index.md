@@ -3,11 +3,11 @@
 ![](../../logo/scvi-julia-logo.jpg)
 
 A Julia package for fitting VAEs to single-cell data using count distributions. 
-Based on the Python implementation in the [scvi-tools](https://github.com/scverse/scvi-tools) package. 
+Based on the Python implementation in the [`scvi-tools`](https://github.com/scverse/scvi-tools) package. 
 
 The scVI model was first proposed in [Lopez R, Regier J, Cole MB *et al.* Deep generative modeling for single-cell transcriptomics. *Nat Methods* **15**, 1053-1058 (2018)](https://doi.org/10.1038/s41592-018-0229-2). 
 
-More on the much more extensive Python package ecosystem scvi-tools can be found on the 
+More on the much more extensive Python package ecosystem [`scvi-tools`](https://github.com/scverse/scvi-tools) can be found on the 
 [website](https://scvi-tools.org) and in the corresponding paper [Gayoso A, Lopez R, Xing G. *et al.* A Python library for probabilistic analysis of single-cell omics data. *Nat Biotechnol* **40**, 163–166 (2022)](https://doi.org/10.1038/s41587-021-01206-w). 
 
 This is the documentation for the Julia version implementing basic functionality, including the following (non-exhausive list): 
@@ -19,8 +19,16 @@ This is the documentation for the Julia version implementing basic functionality
 - several built-in datasets 
 - training routines supporting a wide range of customisable hyperparameters 
 
-## Docs
+## Contents
 
 ```@contents 
-Pages = ["DataProcessing.md", "scVAE.md", "ModelFunctions.md", "Distributions.md", "scLDVAE.md", "Training.md", "Evaluation.md", "Utils.md"]
+Pages = [
+    "DataProcessing.md", 
+    "scVAE.md",
+    "scLDVAE.md", 
+    "ModelFunctions.md", 
+    "Training.md", 
+    "Evaluation.md", 
+    "Utils.md"
+]
 ```
