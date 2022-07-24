@@ -5,6 +5,8 @@
 A Julia package for fitting VAEs to single-cell data using count distributions. 
 Based on the Python implementation in the [`scvi-tools`](https://github.com/scverse/scvi-tools) package. 
 
+## Overview
+
 The scVI model was first proposed in [Lopez R, Regier J, Cole MB *et al.* Deep generative modeling for single-cell transcriptomics. *Nat Methods* **15**, 1053-1058 (2018)](https://doi.org/10.1038/s41592-018-0229-2). 
 
 More on the much more extensive Python package ecosystem [`scvi-tools`](https://github.com/scverse/scvi-tools) can be found on the 
@@ -18,6 +20,21 @@ This is the documentation for the Julia version implementing basic functionality
 - store data in a (very basic) Julia version of the Python [`AnnData`](https://anndata.readthedocs.io/en/latest/) objects 
 - several built-in datasets 
 - training routines supporting a wide range of customisable hyperparameters 
+
+## Installation
+
+The package can be downloaded from the [Github repo](https://github.com/maren-ha/scVI.jl) and added with the Julia package manager via 
+
+```
+julia> ]add "https://github.com/maren-ha/scVI.jl"
+```
+
+or alternatively by 
+
+```
+julia> using Pkg; Pkg.add("https://github.com/maren-ha/scVI.jl")
+```
+
 
 ## Contents
 
