@@ -119,7 +119,9 @@ function (LinearDecoder::scLinearDecoder)(z, library)
     return px_scale, px_r, px_rate, px_dropout
 end
 
-
+"""
+    get_loadings(dec::scLinearDecoder)
+"""
 function get_loadings(dec::scLinearDecoder)
     if dec.use_batch_norm
         w = dec.factor_regressor[1].weight
