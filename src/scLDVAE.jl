@@ -1,4 +1,6 @@
-
+"""
+    mutable struct scLinearDecoder <: AbstractDecoder 
+"""
 Base.@kwdef mutable struct scLinearDecoder <: AbstractDecoder 
     n_input::Int
     n_output::Int
@@ -11,6 +13,32 @@ end
 
 Flux.@functor scLinearDecoder
 
+"""
+    scLinearDecoder(n_input, n_output; 
+        bias::Bool=true,
+        dispersion::Symbol=:gene,
+        gene_likelihood::Symbol=:zinb,
+        dropout_rate::Float32=0.0f0,
+        use_batch_norm::Bool=true,
+        use_layer_norm::Bool=false
+        )
+
+Constructor for a linear decoder for an `scLDVAE` model. Initialises a `scLinearDecoder` struct with the parameters specified by the inputs. 
+
+**Arguments:**
+-------------------
+ - `n_input`: number of input features for the decoder; has to be equal to the latent space dimension.
+ - `n_output`: number of features in the final output layer of the decoder, has to be equal to the number of genes in the dataset.
+
+**Keyword arguments:**
+-------------------
+- `bias`: whether or not to use bias parameters in the neural network layers
+- `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+- `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+- `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+- `use_batch_norm`: whether or not to apply batch normalization in the encoder/decoder layers
+- `use_layer_norm`: whether or not to apply layer normalization in the encoder/decoder layers
+"""
 function scLinearDecoder(n_input, n_output; 
     bias::Bool=true,
     dispersion::Symbol=:gene,
@@ -88,6 +116,59 @@ function get_loadings(dec::scLinearDecoder)
     return loadings 
 end
 
+"""
+    scLDVAE(n_input::Int;
+        activation_fn::Function=relu, # to be used in all FC_layers instances
+        bias::Symbol=:both,  # :both, :none, :encoder, :decoder; whether to use bias in linear layers of all FC instances in encoder/decoder
+        dispersion::Symbol=:gene,
+        dropout_rate::Float32=0.1f0,
+        gene_likelihood::Symbol=:zinb,
+        latent_distribution::Symbol=:normal,
+        library_log_means=nothing,
+        library_log_vars=nothing,
+        log_variational::Bool=true,
+        n_batch::Int=1,
+        n_hidden::Int=128,
+        n_latent::Int=10,
+        n_layers::Int=1,
+        use_activation::Symbol=:both, # :both, :none, :encoder, :decoder
+        use_batch_norm::Symbol=:both, # :both, :none, :encoder, :decoder
+        use_layer_norm::Symbol=:none, # :both, :none, :encoder, :decoder
+        use_observed_lib_size::Bool=true,
+        var_activation=nothing,
+        var_eps::Float32=Float32(1e-4),
+        seed::Int=1234
+    )
+
+Constructor for a linearly decoded VAE model. Initialises an `scVAE` model with a linear decoder with the parameters specified in the input arguments. 
+Julia implementation of the `scvi-tools` LDVAE object. Differs from the `scVAE` constructor only in that it defined a linear decoder, see `scLinearDecoder`.
+
+**Arguments:**
+------------------------
+- `n_input`: input dimension = number of genes/features
+
+**Keyword arguments**
+-------------------------
+ - `actication_fn`: function to use as activation in all neural network layers of encoder and decoder 
+ - `bias`: whether or not to use bias parameters in the neural network layers of encoder and decoder
+ - `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+ - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+ - `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+ - `library_log_means`: log-transformed means of library size; has to be provided when not using observed library size, but encoding it
+ - `library_log_vars`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
+ - `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
+ - `n_batch`: number of batches in the data 
+ - `n_hidden`: number of hidden units to use in each hidden layer 
+ - `n_latent`: dimension of latent space 
+ - `n_layers`: number of hidden layers in encoder and decoder 
+ - `use_activation`: whether or not to use an activation function in the neural network layers of encoder and decoder; if `false`, overrides choice in `actication_fn`
+ - `use_batch_norm`: whether to apply batch normalization in the encoder/decoder layers; can be one of `:encoder`, `:decoder`, `both`, `:none`
+ - `use_layer_norm`: whether to apply layer normalization in the encoder/decoder layers; can be one of `:encoder`, `:decoder`, `both`, `:none`
+ - `use_observed_lib_size`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
+ - `var_activation`: whether or not to use an activation function for the variance layer in the encoder
+ - `var_eps`: numerical stability constant to add to the variance in the reparameterisation of the latent representation
+ - `seed`: random seed to use for initialization of model parameters; to ensure reproducibility. 
+"""
 function scLDVAE(n_input::Int;
     activation_fn::Function=relu, # to be used in all FC_layers instances
     bias::Symbol=:both,  # :both, :none, :encoder, :decoder; whether to use bias in linear layers of all FC instances in encoder/decoder
