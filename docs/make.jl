@@ -5,7 +5,15 @@ makedocs(
     sitename = "scVI",
     authors = "Maren Hackenberg",
     format = Documenter.HTML(prettyurls=false, edit_link="github/main"),
-    modules = [scVI]
+    modules = [scVI],
+    pages = [
+    "Home" => "index.md",
+    "DataProcessing.md", 
+    "The scVAE model" =>"scVAE.md",
+    "scLDVAE.md", 
+    "Training.md", 
+    "Evaluation.md", 
+    ]    
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.
