@@ -1,5 +1,19 @@
 """
     mutable struct scLinearDecoder <: AbstractDecoder 
+
+Julia implementation of the linear Decoder of single-cell LDVAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L427)
+Collects all information on the decoder parameters and stores the decoder parts. 
+Can be constructed using keywords. 
+
+**Keyword arguments**
+-------------------------
+- `n_input`: input dimension = dimension of latent space 
+- `n_output`: output dimension of the decoder = number of genes/features
+- `factor_regressor`: `Flux.Chain` of fully connected layer + optional normalisation realising the first part of the decoder (before the split in mean, dispersion and dropout decoder). For details, see the source code of `FC_layers` in `src/Utils`. Only one layer without activation. 
+- `px_dropout_decoder`: if the generative distribution is zero-inflated negative binomial (`gene_likelihood = :zinb` in the `scVAE` model construction): `Flux.Dense` layer, else `nothing`.
+- `px_r_decoder`: decoder for the dispersion parameter. If generative distribution is not some (zero-inflated) negative binomial, it is `nothing`. Else, it is a parameter vector  or a `Flux.Dense`, depending on whether the dispersion is estimated per gene (`dispersion = :gene`), or per gene and cell (`dispersion = :gene_cell`)  
+- `use_batch_norm`: whether or not to apply batch normalization in the decoder layers
+- `use_layer_norm`: whether or not to apply layer normalization in the decoder layers 
 """
 Base.@kwdef mutable struct scLinearDecoder <: AbstractDecoder 
     n_input::Int
@@ -24,6 +38,8 @@ Flux.@functor scLinearDecoder
         )
 
 Constructor for a linear decoder for an `scLDVAE` model. Initialises a `scLinearDecoder` struct with the parameters specified by the inputs. 
+Julia implementation of the [scvi-tools linear decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L427).
+        
 
 **Arguments:**
 -------------------
@@ -32,12 +48,12 @@ Constructor for a linear decoder for an `scLDVAE` model. Initialises a `scLinear
 
 **Keyword arguments:**
 -------------------
-- `bias`: whether or not to use bias parameters in the neural network layers
-- `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
-- `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
-- `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
-- `use_batch_norm`: whether or not to apply batch normalization in the encoder/decoder layers
-- `use_layer_norm`: whether or not to apply layer normalization in the encoder/decoder layers
+ - `bias`: whether or not to use bias parameters in the neural network layers
+ - `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+ - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+ - `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+ - `use_batch_norm`: whether or not to apply batch normalization in the encoder/decoder layers
+ - `use_layer_norm`: whether or not to apply layer normalization in the encoder/decoder layers
 """
 function scLinearDecoder(n_input, n_output; 
     bias::Bool=true,
@@ -141,7 +157,8 @@ end
     )
 
 Constructor for a linearly decoded VAE model. Initialises an `scVAE` model with a linear decoder with the parameters specified in the input arguments. 
-Julia implementation of the `scvi-tools` LDVAE object. Differs from the `scVAE` constructor only in that it defined a linear decoder, see `scLinearDecoder`.
+Julia implementation of the [`scvi-tools` LDVAE object](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/model/_linear_scvi.py#L21). 
+Differs from the `scVAE` constructor only in that it defines a linear decoder, see `scLinearDecoder`.
 
 **Arguments:**
 ------------------------
@@ -149,7 +166,7 @@ Julia implementation of the `scvi-tools` LDVAE object. Differs from the `scVAE` 
 
 **Keyword arguments**
 -------------------------
- - `actication_fn`: function to use as activation in all neural network layers of encoder and decoder 
+ - `activation_fn`: function to use as activation in all neural network layers of encoder and decoder 
  - `bias`: whether or not to use bias parameters in the neural network layers of encoder and decoder
  - `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
  - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
@@ -230,8 +247,8 @@ function scLDVAE(n_input::Int;
         bias=bias_encoder, 
         n_hidden=n_hidden,
         n_layers=n_layers,
-        dropout_rate=dropout_rate,
         distribution=latent_distribution,
+        dropout_rate=dropout_rate,
         use_activation=use_activation_encoder, 
         use_batch_norm=use_batch_norm_encoder,
         use_layer_norm=use_layer_norm_encoder,
