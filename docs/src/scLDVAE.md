@@ -1,5 +1,7 @@
 # The scLDVAE model 
 
+scVAE model with a linear decoder. The implementation is based on the [`scvi-tools` linearly decoded VAE](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/model/_linear_scvi.py#L21). According to the `scvi-tools` authors, this is turn is based on the model proposed in [Svensson et al, 2020](https://academic.oup.com/bioinformatics/article/36/11/3418/5807606).
+
 ```@docs 
 scLinearDecoder
 ``` 
