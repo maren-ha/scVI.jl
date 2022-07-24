@@ -2,9 +2,27 @@
 # Encoder
 #-------------------------------------------------------------------------------------
 
+"""
+    mutable struct scEncoder
+
+Julia implementation of the Encoder of the single-cell VAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202)
+Collects all information on the encoder parameters and stores the basic encoder and mean and variance encoders. 
+Can be constructed using keywords. 
+
+**Keyword arguments**
+-------------------------
+ - `encoder`: `Flux.Chain` of fully connected layers realising the first part of the encoder (before the split in mean and variance). For details, see the source code of `FC_layers` in `src/Utils`.
+ - `mean_encoder`: `Flux.Dense` fully connected layer realising the latent mean encoder 
+ - `n_input`: input dimension = number of genes/features
+ - `n_hidden`: number of hidden units to use in each hidden layer 
+ - `n_output`: output dimension of the encoder = dimension of latent space 
+ - `n_layers`: number of hidden layers in encoder and decoder 
+ - `var_activation`: whether or not to use an activation function for the variance layer in the encoder
+ - `var_encoder`: `Flux.Dense` fully connected layer realising the latent variance encoder 
+ - `var_eps`: numerical stability constant to add to the variance in the reparameterisation of the latent representation
+ - `z_transformation`: whether to apply a `softmax` transformation the latent z if assuming a lognormal instead of a normal distribution
+"""
 Base.@kwdef mutable struct scEncoder
-    distribution
-    dropout_rate
     encoder 
     mean_encoder 
     n_input
@@ -23,7 +41,45 @@ Flux.@functor scEncoder
 #reconstruction_loss(m::AE, x) = reconstruction_loss(m, Val(:bin), x)
 #reconstruction_loss(m::AE, ::Val{:bin}, x) = -sum( x .* log.(σ.(m(x)) .+ eps(Float32)) .+ (1.0f0 .- x) .* log.(1 .- σ.(m(x)) .+ eps(Float32)))
 #reconstruction_loss(m::AE, ::Val{:log}, x) = Flux.mse(m(x), x)
+"""
+    scEncoder(
+        n_input::Int, 
+        n_output::Int;
+        activation_fn::Function=relu, # to use in FC_layers
+        bias::Bool=true,
+        n_hidden::Int=128,
+        n_layers::Int=1,
+        distribution::Symbol=:normal,
+        dropout_rate::Float32=0.1f0,
+        use_activation::Bool=true,
+        use_batch_norm::Bool=true,
+        use_layer_norm::Bool=false,
+        var_activation=nothing,
+        var_eps::Float32=Float32(1e-4)
+    )
 
+Constructor for an `scVAE` encoder. Initialises an `scEncoder` object according to the input parameters. 
+Julia implementation of the [scvi-tools encoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
+
+**Arguments:**
+---------------------------
+- `n_input`: input dimension = number of genes/features
+- `n_output`: output dimension of the encoder = latent space dimension
+
+**Keyword arguments:**
+---------------------------
+- `activation_fn`: function to use as activation in all encoder neural network layers 
+- `bias`: whether or not to use bias parameters in the encoder neural network layers
+- `n_hidden`: number of hidden units to use in each hidden layer 
+- `n_layers`: number of hidden layers in encoder 
+- `distribution` :whether to use a `:normal` or lognormal (`:ln`) distribution for the latent z  
+- `dropout_rate`: dropout to use in all encoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+- `use_activation`: whether or not to use an activation function in the encoder neural network layers; if `false`, overrides choice in `actication_fn`
+- `use_batch_norm`: whether or not to apply batch normalization in the encoder layers
+- `use_layer_norm`: whether or not to apply layer normalization in the encoder layers
+- `var_activation`: whether or not to use an activation function for the variance layer in the encoder
+- `var_eps`: numerical stability constant to add to the variance in the reparameterisation of the latent representation
+"""
 function scEncoder(
     n_input::Int, 
     n_output::Int;
@@ -31,8 +87,8 @@ function scEncoder(
     bias::Bool=true,
     n_hidden::Int=128,
     n_layers::Int=1,
-    dropout_rate::Float32=0.1f0,
     distribution::Symbol=:normal,
+    dropout_rate::Float32=0.1f0,
     use_activation::Bool=true,
     use_batch_norm::Bool=true,
     use_layer_norm::Bool=false,
@@ -67,8 +123,6 @@ function scEncoder(
     var_activation = isnothing(var_activation) ? exp : var_activation
 
     return scEncoder(
-        distribution=distribution,
-        dropout_rate=dropout_rate,
         encoder=encoder,
         mean_encoder=mean_encoder,
         n_input=n_input, 
@@ -96,8 +150,6 @@ end
 #-------------------------------------------------------------------------------------
 
 Base.@kwdef mutable struct scAEncoder
-    distribution
-    dropout_rate
     encoder 
     mean_encoder 
     n_input
@@ -110,10 +162,10 @@ end
 function scAEncoder(n_input, n_output;
     activation_fn::Function=relu,
     bias::Bool=true,
-    n_hidden::Int=128, 
-    n_layers::Int=1,
     dropout_rate::Float32=0.1f0,
     distribution::Symbol=:normal,
+    n_hidden::Int=128, 
+    n_layers::Int=1,
     use_activation::Bool=true,
     use_batch_norm::Bool=true,
     use_layer_norm::Bool=false)
@@ -142,8 +194,6 @@ function scAEncoder(n_input, n_output;
     end
 
     return scAEncoder(
-                distribution=distribution,
-                dropout_rate=dropout_rate,
                 encoder=encoder,
                 mean_encoder=mean_encoder,
                 n_input=n_input, 
@@ -165,10 +215,30 @@ end
 #-------------------------------------------------------------------------------------
 abstract type AbstractDecoder end 
 
+"""
+    mutable struct scDecoder <: AbstractDecoder
+
+Julia implementation of the Decoder of single-cell VAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308)
+Collects all information on the decoder parameters and stores the decoder parts. 
+Can be constructed using keywords. 
+
+**Keyword arguments**
+-------------------------
+ - `n_input`: input dimension = dimension of latent space 
+ - `n_hidden`: number of hidden units to use in each hidden layer 
+ - `n_output`: output dimension of the decoder = number of genes/features
+ - `n_layers`: number of hidden layers in decoder 
+ - `px_decoder`: `Flux.Chain` of fully connected layers realising the first part of the decoder (before the split in mean, dispersion and dropout decoder). For details, see the source code of `FC_layers` in `src/Utils`.
+ - `px_dropout_decoder`: if the generative distribution is zero-inflated negative binomial (`gene_likelihood = :zinb` in the `scVAE` model construction): `Flux.Dense` layer, else `nothing`.
+ - `px_r_decoder`: decoder for the dispersion parameter. If generative distribution is not some (zero-inflated) negative binomial, it is `nothing`. Else, it is a parameter vector  or a `Flux.Dense`, depending on whether the dispersion is estimated per gene (`dispersion = :gene`), or per gene and cell (`dispersion = :gene_cell`)  
+ - `px_scale_decoder`: decoder for the mean of the reconstruction, `Flux.Chain` of a `Dense` layer followed by `softmax` activation
+ - `use_batch_norm`: whether or not to apply batch normalization in the decoder layers
+ - `use_layer_norm`: whether or not to apply layer normalization in the decoder layers 
+"""
 Base.@kwdef mutable struct scDecoder <: AbstractDecoder
     n_input::Int
-    n_output::Int
     n_hidden::Int=128
+    n_output::Int
     n_layers::Int=1
     px_decoder
     px_dropout_decoder
@@ -180,6 +250,40 @@ end
 
 Flux.@functor scDecoder
 
+"""
+    scDecoder(n_input, n_output; 
+        activation_fn::Function=relu,
+        bias::Bool=true,
+        dispersion::Symbol=:gene,
+        dropout_rate::Float32=0.0f0,
+        gene_likelihood::Symbol=:zinb,
+        n_hidden::Int=128,
+        n_layers::Int=1, 
+        use_activation::Bool=true,
+        use_batch_norm::Bool=true,
+        use_layer_norm::Bool=false
+    )
+
+Constructor for an `scVAE` decoder. Initialises an `scDecoder` object according to the input parameters. 
+Julia implementation of the [scvi-tools decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308).
+
+**Arguments:**
+---------------------------
+- `n_input`: input dimension of the decoder = latent space dimension
+- `n_output`: output dimension = number of genes/features in the data 
+
+**Keyword arguments:**
+---------------------------
+- `activation_fn`: function to use as activation in all decoder neural network layers 
+- `bias`: whether or not to use bias parameters in the decoder neural network layers
+- `dispersion`: whether to estimate the dispersion parameter for the (zero-inflated) negative binomial generative distribution per gene (`:gene`) or per gene and cell (`:gene_cell`) 
+- `dropout_rate`: dropout to use in all decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+- `n_hidden`: number of hidden units to use in each hidden layer 
+- `n_layers`: number of hidden layers in decoder 
+- `use_activation`: whether or not to use an activation function in the decoder neural network layers; if `false`, overrides choice in `actication_fn`
+- `use_batch_norm`: whether or not to apply batch normalization in the decoder layers
+- `use_layer_norm`: whether or not to apply layer normalization in the decoder layers
+"""
 function scDecoder(n_input, n_output; 
     activation_fn::Function=relu,
     bias::Bool=true,
@@ -230,8 +334,8 @@ function scDecoder(n_input, n_output;
 
     return scDecoder(
             n_input=n_input, 
-            n_output=n_output,
             n_hidden=n_hidden,
+            n_output=n_output,
             n_layers=n_layers, 
             px_decoder=px_decoder,
             px_dropout_decoder=px_dropout_decoder,
