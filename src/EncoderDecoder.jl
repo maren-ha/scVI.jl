@@ -5,7 +5,7 @@
 """
     mutable struct scEncoder
 
-Julia implementation of the Encoder of the single-cell VAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202)
+Julia implementation of the Encoder of the single-cell VAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
 Collects all information on the encoder parameters and stores the basic encoder and mean and variance encoders. 
 Can be constructed using keywords. 
 
