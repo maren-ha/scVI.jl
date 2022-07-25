@@ -17,7 +17,7 @@ This is the documentation for the Julia version implementing basic functionality
 - different ways of specifying the dispersion parameter 
 - store data in a (very basic) Julia version of the Python [`AnnData`](https://anndata.readthedocs.io/en/latest/) objects 
 - several built-in datasets 
-- training routines supporting a wide range of customizable hyperparameters
+- training routines supporting a wide range of customisable hyperparameters
 
 ## Docs 
 
@@ -41,8 +41,8 @@ Hosting on Github with GithubActions/TravisCI is planned, but not implemented ye
 - [x] fix `init_library_size` function 
 - [x] actually support more than one layer! 
 - [x] support Poisson likelihood 
+- [x] add docstrings (26/26)
 - [ ] add supervised AE functionality 
-- [ ] add docstrings (18/26)
 -------
 *for later*
 - [ ] repo with data and preprocessing script for Tasic publically available 
