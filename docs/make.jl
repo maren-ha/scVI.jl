@@ -7,7 +7,7 @@ makedocs(
     format = Documenter.HTML(prettyurls=false, edit_link="github/main"),
     modules = [scVI],
     pages = [
-    "Home" => "index.md",
+    "Getting started" => "index.md",
     "DataProcessing.md", 
     "The scVAE model" =>"scVAE.md",
     "scLDVAE.md", 
@@ -15,6 +15,19 @@ makedocs(
     "Evaluation.md", 
     ]    
 )
+
+# Docs rules 
+# if there are explicit documented constructors for user-defined types, 
+# types and default values of structs are not documented in struct docstring, 
+# because it is sufficient to have this info for the constructor function and 
+# it avoids repetition. 
+# If there is not an explicit exported and documented constructor method (like for the `AnnData`
+# and `TrainingArgs` structs), the default values and types are documented in the struct docstring itself. 
+
+#deploydocs(
+#   devbranch="github/main",
+#    repo = "github.com/maren-ha/scVI.jl.git",
+#)
 
 # Documenter can also automatically deploy documentation to gh-pages.
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
