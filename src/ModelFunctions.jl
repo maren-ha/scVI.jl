@@ -92,9 +92,27 @@ function get_kl_weight(n_epochs_kl_warmup, n_steps_kl_warmup, current_epoch, glo
 end
 
 """
-    get_latent_representation(m::scVAE, countmatrix::Matrix; cellindices=nothing, give_mean::Bool=true)
+    get_latent_representation(m::scVAE, countmatrix::Matrix; 
+        cellindices=nothing, give_mean::Bool=true
+    )
+
+Computes the latent representation of an `scVAE` model on input count data by applying the `scVAE` encoder. 
+
+Returns the mean (default) or a sample of the latent representation (can be controlled by `give_mean` keyword argument).
+
+**Arguments:**
+-----------------
+ - `m::scVAE`: `scVAE` model from which the encoder is applied to get the latent representation
+ - `countmatrix::Matrix`: matrix of counts (e.g., `countmatrix` field of an `AnnData` object), which is to be embedded with the `scVAE` model encoder. Is assumed to be in a (cell x gene) format.
+
+ **Keyword arguments:**
+ -----------------
+ - `cellindices=nothing`: optional; indices of cells (=rows) on which to subset the `countmatrix` before embedding it 
+ - `give_mean::Bool=true`: optional; if `true`, returns the mean of the latent representation, else returns a sample. 
 """
-function get_latent_representation(m::scVAE, countmatrix::Matrix; cellindices=nothing, give_mean::Bool=true)
+function get_latent_representation(m::scVAE, countmatrix::Matrix; 
+    cellindices=nothing, give_mean::Bool=true
+    )
     # countmatrix assumes cells x genes 
     if !isnothing(cellindices)
         countmatrix = countmatrix[cellindices,:]
