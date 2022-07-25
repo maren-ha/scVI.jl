@@ -121,6 +121,13 @@ end
 
 """
     get_loadings(dec::scLinearDecoder)
+
+Extracts the loadings of a `scLinearDecoder`, specifically corresponding to 
+the weight matrix of the linear `scLinearDecoder.factor_regressor` layer. 
+If batch normalisation is applied, the weight matrix is re-scaled according 
+to the accumulated statistics in the batch norm layer (for details, see `?Flux.BatchNorm`).
+
+Returns the matrix of loadings. 
 """
 function get_loadings(dec::scLinearDecoder)
     if dec.use_batch_norm
