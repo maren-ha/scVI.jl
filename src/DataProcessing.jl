@@ -9,20 +9,20 @@ and [Github repository](https://github.com/scverse/anndata)).
 
 **Keyword arguments** 
 ---------------------
- - `countmatrix`: countmatrix in cell x gene shape
- - `ncells`: number of cells; `size(countmatrix,1)`
- - `ngenes`: number of genes; `size(countmatrix,2)`
- - `layers`: `Dict` containing other layers (e.g., normalized counts), corresponds to `adata.layers`
- - `obs`: `Dict` containing information about cells, e.g., celltypes
- - `summary_stats`: `Dict` containing summary information, corresponds to `adata.uns["_scvi"]["summary_stats"]`
- - `registry`: `Dict` corresponding to `adata.uns["_scvi"]["data_registry"]`
- - `vars`: `Dict` containing information about genes/features, e.g., gene names or highly variable genes
- - `celltypes`: vector of cell type names, shorthand for `adata.obs["cell_type"]`
- - `train_inds`: vector of cell indices used for training an `scVAE` model 
- - `dataloader`: `Flux.DataLoader` object used for training an `scVAE` model
- - `scVI_latent`: latent representation of trained `scVAE` model 
- - `scVI_latent_umap`: UMAP of latent representation from trained `scVAE` model 
- - `is_trained`: indicating whether a model has been trained on the AnnData object 
+ - `countmatrix::Union{Matrix,Nothing}=nothing`: countmatrix in cell x gene shape
+ - `ncells::Union{Int,Nothing}=nothing`: number of cells; `size(countmatrix,1)`
+ - `ngenes::Union{Int,Nothing}=nothing`: number of genes; `size(countmatrix,2)`
+ - `layers::Union{Dict,Nothing}=nothing`: dictionary of other layers (e.g., normalized counts), corresponds to `adata.layers`
+ - `obs::Union{Dict,Nothing}=nothing`: dictionary of information about cells, e.g., celltypes
+ - `summary_stats::Union{Dict, Nothing}=nothing`: dictionary of summary information, corresponds to `adata.uns["_scvi"]["summary_stats"]`
+ - `registry::Union{Dict, Nothing}=nothing`: dictionary corresponding to `adata.uns["_scvi"]["data_registry"]`
+ - `vars::Union{Dict, Nothing}=nothing`: dictionary of information about genes/features, e.g., gene names or highly variable genes
+ - `celltypes=nothing`: vector of cell type names, shorthand for `adata.obs["cell_type"]`
+ - `train_inds=nothing`: vector of cell indices used for training an `scVAE` model 
+ - `dataloader=nothing`: `Flux.DataLoader` object used for training an `scVAE` model
+ - `scVI_latent=nothing`: latent representation of trained `scVAE` model 
+ - `scVI_latent_umap=nothing`: UMAP of latent representation from trained `scVAE` model 
+ - `is_trained::Bool=false`: indicating whether a model has been trained on the AnnData object 
 
  **Example**
  ------------------
