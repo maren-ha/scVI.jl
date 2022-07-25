@@ -21,11 +21,9 @@ This is the documentation for the Julia version implementing basic functionality
 
 ## Docs 
 
-Currently under development. 
+Only available locally as of now: You can run `julia make.jl` inside the `docs` subfolder of the `scVI` folder. Then, you can access the current version of the documentation in the HTML file at `docs/build/index.html`. 
 
-Locally, you can run `julia make.jl` inside the `docs` subfolder of the `scVI` folder. Then, you can access the current version of the documentation in the HTML file at `docs/build/index.html`. 
-
-Hosting on Github with GithubActions/TravisCI is planned, but not implemented yet. 
+Hosting on Github with GithubActions/TravisCI is currently work on progress. 
 
 ## TODO 
 
