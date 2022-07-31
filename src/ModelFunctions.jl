@@ -58,6 +58,29 @@ function loss(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S 
     return lossval
 end
 
+function supervised_loss(m::scVAE, x::AbstractMatrix{S}, y::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S <: Real 
+    z, qz_m, qz_v, ql_m, ql_v, library = inference(m,x)
+    px_scale, px_r, px_rate, px_dropout = generative(m, z, library)
+    kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) 
+
+    if !m.use_observed_lib_size # TODO!
+        local_library_log_means,local_library_log_vars = _compute_local_library_params() 
+        kl_divergence_l = kl(Normal(ql_m, ql_v.sqrt()),Normal(local_library_log_means, local_library_log_vars.sqrt())).sum(dim=1)
+    else
+        kl_divergence_l = 0.0f0
+    end
+
+    reconst_loss = get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
+    kl_local_for_warmup = kl_divergence_z
+    kl_local_no_warmup = kl_divergence_l
+    weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
+
+    enc_loss = Flux.mse(qz_m, y)
+    lossval = mean(reconst_loss + weighted_kl_local)
+    total_loss = enc_loss + lossval
+    return total_loss
+end
+
 function get_reconstruction_loss(m::scVAE, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}, Nothing}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
     return get_reconstruction_loss(Val(m.gene_likelihood), x, px_rate, px_r, px_dropout)
 end
