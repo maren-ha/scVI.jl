@@ -40,7 +40,7 @@ export
     load_cortex, load_pbmc, load_tasic, subset_tasic!,
     scVAE, scEncoder, scDecoder, scLinearDecoder, scLDVAE,
     TrainingArgs, 
-    train_model!, 
+    train_model!, train_supervised_model!,
     get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!,
     plot_umap_on_latent, 
