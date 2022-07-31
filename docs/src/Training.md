@@ -8,3 +8,6 @@ TrainingArgs
 train_model!
 ```
 
+```@docs 
+train_supervised_model!
+```
