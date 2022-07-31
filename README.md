@@ -40,7 +40,7 @@ Hosting on Github with GithubActions/TravisCI is currently work in progress.
 - [x] actually support more than one layer! 
 - [x] support Poisson likelihood 
 - [x] add docstrings (26/26)
-- [ ] add supervised AE functionality 
+- [x] add supervised AE functionality 
 -------
 *for later*
 - [ ] repo with data and preprocessing script for Tasic publically available 
