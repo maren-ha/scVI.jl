@@ -13,15 +13,15 @@ init_library_size(adata::AnnData)
 ```
 
 ```@docs
-estimatesizefactorsformatrix(mat; locfunc=median)
+estimate_size_factors(mat; locfunc=median)
 ```
 
 ```@docs
-normalizecountdata(mat::AbstractMatrix)
+normalize_counts(mat::AbstractMatrix)
 ```
 
 ```@docs
-normalizecountdata!(adata::AnnData)
+normalize_counts!(adata::AnnData)
 ```
 
 ## Highly variable genes 

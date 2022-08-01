@@ -363,14 +363,14 @@ end
 #-------------------------------------------------------------------------------------
 
 """
-    estimatesizefactorsformatrix(mat; locfunc=median)
+    estimate_size_factors(mat; locfunc=median)
 
 Estimates size factors to use for normalization, based on the corresponding Seurat functionality. 
 Assumes a countmatrix `mat` in cell x gene format as input, returns a vector of size factors. 
 
 For details, please see the Seurat documentation. 
 """
-function estimatesizefactorsformatrix(mat; locfunc=median)
+function estimate_size_factors(mat; locfunc=median)
     logcounts = log.(mat)
     loggeomeans = vec(mean(logcounts, dims=2))
     finiteloggeomeans = isfinite.(loggeomeans)
@@ -385,24 +385,24 @@ function estimatesizefactorsformatrix(mat; locfunc=median)
 end
 
 """
-    normalizecountdata(mat::Abstractmatrix)
+    normalize_counts(mat::Abstractmatrix)
 
-Normalizes the countdata in `mat` by dividing it by the size factors calculated with `estimatesizefactorsformatrix`. 
+Normalizes the countdata in `mat` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Assumes a countmatrix `mat` in cell x gene format as input, returns the normalized matrix.
 """
-function normalizecountdata(mat::AbstractMatrix)
-    sizefactors = estimatesizefactorsformatrix(mat)
+function normalize_counts(mat::AbstractMatrix)
+    sizefactors = estimate_size_factors(mat)
     return mat ./ sizefactors'
 end
 
 """
-    normalizecountdata(adata::AnnData)
+    normalize_counts(adata::AnnData)
 
-Normalizes the `adata.countmatrix` by dividing it by the size factors calculated with `estimatesizefactorsformatrix`. 
+Normalizes the `adata.countmatrix` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Adds the normalized count matrix to `adata.layers` and returns `adata`.
 """
-function normalizecountdata!(adata::AnnData)
-    sizefactors = estimatesizefactorsformatrix(adata.countmatrix)
+function normalize_counts!(adata::AnnData)
+    sizefactors = estimate_size_factors(adata.countmatrix)
     mat_norm = mat ./ sizefactors'
     if !isnothing(adata.layers)
         adata.layers = Dict()

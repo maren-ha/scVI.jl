@@ -83,7 +83,7 @@ function load_tasic(path::String = joinpath(@__DIR__, "../data/"))
     )
 
     # build layers for AnnData struct
-    normalized_counts = normalizecountdata(countmat)
+    normalized_counts = normalize_counts(countmat)
     layers = Dict("counts" => Float32.(countmat'),
                 "normalized_counts" => Float32.(normalized_counts')
     )
