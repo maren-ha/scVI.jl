@@ -8,7 +8,7 @@
 """
     mutable struct scVAE
 
-Julia implementation of the single-cell Variational Autoencoder model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L22)
+Julia implementation of the single-cell Variational Autoencoder model corresponding to the [`scvi-tools` VAE object](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L22). 
 Collects all information on the model parameters such as distribution choices and stores the model encoder and decoder. 
 Can be constructed using keywords. 
 

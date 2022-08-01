@@ -2,7 +2,7 @@
 
 ## Encoder 
 
-The implementation is based on the Python implementation of the  [scvi-tools encoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
+The implementation is based on the Python implementation of the  [`scvi-tools` encoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
 
 
 ```@docs
@@ -29,7 +29,7 @@ scEncoder(
 
 ## Decoder 
 
-The implementation is based on the Python implementation of the  [scvi-tools decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308).
+The implementation is based on the Python implementation of the  [`scvi-tools` decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308).
 
 ```@docs
 scDecoder

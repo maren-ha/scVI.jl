@@ -1,7 +1,7 @@
 """
     mutable struct scLinearDecoder <: AbstractDecoder 
 
-Julia implementation of the linear Decoder of single-cell LDVAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L427)
+Julia implementation of a linear decoder for a single-cell LDVAE model corresponding to the [`scvi-tools` linear decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L427)
 Collects all information on the decoder parameters and stores the decoder parts. 
 Can be constructed using keywords. 
 
@@ -38,7 +38,7 @@ Flux.@functor scLinearDecoder
         )
 
 Constructor for a linear decoder for an `scLDVAE` model. Initialises a `scLinearDecoder` struct with the parameters specified by the inputs. 
-Julia implementation of the [scvi-tools linear decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L427).
+Julia implementation of the [`scvi-tools` linear decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L427).
         
 
 **Arguments:**

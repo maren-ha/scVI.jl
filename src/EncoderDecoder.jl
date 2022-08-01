@@ -5,7 +5,7 @@
 """
     mutable struct scEncoder
 
-Julia implementation of the Encoder of the single-cell VAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
+Julia implementation of the encoder of a single-cell VAE model corresponding to the [`scvi-tools` encoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
 Collects all information on the encoder parameters and stores the basic encoder and mean and variance encoders. 
 Can be constructed using keywords. 
 
@@ -59,7 +59,7 @@ Flux.@functor scEncoder
     )
 
 Constructor for an `scVAE` encoder. Initialises an `scEncoder` object according to the input parameters. 
-Julia implementation of the [scvi-tools encoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
+Julia implementation of the [`scvi-tools` encoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L202).
 
 **Arguments:**
 ---------------------------
@@ -218,7 +218,7 @@ abstract type AbstractDecoder end
 """
     mutable struct scDecoder <: AbstractDecoder
 
-Julia implementation of the Decoder of single-cell VAE model from [`scvi-tools`](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308)
+Julia implementation of the decoder for a single-cell VAE model corresponding to the [`scvi-tools` decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308).
 Collects all information on the decoder parameters and stores the decoder parts. 
 Can be constructed using keywords. 
 
@@ -265,7 +265,7 @@ Flux.@functor scDecoder
     )
 
 Constructor for an `scVAE` decoder. Initialises an `scDecoder` object according to the input parameters. 
-Julia implementation of the [scvi-tools decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308).
+Julia implementation of the [`scvi-tools` decoder](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/nn/_base_components.py#L308).
 
 **Arguments:**
 ---------------------------
