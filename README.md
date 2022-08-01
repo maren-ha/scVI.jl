@@ -43,8 +43,9 @@ Hosting on Github with GithubActions/TravisCI is currently work in progress.
 - [x] add supervised AE functionality 
 -------
 *for later*
+- [ ] consider integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/)
 - [ ] repo with data and preprocessing script for Tasic publically available 
-- [ ] support gene_batch and gene_label dispersion 
+- [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] think about data loading (separate package? etc.)
 
 ## To test 
