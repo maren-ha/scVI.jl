@@ -14,7 +14,9 @@ Base.@kwdef mutable struct AnnData
     train_inds=nothing
     dataloader=nothing
     scVI_latent=nothing
+    scVI_mixlatent=nothing
     scVI_latent_umap=nothing
+    scVI_mixlatent_umap=nothing
     is_trained::Bool=false
 end
 
@@ -41,7 +43,7 @@ function get_from_registry(adata::AnnData, key)
     return data
 end
 
-function init_library_size(adata::AnnData)
+function init_library_size(adata::AnnData, n_batch::Int)
     """
     Computes and returns library size.
     Parameters
@@ -57,19 +59,17 @@ function init_library_size(adata::AnnData)
     and the variance defaults to 1. These defaults are arbitrary placeholders which
     should not be used in any downstream computation.
     """
-    data = adata.countmatrix
-    #
-    if !isnothing(adata.obs) && haskey(adata.obs, "batch")
-        batch_indices = adata.obs["batch"]
-    else
-        batch_indices = try 
-            get_from_registry(adata, "batch_indices") .+ 1 # for Python-Julia index conversion 
-        catch
-            ones(Int,size(data,1)) 
-        end
+    data = try
+        Matrix(get_from_registry(adata, "X")') # countmatrix: gene x cell
+    catch
+        adata.countmatrix
     end
-
-    n_batch = length(unique(batch_indices))
+    #
+    batch_indices = try 
+        get_from_registry(adata, "batch_indices") .+ 1
+    catch
+        zeros(Int,size(data,1)) .+ 1
+    end
 
     library_log_means = zeros(n_batch)
     library_log_vars = ones(n_batch)
@@ -88,13 +88,167 @@ function init_library_size(adata::AnnData)
 end # to check: scvi.model._utils._init_library_size(pydata, n_batch)
 
 #-------------------------------------------------------------------------------------
+# cortex data 
+#-------------------------------------------------------------------------------------
+
+function load_cortex_from_h5ad(anndata::HDF5.File)
+    countmatrix = read(anndata, "layers")["counts"]' # shape: cell x gene 
+    summary_stats = read(anndata, "uns")["_scvi"]["summary_stats"]
+    layers = read(anndata, "layers")
+    obs = read(anndata, "obs")
+    data_registry = read(anndata, "uns")["_scvi"]["data_registry"]
+    celltype_numbers = read(anndata, "obs")["cell_type"] .+1 # for Julia-Python index conversion
+    celltype_categories = read(anndata, "obs")["__categories"]["cell_type"]
+    celltypes = celltype_categories[celltype_numbers]
+    return Matrix(countmatrix), layers, obs, summary_stats, data_registry, celltypes
+end
+
+# assumes Python adata object 
+function init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
+    anndata = open_h5_data(filename)
+    countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_cortex_from_h5ad(anndata)
+    ncells, ngenes = size(countmatrix)
+    adata = AnnData(
+        countmatrix=countmatrix,
+        ncells=ncells,
+        ngenes=ngenes,
+        layers=layers,
+        obs=obs,
+        summary_stats=summary_stats,
+        registry=data_registry,
+        celltypes=celltypes
+    )
+    return adata
+end
+
+function init_cortex_from_url(save_path::String=joinpath(@__DIR__, "../data/"))
+
+    url = "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt"
+    path_to_file = joinpath(save_path, "expression.bin")
+    if !isfile(path_to_file)
+        download(url, path_to_file)
+    end
+    csvfile = DelimitedFiles.readdlm(path_to_file, '\t')
+    precise_clusters = csvfile[2,3:end]
+    clusters = csvfile[9,3:end]
+    gene_names = String.(csvfile[12:end,1])
+
+    countmatrix = Float32.(csvfile[12:end,3:end]')
+
+    labels = fill(0, length(clusters))
+    for i in 1:length(unique(clusters))
+        labels[findall(x -> x == unique(clusters)[i], clusters)] .= i
+    end
+
+    cellinfos = Dict(
+        "cell_type" => clusters,
+        "labels" => labels,
+        "precise_labels" => precise_clusters,
+        "tissue" => String.(csvfile[1,3:end]),
+        "group" => Int.(csvfile[2,3:end]),
+        "totalmRNA" => Int.(csvfile[3,3:end]),
+        "well" => Int.(csvfile[4,3:end]),
+        "sex" => Int.(csvfile[5,3:end]),
+        "age" => Int.(csvfile[6,3:end]),
+        "diameter" => Float32.(csvfile[7,3:end]),
+        "cell_id" => String.(csvfile[8,3:end])
+    )
+
+    geneinfos = Dict(
+        "gene_names" => gene_names
+    )
+
+    @assert size(countmatrix,1) == length(clusters)
+    @assert size(countmatrix,2) == length(gene_names)
+
+    adata = AnnData(
+        countmatrix = countmatrix,
+        ncells = size(countmatrix,1),
+        ngenes = size(countmatrix,2),
+        obs = cellinfos, 
+        vars = geneinfos, 
+        celltypes = cellinfos["cell_type"]
+    )
+    return adata
+end
+
+function load_cortex(path::String=joinpath(@__DIR__, "../data/"))
+    if isfile(string(path, "cortex_anndata.h5ad"))
+        adata = init_cortex_from_h5ad(string(path, "cortex_anndata.h5ad"))
+    else
+        adata = init_cortex_from_url(path)
+    end
+    return adata 
+end
+
+#-------------------------------------------------------------------------------------
+# pbmc data from csv 
+#-------------------------------------------------------------------------------------
+
+function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
+    counts = CSV.read(string(path, "PBMC_counts.csv"), DataFrame)
+    celltypes = vec(string.(CSV.read(string(path, "PBMC_annotation.csv"), DataFrame)[:,:x]))
+    genenames = string.(counts[:,1])
+    barcodes = names(counts)[2:end]
+    counts = Matrix(counts[:,2:end])
+    @assert length(celltypes) == length(barcodes) == size(counts,2)
+    counts = Float32.(counts')
+
+    adata = AnnData(countmatrix=counts, 
+                ncells=size(counts,1), 
+                ngenes=size(counts,2), 
+                celltypes = celltypes
+    )
+    return adata
+end
+
+#-------------------------------------------------------------------------------------
+# benchmarking data from AnnData file  
+#-------------------------------------------------------------------------------------
+function load_benchmark_data(anndata::HDF5.File) 
+    countmatrix = read(anndata, "X")'# shape: cell x gene 
+    summary_stats = nothing
+    layers = nothing
+    obs = read(anndata, "obs")
+    data_registry = nothing
+    
+    celltype_numbers = read(anndata, "obs")["cell_type"] .+1 # for Julia-Python index conversion
+    celltype_categories = read(anndata, "obs")["__categories"]["cell_type"]
+    celltypes = celltype_categories[celltype_numbers]
+    ##############################################
+    # Fix the order of the cell types 
+    #cell_col = CSV.read("./data_sampled/test.csv",DataFrame)
+    #celltypes = vec(cell_col.cell_type)
+    ##############################################
+    return Matrix(countmatrix), layers, obs, summary_stats, data_registry, celltypes
+
+end 
+
+function init_benchmarking_from_h5ad(filename::String=joinpath(@__DIR__, "../data/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"))
+    anndata = open_h5_data(filename)
+    countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_benchmark_data(anndata)
+    ncells, ngenes = size(countmatrix)
+    adata = AnnData(
+        countmatrix=countmatrix,
+        ncells=ncells,
+        ngenes=ngenes,
+        layers=layers,
+        obs=obs,
+        summary_stats=summary_stats,
+        registry=data_registry,
+        celltypes=celltypes
+    )
+    return adata
+end
+
+#-------------------------------------------------------------------------------------
 # get highly variable genes 
 # from scanpy: https://github.com/scverse/scanpy/blob/master/scanpy/preprocessing/_highly_variable_genes.py
 # not yet fully equivalent to Python (difference: 18 genes)
 #-------------------------------------------------------------------------------------
 
 using Loess
-using StatsBase
+using Statistics
 
 function check_nonnegative_integers(X::AbstractArray) 
     if eltype(X) == Integer
@@ -109,8 +263,6 @@ function check_nonnegative_integers(X::AbstractArray)
 end
 
 # expects batch key in "obs" Dict
-# results are comparable to scanpy.highly_variable_genes, but differ slightly. 
-# when using the Python results of the Loess fit though, genes are identical. 
 function _highly_variable_genes_seurat_v3(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
@@ -132,7 +284,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
         y = Float64.(log10.(v[not_const]))
         x = Float64.(log10.(m[not_const]))
         loess_model = loess(x, y, span=span, degree=2);
-        fitted_values = Loess.predict(loess_model,x)
+        fitted_values = predict(loess_model,x)
         estimat_var[not_const] = fitted_values
         reg_std = sqrt.(10 .^estimat_var)
 
@@ -154,7 +306,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     # this is done in SelectIntegrationFeatures() in Seurat v3
     num_batches_high_var = sum(mapslices(row -> row .< n_top_genes, ranked_norm_gene_vars, dims=2), dims=1)
     ranked_norm_gene_vars = Float32.(ranked_norm_gene_vars)
-    ranked_norm_gene_vars[findall(x -> x > n_top_genes, ranked_norm_gene_vars)] .= NaN
+    ranked_norm_gene_vars[findall(x -> x >= n_top_genes, ranked_norm_gene_vars)] .= NaN
     median_ranked = mapslices(col -> mymedian(col[findall(x -> !isnan(x), col)]), ranked_norm_gene_vars, dims=1)
 
     sortdf = DataFrame(row = collect(1:length(vec(median_ranked))),
@@ -214,57 +366,4 @@ function highly_variable_genes(adata::AnnData;
                 span=span,
                 inplace=false
     )
-end
-
-function subset_to_hvg!(adata::AnnData;
-    layer::Union{String,Nothing} = nothing,
-    n_top_genes::Int=2000,
-    batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
-    )
-    if !haskey(adata.vars,"highly_variable")
-        highly_variable_genes!(adata; 
-            layer=layer, 
-            n_top_genes=n_top_genes,
-            batch_key=batch_key,
-            span=span
-        )
-    end
-
-    hvgs = adata.vars["highly_variable"]
-    @assert size(adata.countmatrix,2) == length(hvgs)
-    adata.countmatrix = adata.countmatrix[:,hvgs]
-    adata.ngenes = size(adata.countmatrix,2)
-    for key in keys(adata.vars)
-        if length(adata.vars[key]) == length(hvgs)
-            adata.vars[key] = adata.vars[key][hvgs]
-        end
-    end
-    # some basic checks 
-    @assert sum(adata.vars["highly_variable"]) == adata.ngenes
-    @assert !any(isnan.(adata.vars["highly_variable_rank"]))
-    return adata
-end
-
-#-------------------------------------------------------------------------------------
-# estimate size factors and normalize (based on Seurat)
-#-------------------------------------------------------------------------------------
-
-function estimatesizefactorsformatrix(mat; locfunc=median)
-    logcounts = log.(mat)
-    loggeomeans = vec(mean(logcounts, dims=2))
-    finiteloggeomeans = isfinite.(loggeomeans)
-    loggeomeans = loggeomeans[finiteloggeomeans]
-    logcounts = logcounts[finiteloggeomeans,:]
-    nsamples = size(logcounts, 2)
-    size_factors = fill(0.0, nsamples)
-    for i = 1:nsamples
-        size_factors[i] = exp(locfunc(logcounts[:,i] .- loggeomeans))
-    end
-    return size_factors
-end
-
-function normalizecountdata(mat)
-    sizefactors = estimatesizefactorsformatrix(mat)
-    return mat ./ sizefactors'
 end
