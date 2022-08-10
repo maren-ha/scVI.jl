@@ -13,7 +13,7 @@ Base.@kwdef mutable struct scVAE
     n_layers::Int=1
     dispersion::Symbol=:gene
     dropout_rate::Float32=0.0f0
-    gene_likelihood::Symbol=:zinb
+    modality_likelihood::Symbol=:zinb
     latent_distribution::Symbol=:normal
     log_variational::Bool=true
     use_observed_lib_size::Bool=true
@@ -27,7 +27,7 @@ function scVAE(n_input::Int;
     bias::Symbol=:both, # whether to use bias in all linear layers of all FC instances 
     dispersion::Symbol=:gene,
     dropout_rate::Float32=0.1f0,
-    gene_likelihood::Symbol=:zinb,
+    modality_likelihood::Symbol=:zinb,
     latent_distribution::Symbol=:normal,
     library_log_means=nothing,
     library_log_vars=nothing,
@@ -54,7 +54,7 @@ function scVAE(n_input::Int;
         # + some register_buffer thing I ignored for now: https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L129
     end
 
-    if !(gene_likelihood ∈ [:zinb, :nb, :poisson])
+    if !(modality_likelihood ∈ [:zinb, :nb, :poisson])
         @warn "gene likelihood has to be one of `:zinb`, `:nb`, or `:poisson`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
     end
 
@@ -113,7 +113,7 @@ function scVAE(n_input::Int;
         bias=bias_decoder, 
         dispersion=dispersion, 
         dropout_rate=dropout_rate,
-        gene_likelihood=gene_likelihood,
+        modality_likelihood=modality_likelihood,
         n_hidden=n_hidden,
         n_layers=n_layers,
         use_activation=use_activation_decoder,
@@ -128,7 +128,7 @@ function scVAE(n_input::Int;
         n_layers=n_layers,
         dispersion=dispersion,
         dropout_rate=dropout_rate,
-        gene_likelihood=gene_likelihood,
+        modality_likelihood=modality_likelihood,
         latent_distribution=latent_distribution,
         log_variational=log_variational,
         use_observed_lib_size=use_observed_lib_size,
@@ -143,7 +143,7 @@ function Base.summary(m::scVAE)
      n_hidden: $(m.n_hidden), n_latent: $(m.n_latent), n_layers: $(m.n_layers), 
      dropout_rate:$(m.dropout_rate), 
      dispersion: $(m.dispersion), 
-     gene_likelihood: $(m.gene_likelihood), 
+     modality_likelihood: $(m.modality_likelihood), 
      latent_distribution: $(m.latent_distribution)"
     )
 end
