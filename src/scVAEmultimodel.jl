@@ -202,7 +202,7 @@ function Base.summary(m::scMultiVAE_)
      n_hidden: $(m.n_hidden), n_latent: $(m.n_latent), n_layers: $(m.n_layers), 
      dropout_rate:$(m.dropout_rate), 
      dispersion for GEX: $(m.dispersion[1]),
-    dispersion for protein: $(m.dispersion[2]), 
+     dispersion for protein: $(m.dispersion[2]), 
      gene_likelihood: $(m.gene_likelihood), 
      protein_likelihood: $(m.protein_likelihood), 
      latent_distribution: $(m.latent_distribution),
