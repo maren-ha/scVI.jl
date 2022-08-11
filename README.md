@@ -65,6 +65,10 @@ plot_umap_on_latent(m, adata; save_plot=true)
 
 ## Docs 
 
+[Current version of docs.](https://maren-ha.github.io/scVI.jl/)
+
+This is the manual deployment of the local build. Automatic deployment with GithubActions/TravisCI is work in progress and will (hopefully) be available soon. 
+
 As with every Julia package, you can access the docstrings of exported function by typing `?` into the REPL, followed by the function name. E.g., `?normalize_counts` prints the following to the REPL:
 
 ```
@@ -77,12 +81,7 @@ search: normalize_counts normalize_counts!
   input, returns the normalized matrix.
 ```
 
-Current version of docs available [here](https://maren-ha.github.io/scVI.jl/). 
-
-This is the manual deployment of the local build. Automatic deployment with GithubActions/TravisCI is work in progress and will (hopefully) be available soon. 
-
 To reproduce the current version of the documentation or include your own extensions of the code, you can run `julia make.jl` inside the `docs` subfolder of the `scVI` folder. Then, you can access the documentation in the HTML file at `docs/build/index.html`. 
-
 
 ## Testing 
 
