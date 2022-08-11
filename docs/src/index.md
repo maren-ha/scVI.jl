@@ -1,6 +1,6 @@
 # scVI.jl
 
-![](../../logo/scvi-julia-logo.jpg)
+![](assets/scvi-julia-logo.jpg)
 
 A Julia package for fitting VAEs to single-cell data using count distributions. 
 Based on the Python implementation in the [`scvi-tools`](https://github.com/scverse/scvi-tools) package. 
