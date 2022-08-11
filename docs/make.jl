@@ -4,7 +4,7 @@ using scVI
 makedocs(
     sitename = "scVI",
     authors = "Maren Hackenberg",
-    format = Documenter.HTML(prettyurls=false, edit_link="github/main"),
+    format = Documenter.HTML(prettyurls=false, edit_link="origin/master"),
     modules = [scVI],
     pages = [
     "Getting started" => "index.md",
@@ -24,10 +24,12 @@ makedocs(
 # If there is not an explicit exported and documented constructor method (like for the `AnnData`
 # and `TrainingArgs` structs), the default values and types are documented in the struct docstring itself. 
 
-#deploydocs(
-#   devbranch="github/main",
-#    repo = "github.com/maren-ha/scVI.jl.git",
-#)
+deploydocs(
+    devbranch="main",
+    repo = "github.com/maren-ha/scVI.jl.git",
+    deploy_config=Documenter.Travis(), 
+    push_preview=true
+)
 
 # Documenter can also automatically deploy documentation to gh-pages.
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
