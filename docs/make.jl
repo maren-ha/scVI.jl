@@ -24,13 +24,14 @@ makedocs(
 # If there is not an explicit exported and documented constructor method (like for the `AnnData`
 # and `TrainingArgs` structs), the default values and types are documented in the struct docstring itself. 
 
+#=
 deploydocs(
-    devbranch="main",
+    devbranch="master",
     repo = "github.com/maren-ha/scVI.jl.git",
     deploy_config=Documenter.Travis(), 
     push_preview=true
 )
-
+=#
 # Documenter can also automatically deploy documentation to gh-pages.
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
