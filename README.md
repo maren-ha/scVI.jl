@@ -77,8 +77,11 @@ search: normalize_counts normalize_counts!
   input, returns the normalized matrix.
 ```
 
-Docs can also be built as `html` pages, but as of now only locally: You can run `julia make.jl` inside the `docs` subfolder of the `scVI` folder. Then, you can access the current version of the documentation in the HTML file at `docs/build/index.html`. 
-Hosting on Github Pages with GithubActions/TravisCI is work in progress and will be available soon. 
+Current version of docs available [here](https://maren-ha.github.io/scVI.jl/). 
+
+This is the manual deployment of the local build. Automatic deployment with GithubActions/TravisCI is work in progress and will (hopefully) be available soon. 
+
+To reproduce the current version of the documentation or include your own extensions of the code, you can run `julia make.jl` inside the `docs` subfolder of the `scVI` folder. Then, you can access the documentation in the HTML file at `docs/build/index.html`. 
 
 
 ## Testing 
