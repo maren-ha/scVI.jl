@@ -8,3 +8,6 @@ test_hvg.py
 python_loess_predictions_cortex.csv
 UMAP_on_latent.pdf
 docs/build/
+testrandomstuff.jl
+.travis.yml
+documentation.yml
