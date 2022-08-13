@@ -27,7 +27,7 @@ The package can be downloaded from this Github repo and added with the Julia pac
 
 ```
 using Pkg 
-Pkg.add("https://github.com/maren-ha/scVI.jl")
+Pkg.add(url="https://github.com/maren-ha/scVI.jl")
 using scVI 
 ```
 

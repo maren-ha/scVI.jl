@@ -26,13 +26,14 @@ This is the documentation for the Julia version implementing basic functionality
 The package can be downloaded from the [Github repo](https://github.com/maren-ha/scVI.jl) and added with the Julia package manager via 
 
 ```
-julia> ]add "https://github.com/maren-ha/scVI.jl"
+julia> ]
+pkg > add "https://github.com/maren-ha/scVI.jl"
 ```
 
 or alternatively by 
 
 ```
-julia> using Pkg; Pkg.add("https://github.com/maren-ha/scVI.jl")
+julia> using Pkg; Pkg.add(url="https://github.com/maren-ha/scVI.jl")
 ```
 
 
