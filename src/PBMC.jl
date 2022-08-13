@@ -26,6 +26,7 @@ Returns the Julia `AnnData` object.
         AnnData object with a countmatrix with 7480 cells and 200 genes
         unique celltypes: ["B-cells", "CD4+ T-cells", "Monocytes", "CD8+ T-cells", "NK cells", "NA", "HSC", "Erythrocytes"]
         training status: not trained
+#
 """
 function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
     counts = CSV.read(string(path, "PBMC_counts.csv"), DataFrame)
