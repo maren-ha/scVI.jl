@@ -29,7 +29,7 @@ Returns the Julia `AnnData` object.
 """
 function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
     counts = CSV.read(string(path, "PBMC_counts.csv"), DataFrame)
-    celltypes = vec(string.(CSV.read(string(path, "PBMC_annotation.csv"), DataFrame)[:,:x]))
+    celltypes = vec(string.(CSV.read(string(path, "PBMC_annotation.csv"), DataFrame)[:,2]))
     genenames = string.(counts[:,1])
     barcodes = names(counts)[2:end]
     counts = Matrix(counts[:,2:end])
