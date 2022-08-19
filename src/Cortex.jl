@@ -112,7 +112,8 @@ end
     load_cortex(path::String=""; verbose::Bool=false)
 
 Loads build-in cortex dataset. Looks for a file `cortex_anndata.h5ad` in the `path` given as input argument. 
-This file can be downloaded by cloning the Github repository and subsequently using [Git LFS](https://git-lfs.github.com) to run `git-lfs checkout` inside the cloned package repo.
+This file can be downloaded by cloning the Github pacakge repository and subsequently using [Git LFS](https://git-lfs.github.com) 
+to run `git-lfs checkout` inside the cloned package repo.
 
 The file is the `h5` export of the Python `AnnData` object provided as [built-in `cortex` dataset from `scvi-tools`](https://github.com/scverse/scvi-tools/blob/master/scvi/data/_built_in_data/_cortex.py), 
 data is from [Zeisel et al. 2015](https://www.science.org/doi/10.1126/science.aaa1934).

@@ -11,8 +11,8 @@ The function loads the following files from the folder passed as `path` (default
  - `PBMC_counts.csv`: countmatrix  
  - `PBMC_annotation.csv`: cell type annotation
 
-These files can be downloaded from the repo using [Git LFS](https://git-lfs.github.com) and running `git-lfs checkout`
-after cloning the repository. 
+This file can be downloaded by cloning the package Github repository and subsequently using [Git LFS](https://git-lfs.github.com) 
+to run `git-lfs checkout` inside the cloned package repo.
 
 From these input files, a Julia `AnnData` object is created. The countmatrix contains information on 
 cell barcodes and gene names. The gene name and celltype information is stored in the `vars` and `obs` 
