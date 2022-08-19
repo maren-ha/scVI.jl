@@ -29,14 +29,14 @@ end
 
 # assumes Python adata object 
 """
-    init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
+    init_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
 
 Opens a connection to the HDF5 file saved at `filename` that stores the corresponding Python `AnnData` object created and used with `scvi-tools`. \n
 Reads cortex data from an `AnnData` object created and used with the Python scVI and saved as HDF5 file. \n
 Information is extracted from the file with the `load_cortex_from_h5ad` function. \n
 Uses this information to fill the fields of a Julia `AnnData` object and returns it.
 """
-function init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cortex_anndata.h5ad"))
+function init_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
     anndata = open_h5_data(filename)
     countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_cortex_from_h5ad(anndata)
     ncells, ngenes = size(countmatrix)
@@ -109,7 +109,7 @@ function init_cortex_from_url(save_path::String=""; verbose::Bool=false)
 end
 
 """
-    load_cortex(path::String=joinpath(@__DIR__, "../data/"))
+    load_cortex(path::String=""; verbose::Bool=false)
 
 Loads build-in cortex dataset. Looks for a file `cortex_anndata.h5ad` in the `path` given as input argument. 
 Defaults to `path` pointing to the `data` subfolder. 
