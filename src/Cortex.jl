@@ -53,14 +53,17 @@ function init_cortex_from_h5ad(filename::String=joinpath(@__DIR__, "../data/cort
     return adata
 end
 
-function init_cortex_from_url(save_path::String=joinpath(@__DIR__, "../data/"))
+function init_cortex_from_url(save_path::String=""; verbose::Bool=false)
 
     url = "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt"
     path_to_file = joinpath(save_path, "expression.bin")
     if !isfile(path_to_file)
+        verbose && @info "downloading data..."
         download(url, path_to_file)
     end
+    verbose && @info "reading file..."
     csvfile = DelimitedFiles.readdlm(path_to_file, '\t')
+    verbose && @info "extracting info..."
     precise_clusters = csvfile[2,3:end]
     clusters = csvfile[9,3:end]
     gene_names = String.(csvfile[12:end,1])
@@ -93,6 +96,7 @@ function init_cortex_from_url(save_path::String=joinpath(@__DIR__, "../data/"))
     @assert size(countmatrix,1) == length(clusters)
     @assert size(countmatrix,2) == length(gene_names)
 
+    verbose && @info "populating AnnData object..."
     adata = AnnData(
         countmatrix = countmatrix,
         ncells = size(countmatrix,1),
@@ -133,11 +137,12 @@ Returns the Julia `AnnData` object.
         unique celltypes: ["interneurons", "pyramidal SS", "pyramidal CA1", "oligodendrocytes", "microglia", "endothelial-mural", "astrocytes_ependymal"]
         training status: not trained
 """
-function load_cortex(path::String=joinpath(@__DIR__, "../data/"))
-    if isfile(string(path, "cortex_anndata.h5ad"))
-        adata = init_cortex_from_h5ad(string(path, "cortex_anndata.h5ad"))
+function load_cortex(path::String=""; verbose::Bool=false)
+    filename = joinpath(path, "cortex_anndata.h5ad")
+    if isfile(filename)
+        adata = init_cortex_from_h5ad(filename)
     else
-        adata = init_cortex_from_url(path)
+        adata = init_cortex_from_url(path, verbose=verbose)
     end
     return adata 
 end
