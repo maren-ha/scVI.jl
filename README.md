@@ -35,12 +35,10 @@ The following illustrate a quick demo usage of the package. We load one of the b
 
 ```
 # load cortex data
-adata = load_cortex(@__DIR__) # (or init_cortex_from_url())
-hvgdict = highly_variable_genes(adata, n_top_genes=1200)
-highly_variable_genes!(adata, n_top_genes=1200)
+adata = load_cortex(; verbose=true)
 
 # subset to highly variable genes 
-subset_to_hvg!(adata, n_top_genes=1200)
+subset_to_hvg!(adata, n_top_genes=1200, verbose=true)
 
 # calculate library size 
 library_log_means, library_log_vars = init_library_size(adata)
