@@ -12,8 +12,10 @@ Loads the following files from the folder passed as `path` (default: `data` subf
  - `Tasic_celltypes.txt`: cell types
  - `Tasic_genenames.txt`: gene names 
  - `Tasic_receptorandmarkers.txt`: List of receptor and marker genes 
-These files can be downloaded from the repo using [Git LFS](https://git-lfs.github.com) and running `git-lfs checkout`
-after cloning the repository. The original data is available at [Gene expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) under accession number GSE71585. 
+
+This file can be downloaded by cloning the package Github repository and subsequently using [Git LFS](https://git-lfs.github.com) 
+to run `git-lfs checkout` inside the cloned package repo.
+The original data is available at [Gene expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) under accession number GSE71585. 
 Preprocessing and annotation has been prepared according to the original manuscript. 
 
 From these input files, a Julia `AnnData` object is created. The list of receptor and marker genes is used 
