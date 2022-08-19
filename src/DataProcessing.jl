@@ -139,14 +139,16 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
     span::Float64=0.3,
-    inplace::Bool=true
+    inplace::Bool=true,
+    verbose::Bool=false
     )
     X = !isnothing(layer) ? adata.layers[layer] : adata.countmatrix
     !check_nonnegative_integers(X) && @warn "flavor Seurat v3 expects raw count data, but non-integers were found"
-
+    verbose && @info "input checks passed..."
     means, vars = mean(X, dims=1), var(X, dims=1)
     batch_info = isnothing(batch_key) ? zeros(size(X,1)) : adata.obs[batch_key]
     norm_gene_vars = []
+    verbose && @info "calculating variances per batch..."
     for b in unique(batch_info)
         X_batch = X[findall(x -> x==b, batch_info),:]
         m, v = vec(mean(X_batch, dims=1)), vec(var(X_batch, dims=1))
@@ -171,6 +173,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
         norm_gene_var = (1 ./((N-1) .* reg_std.^2)) .* ((N.*m.^2) .+ squared_batch_counts_sum .- 2 .* batch_counts_sum .* m)
         push!(norm_gene_vars, norm_gene_var)
     end
+    verbose && @info "identifying top HVGs..."
     norm_gene_vars = hcat(norm_gene_vars...)'
     # argsort twice gives ranks, small rank means most variable
     ranked_norm_gene_vars = mapslices(row -> sortperm(sortperm(-row)), norm_gene_vars,dims=2)
@@ -252,14 +255,16 @@ function highly_variable_genes!(adata::AnnData;
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
+    span::Float64=0.3, 
+    verbose::Bool=false
     )
     return _highly_variable_genes_seurat_v3(adata; 
                 layer=layer, 
                 n_top_genes=n_top_genes, 
                 batch_key=batch_key,
                 span=span,
-                inplace=true
+                inplace=true, 
+                verbose=verbose
     )
 end
 
@@ -289,6 +294,7 @@ from the corresponding Python implementation.
 - `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
 - `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
 - `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
+- `verbose`: whether or not to print info on current status
 
 **Returns**
 ------------------------
@@ -304,14 +310,16 @@ function highly_variable_genes(adata::AnnData;
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
+    span::Float64=0.3,
+    verbose::Bool=false
     )
     return _highly_variable_genes_seurat_v3(adata; 
                 layer=layer, 
                 n_top_genes=n_top_genes, 
                 batch_key=batch_key,
                 span=span,
-                inplace=false
+                inplace=false,
+                verbose=verbose
     )
 end
 
@@ -332,14 +340,16 @@ function subset_to_hvg!(adata::AnnData;
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
+    span::Float64=0.3,
+    verbose::Bool=true
     )
     if !haskey(adata.vars,"highly_variable")
         highly_variable_genes!(adata; 
             layer=layer, 
             n_top_genes=n_top_genes,
             batch_key=batch_key,
-            span=span
+            span=span,
+            verbose=verbose
         )
     end
 
