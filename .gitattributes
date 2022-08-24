@@ -1,16 +1,4 @@
-data/* filter=lfs diff=lfs merge=lfs -text
-*.gitignore filter=lfs diff=lfs merge=lfs -text
-/LICENSE filter=lfs diff=lfs merge=lfs -text
-*.toml filter=lfs diff=lfs merge=lfs -text
-*.md filter=lfs diff=lfs merge=lfs -text
-*.csv filter=lfs diff=lfs merge=lfs -text
-*.txt filter=lfs diff=lfs merge=lfs -text
-*.h5ad filter=lfs diff=lfs merge=lfs -text
-*.jl filter=lfs diff=lfs merge=lfs -text
-*.jpg filter=lfs diff=lfs merge=lfs -text
-*.svg filter=lfs diff=lfs merge=lfs -text
-*.pdf filter=lfs diff=lfs merge=lfs -text
-*.local filter=lfs diff=lfs merge=lfs -text
+data/* !filter !filter -text !merge !diff
 src/Cortex.jl !text !filter !merge !diff
 src !text !filter !merge !diff
 src/Evaluate.jl !text !filter !merge !diff
@@ -35,4 +23,4 @@ adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad !text !filter !merge !diff
 adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad !text !filter !merge !diff
 adata_cite_protein_subsample_5000_cells_rep_0.h5ad !text !filter !merge !diff
 adata_cite_gex_subsample_5000_cells_rep_0.h5ad !text !filter !merge !diff
-adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad filter=lfs diff=lfs merge=lfs -text
+adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad !filter !filter !filter -text
