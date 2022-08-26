@@ -113,9 +113,9 @@ function (LinearDecoder::scLinearDecoder)(z, library)
     #z = randn(10,1200)
     raw_px_scale = LinearDecoder.factor_regressor(z)
     px_scale = softmax(raw_px_scale, dims=1)
-    px_dropout = LinearDecoder.px_dropout_decoder(z)
+    px_dropout = apply_px_dropout_decoder(LinearDecoder.px_dropout_decoder,z)
     px_rate = exp.(library) .* px_scale
-    px_r = LinearDecoder.px_r_decoder(z)
+    px_r = apply_px_r_decoder(LinearDecoder.px_r_decoder,z)
     return px_scale, px_r, px_rate, px_dropout
 end
 
