@@ -203,7 +203,11 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     end
 
     if inplace 
-        adata.vars = merge(adata.vars, hvg_info)
+        if isnothing(adata.vars)
+            adata.vars = hvg_info
+        else
+            adata.vars = merge(adata.vars, hvg_info)
+        end
         return adata
     else
         return hvg_info
