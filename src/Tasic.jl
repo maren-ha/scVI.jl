@@ -3,18 +3,19 @@
 # for complete preprocessing: see Moritz' notebook and files
 #-------------------------------------------------------------------------------------
 """
-    load_tasic(path::String = joinpath(@__DIR__, "../data/"))
+    load_tasic(path::String = "data/")
 
-Loads build-in `tasic` dataset from [Tasic et al. (2016)](https://www.nature.com/articles/nn.4216). 
+Loads `tasic` dataset based on [Tasic et al. (2016)](https://www.nature.com/articles/nn.4216) and creates a corresponding `AnnData` object. 
 
-Loads the following files from the folder passed as `path` (default: `data` subfolder of scVI repo.)
+Loads the following files that can be downloaded from [this GoogleDrive `data` folder](https://drive.google.com/drive/folders/1JYNypxWnQhigEJ37jOiEwv7fzGW71jC8?usp=sharing): 
  - `Tasic_countmat.txt`: countmatrix  
  - `Tasic_celltypes.txt`: cell types
  - `Tasic_genenames.txt`: gene names 
  - `Tasic_receptorandmarkers.txt`: List of receptor and marker genes 
 
-This file can be downloaded by cloning the package Github repository and subsequently using [Git LFS](https://git-lfs.github.com) 
-to run `git-lfs checkout` inside the cloned package repo.
+Files are loaded from the folder passed as `path` (default: assumes files are in a subfolder named `data` of the current directory, i.e., that the complete
+GoogleDrive `data` folder has been downloaded in the current directory.
+ 
 The original data is available at [Gene expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) under accession number GSE71585. 
 Preprocessing and annotation has been prepared according to the original manuscript. 
 
@@ -37,12 +38,12 @@ Returns the Julia `AnnData` object.
         unique celltypes: ["Vip", "L4", "L2/3", "L2", "Pvalb", "Ndnf", "L5a", "SMC", "Astro", "L5", "Micro", "Endo", "Sst", "L6b", "Sncg", "Igtp", "Oligo", "Smad3", "OPC", "L5b", "L6a"]
         training status: not trained
 """
-function load_tasic(path::String = joinpath(@__DIR__, "../data/"))
+function load_tasic(path::String = "data/")
 
-    countmat = readdlm(string(path, "Tasic_countmat.txt"))
-    celltypes = readdlm(string(path, "Tasic_celltypes.txt"))
-    genenames = readdlm(string(path, "Tasic_genenames.txt"))
-    receptorandmarkers = readdlm(string(path, "Tasic_receptorandmarkers.txt"))
+    countmat = readdlm(joinpath(path, "Tasic_countmat.txt"))
+    celltypes = readdlm(joinpath(path, "Tasic_celltypes.txt"))
+    genenames = readdlm(joinpath(path, "Tasic_genenames.txt"))
+    receptorandmarkers = readdlm(joinpath(path, "Tasic_receptorandmarkers.txt"))
 
     # cell type annotation: neural vs. no neural 
     celltypes = [celltypes[i,1]*" "*celltypes[i,2] for i in 1:size(celltypes,1)]

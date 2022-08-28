@@ -2,17 +2,17 @@
 # pbmc data from csv 
 #-------------------------------------------------------------------------------------
 """
-    load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
+    load_pbmc(path::String = "data/")
 
-Loads build-in `pbmc` dataset from [Zheng et al. 2017](https://www.nature.com/articles/ncomms14049). 
-Specifically, the PBMC8k version is used and has been preprocessed according to the [Bioconductor workflow](https://bioconductor.org/books/3.15/OSCA.workflows/unfiltered-human-pbmcs-10x-genomics.html).
+Loads `pbmc` dataset from [Zheng et al. 2017](https://www.nature.com/articles/ncomms14049) and creates a corresponding `AnnData` object. 
+Specifically, the PBMC8k version is used, preprocessed according to the [Bioconductor workflow](https://bioconductor.org/books/3.15/OSCA.workflows/unfiltered-human-pbmcs-10x-genomics.html).
 
-The function loads the following files from the folder passed as `path` (default: `data` subfolder of scVI repo.)
- - `PBMC_counts.csv`: countmatrix  
- - `PBMC_annotation.csv`: cell type annotation
+Loads the following files that can be downloaded from [this GoogleDrive `data` folder](https://drive.google.com/drive/folders/1JYNypxWnQhigEJ37jOiEwv7fzGW71jC8?usp=sharing): 
+- `PBMC_counts.csv`: countmatrix  
+- `PBMC_annotation.csv`: cell type annotation
 
-This file can be downloaded by cloning the package Github repository and subsequently using [Git LFS](https://git-lfs.github.com) 
-to run `git-lfs checkout` inside the cloned package repo.
+Files are loaded from the folder passed as `path` (default: assumes files are in a subfolder named `data` of the current directory, i.e., that the complete
+GoogleDrive `data` folder has been downloaded in the current directory.)
 
 From these input files, a Julia `AnnData` object is created. The countmatrix contains information on 
 cell barcodes and gene names. The gene name and celltype information is stored in the `vars` and `obs` 
@@ -28,7 +28,7 @@ Returns the Julia `AnnData` object.
         training status: not trained
 #
 """
-function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
+function load_pbmc(path::String = "data/")
     filename_counts = joinpath(path, "PBMC_counts.csv")
     filename_annotation = joinpath(path, "PBMC_annotation.csv")
     if isfile(filename_counts) && isfile(filename_annotation)
@@ -49,7 +49,12 @@ function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
         )
     else 
         filename_jld2 = joinpath(path, "pbmc.jld2")
-        adata = jldopen(filename_jld2)["adata_pbmc"]
+        filename_in_scvi = string(dirname(pathof(scVI)),"/../data/pbmc.jld2")
+        if isfile(filename_jld2)
+            adata = jldopen(filename_jld2)["adata_pbmc"]
+        elseif isfile(filename_in_scvi)
+            adata = jldopen(filename_in_scvi)["adata_pbmc"]
+        end
     end
     return adata
 end
