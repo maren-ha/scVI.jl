@@ -29,20 +29,27 @@ Returns the Julia `AnnData` object.
 #
 """
 function load_pbmc(path::String = joinpath(@__DIR__, "../data/"))
-    counts = CSV.read(string(path, "PBMC_counts.csv"), DataFrame)
-    celltypes = vec(string.(CSV.read(string(path, "PBMC_annotation.csv"), DataFrame)[:,2]))
-    genenames = string.(counts[:,1])
-    barcodes = names(counts)[2:end]
-    counts = Matrix(counts[:,2:end])
-    @assert length(celltypes) == length(barcodes) == size(counts,2)
-    counts = Float32.(counts')
+    filename_counts = joinpath(path, "PBMC_counts.csv")
+    filename_annotation = joinpath(path, "PBMC_annotation.csv")
+    if isfile(filename_counts) && isfile(filename_annotation)
+        counts = CSV.read(filename_counts, DataFrame)
+        celltypes = vec(string.(CSV.read(filename_annotation, DataFrame)[:,2]))
+        genenames = string.(counts[:,1])
+        barcodes = names(counts)[2:end]
+        counts = Matrix(counts[:,2:end])
+        @assert length(celltypes) == length(barcodes) == size(counts,2)
+        counts = Float32.(counts')
 
-    adata = AnnData(countmatrix=counts, 
-                ncells=size(counts,1), 
-                ngenes=size(counts,2), 
-                celltypes = celltypes,
-                obs=Dict("cell_type" => celltypes),
-                vars = Dict("gene_names" => genenames)
-    )
+        adata = AnnData(countmatrix=counts, 
+                    ncells=size(counts,1), 
+                    ngenes=size(counts,2), 
+                    celltypes = celltypes,
+                    obs=Dict("cell_type" => celltypes),
+                    vars = Dict("gene_names" => genenames)
+        )
+    else 
+        filename_jld2 = joinpath(path, "pbmc.jld2")
+        adata = jldopen(filename_jld2)["adata_pbmc"]
+    end
     return adata
 end

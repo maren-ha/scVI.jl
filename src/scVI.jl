@@ -5,6 +5,7 @@ using CSV
 using DataFrames
 using HDF5
 using DelimitedFiles
+using JLD2
 
 # core package functionality 
 using Distributions
