@@ -31,7 +31,23 @@ Pkg.add(url="https://github.com/maren-ha/scVI.jl")
 using scVI 
 ```
 
-The following illustrate a quick demo usage of the package. We load one of the built-in datasets, the `cortex` data (one of the built-in datasets of `scvi-tools`). We subset the dataset to the 1200 most highly variable genes and calculate the library size. Then, we initialise a `scVAE` model and train for 50 epochs using default arguments. We visualise the results by running UMAP on the latent representation and plotting. 
+## Built-in data
+
+There are currently three datasets for which the package supplies built-in convenience functions for loading, processing and creating corresponding `AnnData` objects. They can be downloaded from this [Google Drive `data` folder](https://drive.google.com/drive/folders/1JYNypxWnQhigEJ37jOiEwv7fzGW71jC8?usp=sharing). The folder contains all three datasets, namely 
+
+ *  the `cortex` data, corresponding to the [`cortex` dataset from the `scvi-tools`](https://github.com/scverse/scvi-tools/blob/master/scvi/data/_built_in_data/_cortex.py) from [Zeisel et al. 2015](https://www.science.org/doi/10.1126/science.aaa1934).
+ * the `tasic` data from [Tasic et al. (2016)](https://www.nature.com/articles/nn.4216), available at [Gene expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) under accession number GSE71585. Preprocessing and additional annotation according to the original manuscript; annotations are available and loaded together with the countmatrix. 
+ * the `pbmc` data (PBMC8k) from [Zheng et al. 2017](https://www.nature.com/articles/ncomms14049), preprocessed according to the [Bioconductor workflow](https://bioconductor.org/books/3.15/OSCA.workflows/unfiltered-human-pbmcs-10x-genomics.html).
+
+After downloading the `data` folder from Google Drive, the functions `load_cortex`, `load_tasic` and `load_pbmc` can be used to get preprocessed `adata` objects from each of these datasets, respectively (check the [docs](https://maren-ha.github.io/scVI.jl/) for more details). 
+
+## Demo usage
+
+The following illustrate a quick demo usage of the package. 
+
+We load the `cortex` data (one of the built-in datasets of `scvi-tools`). If the `data` subfolder has been downloaded and the Julia process is started in the parent directory of that folder, the dataset will be loaded directly from the one supplied in `data`, if not, it will be downloaded from the original authors.
+
+We subset the dataset to the 1200 most highly variable genes and calculate the library size. Then, we initialise a `scVAE` model and train for 50 epochs using default arguments. We visualise the results by running UMAP on the latent representation and plotting. 
 
 ```
 # load cortex data
@@ -94,11 +110,9 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 ------------
 ## TODO 
 
+- [x] fix data loading --> from GoogleDrive
 - [ ] deploy docs 
 - [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
-- [ ] separate repo with data and preprocessing script for Tasic data 
 - [ ] support `gene_batch` and `gene_label` dispersion 
-- [ ] better data loading (separate package?)
-
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
