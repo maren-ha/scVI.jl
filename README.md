@@ -110,6 +110,7 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 ## TODO 
 
 - [x] fix data loading --> from GoogleDrive
+- [ ] document `loss_registry` field and option during training!
 - [ ] deploy docs 
 - [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
 - [ ] support `gene_batch` and `gene_label` dispersion 
