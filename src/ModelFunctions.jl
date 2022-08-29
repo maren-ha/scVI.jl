@@ -78,9 +78,9 @@ function register_losses!(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0
 
     lossval = mean(reconst_loss + weighted_kl_local)
 
-    push!(m.loss_registry["kl_z"], kl_divergence_z)
-    push!(m.loss_registry["kl_l"], kl_divergence_l)
-    push!(m.loss_registry["reconstruction"], reconst_loss)
+    push!(m.loss_registry["kl_z"], mean(kl_divergence_z))
+    push!(m.loss_registry["kl_l"], mean(kl_divergence_l))
+    push!(m.loss_registry["reconstruction"], mean(reconst_loss))
     push!(m.loss_registry["total_loss"], lossval)
     #kl_local = Dict("kl_divergence_l" => kl_divergence_l, "kl_divergence_z" => kl_divergence_z)
     #kl_global = [0.0]
