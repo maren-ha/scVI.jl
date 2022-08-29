@@ -61,7 +61,6 @@ library_log_means, library_log_vars = init_library_size(adata)
 
 # initialise scVAE model 
 m = scVAE(size(adata.countmatrix,2);
-        n_layers=2,
         library_log_means=library_log_means,
         library_log_vars=library_log_vars
 )
