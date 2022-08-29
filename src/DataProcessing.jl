@@ -347,7 +347,7 @@ function subset_to_hvg!(adata::AnnData;
     span::Float64=0.3,
     verbose::Bool=true
     )
-    if !haskey(adata.vars,"highly_variable")
+    if isnothing(adata.vars) || (!isnothing(adata.vars) && !haskey(adata.vars,"highly_variable"))
         highly_variable_genes!(adata; 
             layer=layer, 
             n_top_genes=n_top_genes,
