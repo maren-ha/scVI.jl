@@ -27,6 +27,7 @@ Base.@kwdef mutable struct TrainingArgs
     weight_decay::Float32=0.0f0
     n_steps_kl_warmup::Union{Int, Nothing}=nothing
     n_epochs_kl_warmup::Union{Int, Nothing}=400
+    register_losses::Bool=false
     progress::Bool=true
     verbose::Bool=false
     verbose_freq::Int=10
@@ -58,6 +59,13 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
         train_inds = collect(1:adata.ncells);
     end
 
+    if training_args.register_losses
+        m.loss_registry["kl_l"] = []
+        m.loss_registry["kl_z"] = []
+        m.loss_registry["reconstruction"] = []
+        m.loss_registry["total_loss"] = []
+    end
+
     dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
@@ -79,6 +87,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
             end
             train_steps += 1
         end
+        training_args.register_losses && register_losses!(m, Float32.(adata.countmatrix[train_inds,:]'); kl_weight=kl_weight)
     end
     @info "training complete!"
     adata.is_trained = true
