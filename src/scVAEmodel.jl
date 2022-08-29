@@ -39,6 +39,7 @@ Base.@kwdef mutable struct scVAE
     gene_likelihood::Symbol=:zinb
     latent_distribution::Symbol=:normal
     log_variational::Bool=true
+    loss_registry::Dict=Dict()
     use_observed_lib_size::Bool=true
     z_encoder::scEncoder
     l_encoder::Union{Nothing, scEncoder}
