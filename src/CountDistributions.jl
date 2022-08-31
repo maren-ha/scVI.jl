@@ -6,22 +6,24 @@ using SpecialFunctions # for loggamma
 
 LogGammaTerms(x, theta) = @. loggamma(x + theta) - loggamma(theta) - loggamma(one(eltype(theta)) + x)
 
+"""
+    log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
+
+Log likelihood (scalar) of a minibatch according to a zinb model.
+
+Parameters
+----------
+x: Data
+mu: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
+theta: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
+pi: logit of the dropout parameter (real support) (shape: minibatch x vars)
+eps: numerical stability constant
+
+Notes
+-----
+We parametrize the bernoulli using the logits, hence the softplus functions appearing.
+"""
 function log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
-    """
-    Log likelihood (scalar) of a minibatch according to a zinb model.
-
-    Parameters
-    ----------
-    x: Data
-    mu: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
-    theta: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
-    pi: logit of the dropout parameter (real support) (shape: minibatch x vars)
-    eps: numerical stability constant
-
-    Notes
-    -----
-    We parametrize the bernoulli using the logits, hence the softplus functions appearing.
-    """
     softplus_zi = @fastmath softplus.(-zi);    
     log_thetha_mu_eps = @fastmath log.(theta .+ mu .+ eps)
     GammaTerms = @fastmath LogGammaTerms(x, theta)
@@ -38,17 +40,19 @@ function log_nb_positive_julia(x, mu, theta)
     return logpdf.(NegativeBinomial.(r, p), x)
 end
 
-function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, eps::S=S(1e-8)) where S <: Real
-    """
-    Log likelihood (scalar) of a minibatch according to a nb model.
+"""
+    log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, eps::S=S(1e-8)) where S <: Real
 
-    Parameters
-    ----------
-    x: Data
-    mu: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
-    theta: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
-    eps: numerical stability constant
-    """
+Log likelihood (scalar) of a minibatch according to a nb model.
+
+Parameters
+----------
+x: Data
+mu: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
+theta: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
+eps: numerical stability constant
+"""
+function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, eps::S=S(1e-8)) where S <: Real
     if length(size(theta)) == 1
         # do some shit 
     end
@@ -57,47 +61,53 @@ function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::Abs
     return res 
 end
 
-function log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
-    """
-    Log likelihood (scalar) of a minibatch according to a Poisson model.
+"""
+    log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
 
-    Parameters
-    ----------
-    x: Data
-    mu: mean=variance of the Poisson distribution (has to be positive support) (shape: minibatch x vars)
-    eps: numerical stability constant
-    """
+Log likelihood (scalar) of a minibatch according to a Poisson model.
+
+Parameters
+----------
+x: Data
+mu: mean=variance of the Poisson distribution (has to be positive support) (shape: minibatch x vars)
+eps: numerical stability constant
+"""
+function log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
     return logpdf.(Poisson.(mu), x)
 end
 
+"""
+    _convert_mean_disp_to_counts_logits(mu, theta, eps=1e-6)
+
+NB parameterizations conversion.
+Parameters
+----------
+mu: mean of the NB distribution.
+theta: inverse overdispersion.
+eps: constant used for numerical log stability. (Default value = 1e-6)
+Returns
+-------
+the number of failures until the experiment is stopped and the success probability.
+"""
 function _convert_mean_disp_to_counts_logits(mu, theta, eps=1e-6)
-    """
-    NB parameterizations conversion.
-    Parameters
-    ----------
-    mu: mean of the NB distribution.
-    theta: inverse overdispersion.
-    eps: constant used for numerical log stability. (Default value = 1e-6)
-    Returns
-    -------
-    the number of failures until the experiment is stopped and the success probability.
-    """
     logits = log.(mu .+ eps) .- log.(theta .+ eps) 
     total_count = theta 
     return total_count, logits 
 end
 
+"""
+    _convert_counts_logits_to_mean_disp(total_count, logits)
+
+NB parameterizations conversion.
+Parameters
+----------
+total_count: Number of failures until the experiment is stopped.
+logits: success logits.
+Returns
+-------
+the mean and inverse overdispersion of the NB distribution.
+"""
 function _convert_counts_logits_to_mean_disp(total_count, logits)
-    """
-    NB parameterizations conversion.
-    Parameters
-    ----------
-    total_count: Number of failures until the experiment is stopped.
-    logits: success logits.
-    Returns
-    -------
-    the mean and inverse overdispersion of the NB distribution.
-    """
     theta = total_count
     mu = exp.(logits) .* theta
     return mu, theta
@@ -118,17 +128,19 @@ function _gamma(theta, mu)
     return gamma_d
 end
 
+"""
+    decodersample(m::scVAE, z::AbstractMatrix, library::AbstractMatrix)
+
+Sample from (zero-inflated) negative binomial distribution 
+parametrised by mu, theta and zi (logits of dropout parameter)
+adapted from here: https://github.com/YosefLab/scvi-tools/blob/f0a3ba6e11053069fd1857d2381083e5492fa8b8/scvi/distributions/_negative_binomial.py#L420
+"""
 function decodersample(m::scVAE, z::AbstractMatrix, library::AbstractMatrix)
-    """
-    Sample from (zero-inflated) negative binomial distribution 
-    parametrised by mu, theta and zi (logits of dropout parameter)
-    adapted from here: https://github.com/YosefLab/scvi-tools/blob/f0a3ba6e11053069fd1857d2381083e5492fa8b8/scvi/distributions/_negative_binomial.py#L420
-    """
     px_scale, theta, mu, zi_logits = generative(m, z, library)
     if m.gene_likelihood == :nb
-        return rand(NegativeBinomial.(theta, theta ./ (theta .+ mu)), size(mu))
+        return rand(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))), size(mu))
     elseif m.gene_likelihood == :zinb
-        samp = rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu)))
+        samp = rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))))
         zi_probs = logits_to_probs(zi_logits)
         is_zero = rand(Float32, size(mu)) .<= zi_probs
         samp[is_zero] .= 0.0
