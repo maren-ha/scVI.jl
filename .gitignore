@@ -3,3 +3,5 @@ Manifest.*
 *.npy
 src/runs/
 *copy.*
+data_sampled/*
+
