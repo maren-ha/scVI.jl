@@ -22,7 +22,6 @@ and [Github repository](https://github.com/scverse/anndata)).
  - `dataloader=nothing`: `Flux.DataLoader` object used for training an `scVAE` model
  - `scVI_latent=nothing`: latent representation of trained `scVAE` model 
  - `scVI_latent_umap=nothing`: UMAP of latent representation from trained `scVAE` model 
- - `is_trained::Bool=false`: indicating whether a model has been trained on the AnnData object 
 
  **Example**
  ------------------
@@ -30,7 +29,6 @@ and [Github repository](https://github.com/scverse/anndata)).
         AnnData object with a countmatrix with 1679 cells and 15119 genes
             layers dict with the following keys: ["normalized_counts", "counts"]
             unique celltypes: ["Vip", "L4", "L2/3", "L2", "Pvalb", "Ndnf", "L5a", "SMC", "Astro", "L5", "Micro", "Endo", "Sst", "L6b", "Sncg", "Igtp", "Oligo", "Smad3", "OPC", "L5b", "L6a"]
-            training status: not trained
 """
 Base.@kwdef mutable struct AnnData
     countmatrix::Union{Matrix,Nothing}=nothing # shape: cells by genes 
@@ -46,7 +44,7 @@ Base.@kwdef mutable struct AnnData
     dataloader=nothing
     scVI_latent=nothing
     scVI_latent_umap=nothing
-    is_trained::Bool=false
+    #is_trained::Bool=false
 end
 
 function Base.show(io::IO, a::AnnData)
@@ -54,7 +52,7 @@ function Base.show(io::IO, a::AnnData)
     !isnothing(a.layers) && println(io, "   layers dict with the following keys: $(keys(a.layers))")
     !isnothing(a.summary_stats) && println(io, "   summary statistics dict with the following keys: $(keys(a.summary_stats))")
     !isnothing(a.celltypes) && println(io, "   unique celltypes: $(unique(a.celltypes))")
-    a.is_trained ? println(io, "    training status: trained") : println(io, "   training status: not trained")
+    #a.is_trained ? println(io, "    training status: trained") : println(io, "   training status: not trained")
     nothing 
 end
 
