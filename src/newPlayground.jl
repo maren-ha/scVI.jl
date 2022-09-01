@@ -1,3 +1,4 @@
+using scVI
 using DelimitedFiles: include
 using Base: Float32, func_for_method_checked
 # just for the sake of testing .... 
@@ -10,7 +11,6 @@ using CSV
 using DataFrames
 using HDF5
 using DelimitedFiles
-
 # core package functionality 
 using Distributions
 using Flux
@@ -42,14 +42,15 @@ include("ModelFunctions.jl")
 include("Training.jl")
 include("Evaluate.jl")
 
-# paths to the datsa 
-path_to_protein = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
-path_to_gex = "./data_sampled/adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad"
+# paths to the sampled data
+path_to_gex = "./data_sampled/adata_cite_gex_subsample_5000_cells_rep_0_sorted.h5ad"
+path_to_protein = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_sorted.h5ad"
+
 
 # get the data 
-@info " Initialising data objects... "
+@info "data loaded, initialising objects... "
 adata1 = init_benchmarking_from_h5ad(path_to_gex)
-adata2 = init_benchmarking_from_h5ad(path_to_protein)
+adata2 = init_benchmarking_from_h5ad(path_to_protein) 
 
 @info "Benchmarking data is loaded ... "
 @info "GEX modality contains $(size(adata1.countmatrix,1)) cells and $(size(adata1.countmatrix,2)) genes"
@@ -58,7 +59,7 @@ adata2 = init_benchmarking_from_h5ad(path_to_protein)
 isdir("./src/runs/") || mkdir("./src/runs/")
 ############ Folders for experiments documentation ###############
 timestamp = Dates.format(now(),"dd_mm_yyyy_HHMM")
-remarks = "test_multi_scvi"
+remarks = "test_multi_scvi_sorted"
 isdir("./src/runs/experiment_$(remarks)_$(timestamp)") || mkdir("./src/runs/experiment_$(remarks)_$(timestamp)")
 experiment_path = "./src/runs/experiment_$(remarks)_$(timestamp)"
 isdir("$(experiment_path)/log/") || mkdir("$(experiment_path)/log/")
@@ -74,7 +75,7 @@ library_log_means, library_log_vars = init_library_size(adata1, 1)
 n_inputs = [size(adata1.countmatrix,2),size(adata2.countmatrix,2)]
 
 training_args = TrainingArgs(
-    max_epochs=75, 
+    max_epochs=50, 
     lr = 1e-3,
     weight_decay=Float32(1e-6),
     n_epochs_kl_warmup=12,
@@ -106,3 +107,6 @@ m, adata = start_training(m, x, training_args,logger)
 adata1,adata2 = register_multilatent_representation!(adata1,adata2, m)
 adata1,adata2 = register_umap_on_multilatent!(adata1,adata2, m)
 umap_plot_mod1, umap_plot_mod2, umap_plot_mix = plot_umap_on_mixlatent(m, adata1, adata2; save_plot=true,figure_path=figures_path)
+# save the latentspace as a csv file 
+# retreive the latentspace either from adata2.scVI_mixlatent or adata1.scVI_mixlatent, and append the obs
+integrated_latent = hcat((adata2.obs["_index"]),adata2.scVI_mixlatent')

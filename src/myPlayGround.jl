@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(".")
 using DelimitedFiles: include
 using Base: Float32
 # just for the sake of testing .... 
@@ -51,9 +53,9 @@ include("scmmVAE.jl")
 # fix the multimodal to have it train multi or unimodality, parameterized. 
 
 
-# paths to the datsa 
-path_to_protein = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
+# paths to the sampled data
 path_to_gex = "./data_sampled/adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad"
+path_to_protein = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
 
 
 # get the data 

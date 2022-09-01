@@ -224,7 +224,7 @@ function load_benchmark_data(anndata::HDF5.File)
 
 end 
 
-function init_benchmarking_from_h5ad(filename::String=joinpath(@__DIR__, "../data/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"))
+function init_benchmarking_from_h5ad(filename::String=joinpath(@__DIR__, "../data_sampled/"))
     anndata = open_h5_data(filename)
     countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_benchmark_data(anndata)
     ncells, ngenes = size(countmatrix)

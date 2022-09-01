@@ -25,7 +25,7 @@ using VegaLite
 #logging 
 using TensorBoardLogger: TBLogger, tb_overwrite
 using Logging: with_logger
-
+# adata_rna.obs.rename(columns = {'':'n_genes_by_counts', :''}, inplace = True)
 
 include("DataProcessing.jl")
 include("Cortex.jl")
