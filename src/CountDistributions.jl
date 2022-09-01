@@ -127,33 +127,3 @@ function _gamma(theta, mu)
     gamma_d = Gamma(concentration, scale)
     return gamma_d
 end
-
-"""
-    decodersample(m::scVAE, z::AbstractMatrix, library::AbstractMatrix)
-
-Sample from (zero-inflated) negative binomial distribution 
-parametrised by mu, theta and zi (logits of dropout parameter)
-adapted from here: https://github.com/YosefLab/scvi-tools/blob/f0a3ba6e11053069fd1857d2381083e5492fa8b8/scvi/distributions/_negative_binomial.py#L420
-"""
-function decodersample(m::scVAE, z::AbstractMatrix, library::AbstractMatrix)
-    px_scale, theta, mu, zi_logits = generative(m, z, library)
-    if m.gene_likelihood == :nb
-        return rand(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))), size(mu))
-    elseif m.gene_likelihood == :zinb
-        samp = rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))))
-        zi_probs = logits_to_probs(zi_logits)
-        is_zero = rand(Float32, size(mu)) .<= zi_probs
-        samp[is_zero] .= 0.0
-        return samp
-    else
-        error("Not implemented")
-    end
-end
-
-#=
-# to test: 
-Random.seed!(42)
-x = first(dataloader)
-z, qz_m, qz_v, ql_m, ql_v, library = inference(m,x)
-samp = decodersample(m, z, library)
-=#
