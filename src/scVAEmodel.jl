@@ -14,19 +14,22 @@ Can be constructed using keywords.
 
 **Keyword arguments**
 -------------------------
- - `n_input`: input dimension = number of genes/features
- - `n_batch`: number of batches in the data 
- - `n_hidden`: number of hidden units to use in each hidden layer 
- - `n_latent`: dimension of latent space 
- - `n_layers`: number of hidden layers in encoder and decoder 
- - `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+ - `n_input::Ind`: input dimension = number of genes/features
+ - `n_batch::Int=0`: number of batches in the data 
+ - `n_hidden::Int=128`: number of hidden units to use in each hidden layer 
+ - `n_latent::Int=10`: dimension of latent space 
+ - `n_layers::Int=1`: number of hidden layers in encoder and decoder 
+ - `dispersion::Symbol=:gene`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+ - `is_trained::Bool=false`: indicating whether the model has been trained or not
  - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
- - `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+ - `gene_likelihood::Symbol=:zinb`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+ - `latent_distribution::Symbol=:normal`: whether or not to log-transform the input data in the encoder (for numerical stability)
  - `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
- - `use_observed_lib_size`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
- - `z_encoder`: Encoder struct of the VAE model for latent representation; see `scEncoder`
- - `l_encoder`: Encoder struct of the VAE model for the library size (if `use_observed_lib_size==false`), see `scEncoder`
- - `decoder`: Decoder struct of the VAE model; see `scDecoder`
+ - `loss_registry::Dict=Dict()`: dictionary in which to record the values of the different loss components (reconstruction error, KL divergence(s)) during training 
+ - `use_observed_lib_size::Bool=true`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
+ - `z_encoder::scEncoder`: Encoder struct of the VAE model for latent representation; see `scEncoder`
+ - `l_encoder::Union{Nothing, scEncoder}`: Encoder struct of the VAE model for the library size (if `use_observed_lib_size==false`), see `scEncoder`
+ - `decoder::AbstractDecoder`: Decoder struct of the VAE model; see `scDecoder`
 """
 Base.@kwdef mutable struct scVAE
     n_input::Int
@@ -36,6 +39,7 @@ Base.@kwdef mutable struct scVAE
     n_layers::Int=1
     dispersion::Symbol=:gene
     dropout_rate::Float32=0.0f0
+    is_trained::Bool=false
     gene_likelihood::Symbol=:zinb
     latent_distribution::Symbol=:normal
     log_variational::Bool=true
@@ -216,11 +220,13 @@ function scVAE(n_input::Int;
 end
 
 function Base.summary(m::scVAE)
-    string("SCVI Model with the following parameters: 
-     n_hidden: $(m.n_hidden), n_latent: $(m.n_latent), n_layers: $(m.n_layers), 
-     dropout_rate:$(m.dropout_rate), 
-     dispersion: $(m.dispersion), 
-     gene_likelihood: $(m.gene_likelihood), 
-     latent_distribution: $(m.latent_distribution)"
+    training_status = m.is_trained ? "trained" : "not trained"
+    println("SCVI Model with the following parameters:
+     n_hidden: $(m.n_hidden), n_latent: $(m.n_latent), n_layers: $(m.n_layers),
+     dropout_rate:$(m.dropout_rate),
+     dispersion: $(m.dispersion),
+     gene_likelihood: $(m.gene_likelihood),
+     latent_distribution: $(m.latent_distribution),
+     training status: $(training_status)"
     )
 end
