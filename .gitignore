@@ -3,5 +3,6 @@ Manifest.*
 *.npy
 src/runs/
 *copy.*
-data_sampled/*
+data_sampled/*.csvi
+data_sampled/*.h5ad
 
