@@ -15,6 +15,7 @@ Can be constructed using keywords.
  - `n_steps_kl_warmup::Union{Int, Nothing}=nothing`: number of steps (one gradient descent optimiser update for one batch) over which to perform gradual increase (warm-up, annealing) of the weight of the regularising KL-divergence term in the loss function (ensuring the consistency between variational posterior and standard normal prior). Empirically, this improves model inference.
  - `n_epochs_kl_warmup::Union{Int, Nothing}=400`: number of epochs (one update for all batches) over which to perform gradual increase (warm-up, annealing) of the weight of the regularising KL-divergence term in the loss function (ensuring the consistency between variational posterior and standard normal prior). Empirically, this improves model inference.
  - `progress::Bool=true`: whether or not to print a progress bar and the current value of the loss function to the REPL.
+ - `register_losses::Bool=false`: whether or not to record the values of the different loss components after each training epoch in the `loss_registry` of the `scVAE` model. If `true`, for each loss component (reconstruction error, KL divergences, total loss), an array will be created in the dictionary with the name of the loss component as key, where after each epoch, the value of the component is saved.
  - `verbose::Bool=false`: only kicks in if `progress==false`: whether or not to print the current epoch and value of the loss function every `verbose_freq` epoch. 
  - `verbose_freq::Int=10`: frequency with which to display the current epoch and current value of the loss function (only if `progress==false` and `verbose==true`).
 """
@@ -90,7 +91,8 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
         training_args.register_losses && register_losses!(m, Float32.(adata.countmatrix[train_inds,:]'); kl_weight=kl_weight)
     end
     @info "training complete!"
-    adata.is_trained = true
+    m.is_trained = true
+    #adata.is_trained = true
     return m, adata
 end
 
@@ -153,5 +155,8 @@ function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOr
             train_steps += 1
         end
     end
-    return m
+    @info "training complete!"
+    m.is_trained = true
+    #adata.is_trained = true
+    return m, adata
 end
