@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------------
 # Utils 
 #-------------------------------------------------------------------------------------
-
+# mu + eps * exp(0.5 * var)
 function reparameterize_gaussian(mean, var)
     # Julia Distributions, like torch, parameterizes the Normal with std, not variance
     # Normal(μ, σ)      # Normal distribution with mean μ and variance σ^2
@@ -48,3 +48,18 @@ function FCLayers(
 
     return fc_layers
 end
+
+# plot & save figuures 
+function plot_losses(nepoch,
+    moes_loss,
+    loss_rnas,
+    loss_proteins, figure_path)
+    figure = plot(collect(1:nepoch), 
+    hcat(log.(10, moes_loss .+ 1), 
+    log.(10, loss_rnas .+1 ), 
+    log.(10, loss_proteins .+1 )), 
+    title = "Loss", 
+    label=["MoE-Loss" "GEX-Loss" "Protein-Loss"], 
+    xlabel="number of epoch", ylabel="log10(MultiVAE loss)", legend=:topright)
+    savefig(figure,"$(figure_path)/traing_loss.png")
+end 
