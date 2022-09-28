@@ -4,15 +4,14 @@ function register_latent_representation!(adata::AnnData, m::scVAE)
     return adata 
 end
 
-function register_multilatent_representation!(adata1::AnnData,adata2::AnnData, m::scMultiVAE_)
-    lat_rna , lat_protein, lat_mix =  get_mixlatent_representation(m, adata1,adata2)
-    adata1.scVI_latent = lat_rna
-    adata2.scVI_latent = lat_protein
-    adata1.scVI_mixlatent = lat_mix
-    adata2.scVI_mixlatent = lat_mix
+function register_multilatent_representation!(multiadata::AnnData, model::scMultiVAE_)
+    lat_rna , lat_protein, lat_mix =  get_mixlatent_representation(model, multiadata)
+    multiadata.scVI_integrated_latent = lat_mix
+    multiadata.scVI_mod1_latent = lat_rna
+    multiadata.scVI_mod2_latent = lat_protein
 
     @info "latent representation added"
-    return adata1, adata2 
+    return multi_adata 
 end
 
 function register_umap_on_latent!(adata::AnnData, m::scVAE)
@@ -25,17 +24,16 @@ function register_umap_on_latent!(adata::AnnData, m::scVAE)
     return adata
 end
 
-function register_umap_on_multilatent!(adata1::AnnData,adata2::AnnData, m::scMultiVAE_)
-    if isnothing(adata1.scVI_latent) || isnothing(adata2.scVI_latent)
-        @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-        register_multilatent_representation!(adata1,adata2, m)
+function register_umap_on_multilatent!(multi_adata::AnnData , model::scMultiVAE_)
+    if isnothing(multi_adata.scVI_integrated_latent)
+        @info "no integrated latent representation saved in AnnData object, calculating based on scVAE model..."
+        register_multilatent_representation!(multi_adata, model)
     end
-    adata1.scVI_latent_umap = umap(adata1.scVI_latent, 2; min_dist=0.3)
-    adata2.scVI_latent_umap = umap(adata2.scVI_latent, 2; min_dist=0.3)
-    adata1.scVI_mixlatent_umap = umap(adata1.scVI_mixlatent, 2; min_dist=0.3)
-    adata2.scVI_mixlatent_umap = umap(adata2.scVI_mixlatent, 2; min_dist=0.3)
+    multi_adata.scVI_mod1_latent_umap = umap(multi_adata.scVI_mod1_latent, 2; min_dist=0.3)
+    multi_adata.scVI_mod2_latent_umap = umap(multi_adata.scVI_mod2_latent, 2; min_dist=0.3)
+    multi_adata.scVI_integrated_latent_umap = umap(multi_adata.scVI_integrated_latent, 2; min_dist=0.3)
     @info "UMAP of latent representations added"
-    return adata1, adata2
+    return multi_adata
 end
 
 function plot_umap_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=true, seed::Int=111, filename::String="UMAP_on_latent.pdf")
@@ -62,47 +60,40 @@ function plot_umap_on_latent(m::scVAE, adata::AnnData; save_plot::Bool=true, see
     return umap_plot
 end
 
-function plot_umap_on_mixlatent(m::scMultiVAE_, adata1::AnnData, adata2::AnnData; save_plot::Bool=false, seed::Int=111, figure_path::String="UMAP_on_latent.pdf")
+function plot_umap_on_mixlatent(model::scMultiVAE_, multi_adata::AnnData; save_plot::Bool=false, seed::Int=111, figure_path::String="UMAP_on_latent.pdf")
 
-    if isnothing(adata1.scVI_latent) || isnothing(adata2.scVI_latent)
-        @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-        register_multilatent_representation!(adata1,adata2, m)
+    if isnothing(multi_adata.scVI_integrated_latent) 
+        @info "no integrated latent representation saved in AnnData object, calculating based on scVAE model..."
+        register_multilatent_representation!(multi_adata,model)
     end
 
-    if isnothing(adata1.scVI_latent_umap) || isnothing(adata2.scVI_latent) || isnothing(adata1.scVI_mixlatent)
-        @info "no UMAP of latent representation saved in AnnData object, calculating it now..."
-        Random.seed!(seed)
-        register_umap_on_multilatent!(adata1,adata2, m)
-    end
-
-    umap_plot_mod1 = @vlplot(:point, 
-                        title="UMAP of RNA Modality latent representation", 
-                        x=adata1.scVI_latent_umap[1,:], 
-                        y = adata1.scVI_latent_umap[2,:], 
-                        color = adata1.celltypes, 
-                        width = 800, height=500
-    )
-    save_plot && save("$(figure_path)/UMAP_on_latent_RNA.pdf", umap_plot_mod1)
+    umap_plot_integrated = @vlplot(:point, 
+                        title="UMAP of Integrated latent representation", 
+                        x = multi_adata.scVI_integrated_latent_umap[1,:], 
+                        y =  multi_adata.scVI_integrated_latent_umap[2,:], 
+                        color={multi_adata.celltypes, type="n"},
+                        width = 800, height=500)
+    save_plot && save("$(figure_path)/UMAP_on_Integrated_latent.pdf", umap_plot_integrated)
     
+    umap_plot_mod1 = @vlplot(:point, 
+                        title="UMAP of RNA Modality", 
+                        x= multi_adata.scVI_mod1_latent_umap[1,:], 
+                        y = multi_adata.scVI_mod1_latent_umap[2,:], 
+                        color = multi_adata.celltypes, 
+                        width = 800, height=500)
+    save_plot && save("$(figure_path)/UMAP_on_latent_RNA.pdf", umap_plot_mod1)
+
     umap_plot_mod2 = @vlplot(:point, 
-                        title="UMAP of Protein Modality latent representation", 
-                        x=adata2.scVI_latent_umap[1,:], 
-                        y = adata2.scVI_latent_umap[2,:], 
-                        color = adata2.celltypes, 
-                        width = 800, height=500
-    )
+                    title="UMAP of Protein Modality", 
+                    x = multi_adata.scVI_mod2_latent_umap[1,:], 
+                    y = multi_adata.scVI_mod2_latent_umap[2,:], 
+                    color = multi_adata.celltypes, 
+                    width = 800, height=500)
     save_plot && save("$(figure_path)/UMAP_on_latent_Protein.pdf", umap_plot_mod2)
 
-    umap_plot_mix = @vlplot(:point, 
-                    title="UMAP of Integrated latent representation", 
-                    x=adata2.scVI_mixlatent_umap[1,:], 
-                    y = adata2.scVI_mixlatent_umap[2,:], 
-                    color = adata2.celltypes, 
-                    width = 800, height=500
-    )
 
-    save_plot && save("$(figure_path)/UMAP_on_latent_Mix.pdf", umap_plot_mix)
-    return umap_plot_mod1, umap_plot_mod2, umap_plot_mix
+
+    return umap_plot_mod1, umap_plot_mod2, umap_plot_integrated
 end
 
 
