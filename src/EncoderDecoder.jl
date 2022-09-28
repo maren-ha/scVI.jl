@@ -24,7 +24,7 @@ Flux.@functor scEncoder
 function scEncoder(
     n_input::Int, 
     n_output::Int;
-    activation_fn::Function=relu, # to use in FC_layers
+    activation_fn::Function=leakyrelu, # to use in FC_layers, LeakyRelu
     bias::Bool=true,
     n_hidden::Int=128,
     n_layers::Int=1,
@@ -115,7 +115,7 @@ Flux.@functor MuEncoder
 function muEncoder( 
     n_input::Int, 
     n_output::Int;
-    activation_fn::Function=relu, # to use in FC_layers
+    activation_fn::Function=leakyrelu, # to use in FC_layers
     bias::Bool=true,
     n_hidden::Int=128,
     n_layers::Int=1,
@@ -186,9 +186,9 @@ end
 
 function FCLayers(
     n_in, n_out; 
-    activation_fn::Function=relu,
+    activation_fn::Function=leakyrelu,
     bias::Bool=true,
-    dropout_rate::Float32=0.0f0, 
+    dropout_rate::Float32=0.2f0, 
     n_hidden::Int=128, 
     n_layers::Int=1, 
     use_batch_norm::Bool=true,
@@ -199,9 +199,12 @@ function FCLayers(
     if n_layers != 1 
         @warn "n_layers > 1 currently not supported; model initialization will default to one hidden layer only"
     end
+    if use_activation
+        activation_fn = leakyrelu
+    else
+        activation_fn : identity
+    end
 
-    #activation_fn = use_activation ? activation_fn : identity
-    activation_fn = relu
     batchnorm = use_batch_norm ? BatchNorm(n_out, momentum = Float32(0.01), ϵ = Float32(0.001)) : identity
     layernorm = use_layer_norm ? LayerNorm(n_out, affine=false) : identity
 
@@ -235,7 +238,7 @@ end
 Flux.@functor scDecoder
 
 function scDecoder(n_input, n_output; 
-    activation_fn::Function=relu,
+    activation_fn::Function=leakyrelu,
     bias::Bool=true,
     dispersion::Symbol=:gene,
     dropout_rate::Float32=0.0f0,
@@ -326,7 +329,7 @@ end
 Flux.@functor MuDecoder
 
 function muDecoder(n_input, n_output; 
-    activation_fn::Function=relu,
+    activation_fn::Function=leakyrelu,
     bias::Bool=true,
     dispersion::Symbol=:gene,
     dropout_rate::Float32=0.0f0,
