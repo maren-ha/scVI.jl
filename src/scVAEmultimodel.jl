@@ -25,7 +25,7 @@ Base.@kwdef mutable struct scMultiVAE_
 end
 
 function scMultiVAE_(n_inputs::AbstractArray{S};
-    activation_fn::Function=relu, # to be used in all FC_layers instances
+    activation_fn::Function=leakyrelu, # to be used in all FC_layers instances
     bias::Symbol=:both, # whether to use bias in all linear layers of all FC instances 
     dispersion::AbstractArray{Symbol}, # =:gene or =:gene_cell
     dropout_rate::Float32=0.0f0,
