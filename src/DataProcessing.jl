@@ -14,9 +14,15 @@ Base.@kwdef mutable struct AnnData
     train_inds=nothing
     dataloader=nothing
     scVI_latent=nothing
-    scVI_mixlatent=nothing
+    scVI_mod1_latent=nothing
+    scVI_mod2_latent=nothing
+    scVI_mod3_latent=nothing
+    scVI_integrated_latent=nothing
     scVI_latent_umap=nothing
-    scVI_mixlatent_umap=nothing
+    scVI_mod1_latent_umap=nothing
+    scVI_mod2_latent_umap=nothing
+    scVI_mod3_latent_umap=nothing
+    scVI_integrated_latent_umap=nothing
     is_trained::Bool=false
 end
 
@@ -211,15 +217,13 @@ function load_benchmark_data(anndata::HDF5.File)
     layers = nothing
     obs = read(anndata, "obs")
     data_registry = nothing
-    
-    celltype_numbers = read(anndata, "obs")["cell_type"] .+1 # for Julia-Python index conversion
-    celltype_categories = read(anndata, "obs")["__categories"]["cell_type"]
-    celltypes = celltype_categories[celltype_numbers]
-    ##############################################
+        
+    celltype_numbers = obs["cell_type"]["codes"] .+1 # for Julia-Python index conversion
+    celltype_categories = obs["cell_type"]["categories"]
+    celltypes = celltype_categories[celltype_numbers] # same order as python version from multigrate framework
     # Fix the order of the cell types 
     #cell_col = CSV.read("./data_sampled/test.csv",DataFrame)
     #celltypes = vec(cell_col.cell_type)
-    ##############################################
     return Matrix(countmatrix), layers, obs, summary_stats, data_registry, celltypes
 
 end 
