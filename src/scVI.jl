@@ -12,6 +12,7 @@ using Dates: print
 # core package functionality 
 using Distributions
 using Flux
+using BSON
 using Random 
 using ProgressMeter
 using SpecialFunctions # for loggamma
@@ -40,6 +41,7 @@ include("CountDistributions.jl")
 include("ModelFunctions.jl")
 include("Training.jl")
 include("Evaluate.jl")
+
 
 
 export 
