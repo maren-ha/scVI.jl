@@ -1,7 +1,7 @@
 *.h5ad
 Manifest.*
 *.npy
-src/runs/
+../src/runs/
 *copy.*
 data_sampled/*.csvi
 data_sampled/*.h5ad
