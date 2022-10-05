@@ -119,15 +119,13 @@ function get_latent_representation(m::scVAE, countmatrix::Matrix; cellindices=no
     end
 end
 ###################################################### Multimodality Functions ##########################################################################
-
-# MoE Loss Function, calculating the recons can be better, leaving it for now ! calling nb and zinf in the function!
+# TODO revise the implemetation and further improve the function by using dispatching
+# MoE Loss Function, calculating the recons can be better, leaving it for now ! calling nb and zinb in the function!
 function loss(m::scMultiVAE_, x::AbstractVector{Matrix{S}}; kl_weight::Float32=1.0f0) where S <: Real 
     # unpack the data 
     mod1, mod2 = x[1] , x[2] 
     #apply inference on multimodality
     z_rna ,z_protein, qz_m_rna, qz_v_rna,qz_m_p, qz_v_p, ql_m, ql_v, library  = do_inference(m, x)
-    #apply generative on multimodal
-    #px_scale, px_r, px_rate, px_dropout, r, p = multimodal_generative(m, z_rna, z_protein,library)
     z = [z_rna, z_protein]
     px_scale, px_r, px_rate, px_dropout, px_scale_, px_r_, px_rate_, px_dropout_  = do_generative(m, z,library)
     # no off diagonal calculation
@@ -158,23 +156,6 @@ end
 function inference(::Type{scMultiVAE_},m, x::AbstractVector{Matrix{S}}) where S <: Real
     
     mod1, mod2 = x[1], x[2]
-    #read_mod2 = Float32(1.0f0)
-  
-
-    # mod1
-    #mod1 = mod1'
-    #read_mod1 = read_count(mod1)
-    #scaled = read_mod1 .* scale_factor
-    #mod1 = mod1 ./ scaled
-    #mod1 = mod1'
-
-    # mod2 
-    #mod2 = mod2'
-    #read_mod2 = read_count(mod2)
-    #scaled = read_mod2 .* scale_factor
-    #mod2 = mod2 ./ scaled
-    #mod2 = mod2'
-
 
     encoder_input = m.log_variational ? log.(one(S) .+ mod1) : mod1
     # unpack the encoders ... 
@@ -182,6 +163,7 @@ function inference(::Type{scMultiVAE_},m, x::AbstractVector{Matrix{S}}) where S 
     
     # Modality 1  gex
     qz_m, qz_v, z_gex = z_encoder_g(encoder_input)
+    # no library size estimation needed
     ql_m, ql_v = nothing, nothing 
     library = get_library(m, mod1, encoder_input)
     
@@ -189,50 +171,42 @@ function inference(::Type{scMultiVAE_},m, x::AbstractVector{Matrix{S}}) where S 
     encoder_input_2 = m.log_variational ? log.(one(S) .+ mod2) : mod2
     qz_m_p, qz_v_p,z_protein = z_encoder_p(encoder_input_2)
 
-    # ,Float32.(read_mod2)
     return Float32.(z_gex),Float32.(z_protein), Float32.(qz_m), Float32.(qz_v),Float32.(qz_m_p), Float32.(qz_v_p), ql_m, ql_v, Float32.(library)
 end 
 
-# ,readcount_mod2::AbstractMatrix{S}
 function generative(::Type{scMultiVAE_},m, z::AbstractVector{Matrix{S}},library::AbstractMatrix{S}) where S <: Real
     
     z_rna, z_protein = z[1], z[2]
     # unpack decoders 
-    decoder_g, decoder_p= m.decoder[1], m.decoder[2]
+    decoder_g, decoder_p = m.decoder[1], m.decoder[2]
     px_scale, px_r, px_rate, px_dropout = decoder_g(z_rna, library)
     #if m.dispersion == :gene # some other cases (:gene-batch, :gene-label ignored)
     #    px_r = m.px_r
     #end
     px_r = exp.(px_r)
     px_scale_, px_r_, px_rate_, px_dropout_ = decoder_p(z_protein, library)
-    #r, p = m.mudecoder(z_protein)
-    
-
-        #s_mod1 = scale_factor * readcount_mod1
-        #px_rate = px_rate' ./ s_mod1
-        #px_rate = px_rate'
-    #s_mod2= scale_factor * readcount_mod2
-    #r = r' ./ s_mod2
-    #r = r'
     px_r_ = exp.(px_r_)
     return px_scale, px_r, px_rate, px_dropout, px_scale_, px_r_, px_rate_, px_dropout_
 end
 
-function get_mixlatent_representation(m::scMultiVAE_, mod1::AnnData,mod2::AnnData; cellindices=nothing, give_mean::Bool=true)
+function get_mixlatent_representation(model::scMultiVAE_, multiadata::AnnData; cellindices=nothing, give_mean::Bool=true)
     # set the model to test mode 
-    testmode!(m, true)
-    # countmatrix assumes cells x genes 
+    testmode!(model, true)
+    # countmatrix assumes cells x genes
+    # TODO this can be parameterized; namely, we pass the # of GEX & protein instead of hardcoding 
     if !isnothing(cellindices)
-        mod1 = mod1.countmatrix[cellindices,:]
-        mod2 = mod2.countmatrix[cellindices,:]
+        mod1 = multiadata.countmatrix[cellindices,1:4000]
+        mod2 = multiadata.countmatrix[cellindices,4001:4134]
     end
-    # pack the countmatrices in an array 
-    x = [Float32.(mod1.countmatrix'), Float32.(mod2.countmatrix')]
-    z_rna ,z_protein, qz_m_rna, qz_v_rna,qz_m_p, qz_v_p, ql_m, ql_v, library = inference(typeof(m),m,x)
+    # pack the modalities countmatrices in an array 
+    mod1 = multiadata.countmatrix[:,1:4000]
+    mod2 = multiadata.countmatrix[:,4001:4134]
+    x = [Float32.(mod1'), Float32.(mod2')]
+    z_rna ,z_protein, qz_m_rna, qz_v_rna,qz_m_p, qz_v_p, ql_m, ql_v, library = inference(typeof(model),model,x)
     
     
     if give_mean
-        # compute the mean and save it, divide by 2 since we have 2 modalities
+        # compute the mean, divide by 2 since we have 2 modalities
         mean_lats = (qz_m_rna' .+ qz_m_p') ./ 2
         return qz_m_rna, qz_m_p, mean_lats'
     else
