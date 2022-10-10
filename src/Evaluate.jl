@@ -4,14 +4,20 @@ function register_latent_representation!(adata::AnnData, m::scVAE)
     return adata 
 end
 
-function register_multilatent_representation!(multiadata::AnnData, model::scMultiVAE_)
+function register_multilatent_representation!(multiadata::AnnData, model::scMultiVAE_ ;save_latent::Bool=false,experiment_path::String="integrated_latent_space.csv")
     lat_rna , lat_protein, lat_mix =  get_mixlatent_representation(model, multiadata)
     multiadata.scVI_integrated_latent = lat_mix
     multiadata.scVI_mod1_latent = lat_rna
     multiadata.scVI_mod2_latent = lat_protein
 
     @info "latent representation added"
-    return multi_adata 
+
+    if save_latent
+        # save the latent space cells x dimensions e.g. 5000 x 10
+        CSV.write("$(experiment_path)/integrated_latent_space.csv",  Tables.table(hcat(multiadata.obs["_index"],multiadata.scVI_integrated_latent')), writeheader=false)
+        @info "latent representation saved to location $(experiment_path))"
+    end
+    return multiadata 
 end
 
 function register_umap_on_latent!(adata::AnnData, m::scVAE)
