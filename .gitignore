@@ -3,6 +3,8 @@ Manifest.*
 *.npy
 ../src/runs/
 *copy.*
-data_sampled/*.csvi
+data_sampled/*.csv
 data_sampled/*.h5ad
-
+data/*.csv
+data/*.txt
+data/*.h5ad
