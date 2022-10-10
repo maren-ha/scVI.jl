@@ -8,3 +8,4 @@ data_sampled/*.h5ad
 data/*.csv
 data/*.txt
 data/*.h5ad
+src/runs/experiment*
