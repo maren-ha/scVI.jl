@@ -46,25 +46,26 @@ include("Training.jl")
 include("Evaluate.jl")
 include("scmmVAE.jl")
 
-# TODO 
-#################################################################
-# fix the ann data to have gene and protein also the show method.
-# fix the multimodal to have a vector of inputs (gex, protein) instread of redundant data. 
-# fix the multimodal to have it train multi or unimodality, parameterized. 
-
-
 # paths to the sampled data
-path_to_gex = "./data_sampled/adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad"
-path_to_protein = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
+#path_to_gex = "./data_sampled/adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad"
+#path_to_protein = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
+path_to_multi = "./data_sampled/multi_subsample_5000_cells_rep_0_st.h5ad"
 
 
 # get the data 
 @info "data loaded, initialising objects... "
-adata1 = init_benchmarking_from_h5ad(path_to_gex)
-adata2 = init_benchmarking_from_h5ad(path_to_protein) 
+#adata1 = init_benchmarking_from_h5ad(path_to_gex)
+#adata2 = init_benchmarking_from_h5ad(path_to_protein) 
+multi_adata = init_benchmarking_from_h5ad(path_to_multi)
+
+mod1 = multi_adata.countmatrix[:,1:4000]
+mod2 = multi_adata.countmatrix[:,4001:4134]
 
 
-library_log_means, library_log_vars = init_library_size(adata1, 1)
+#library_log_means, library_log_vars = init_library_size(adata1, 1)
+library_log_means = 0 # we dont estimate the library size 
+n_inputs = [size(mod1,2), size(mod2,2)]
+
 isdir("./src/runs/") || mkdir("./src/runs/")
 ############ Folders for experiments documentation ###############
 timestamp = Dates.format(now(),"dd_mm_yyyy_HHMM")
@@ -89,14 +90,14 @@ training_args = TrainingArgs(
     verbose=true
 )
 
-scvMulti =  scMultiVAE(size(adata1.countmatrix,2);
-            library_log_means=library_log_means,
-            n_input_2 = size(adata2.countmatrix,2),
-            n_latent=10, 
+scvMulti =  scMultiVAE_(n_inputs;
+            n_latent=10,
+            dispersion=[:gene, :gene_cell],  # :gene GEX, :gene_cell: protein 
             gene_likelihood=:zinb, 
             protein_likelihood=:nb,
-            latent_distribution = :normal)
-m = scvMulti
+            latent_distribution = :normal,
+            library_log_means=library_log_means,)
+model = scvMulti
 #----------------------------------------------------------------
 # Create a Tensorboard logger
 #-----------------------------------------------------------------
@@ -104,13 +105,16 @@ logger = TBLogger(training_args.log_path, tb_overwrite)
 #----------------------------------------------------------------
 # Train the multimodal scvMulti
 #-----------------------------------------------------------------
-train_multimodel!(m, adata1, adata2, training_args,logger)
+x = [multi_adata]
+
+model, adata , losses = start_training!(model, x, training_args,logger)
+moes_loss, loss_rnas, loss_proteins = losses.moes_train, losses.mod1_train, losses.mod2_train;
 
 # save the trained model 
 #@save "$(experiment_path)/model.bson" m 
-register_multilatent_representation!(adata1,adata2, m)
+register_multilatent_representation!(multi_adata, model; save_latent=true, experiment_path=experiment_path)
 
 # Plotting 
-register_umap_on_multilatent!(adata1,adata2, m)
+register_umap_on_multilatent!(multi_adata, model)
 
 umap_plot_mod1, umap_plot_mod2, umap_plot_mix = plot_umap_on_mixlatent(m, adata1, adata2; save_plot=true,figure_path=figures_path)
