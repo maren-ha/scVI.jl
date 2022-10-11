@@ -50,7 +50,17 @@ function start_training!(m,adata::AbstractArray{AnnData}, training_args::Trainin
     m , adata, losses = train_model!(typeof(m),m, adata,training_args,logger)
     return m, adata, losses
 end
+"""
+    train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
 
+Trains an `scVAE` model on an `AnnData` object, where the behaviour is controlled by a `TrainingArgs` object: 
+Defines the ADAM SGD optimiser, collects the model parameters, optionally splits data in training and testdata and 
+initialises a `Flux.DataLoader` storing the data in the countmatrix of the `AnnData` object in batches. 
+Updates the model parameters via stochastic gradient for the specified number of epochs, 
+optionally prints out progress and current loss values. 
+
+Returns the trained `scVAE` model.
+"""
 Flux.params(m::scVAE) = Flux.params(m.z_encoder, m.l_encoder, m.decoder)
 function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_args::TrainingArgs,logger)
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
@@ -63,7 +73,12 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
     else
         train_inds = collect(1:adata.ncells);
     end
-
+    if training_args.register_losses
+        m.loss_registry["kl_l"] = []
+        m.loss_registry["kl_z"] = []
+        m.loss_registry["reconstruction"] = []
+        m.loss_registry["total_loss"] = []
+    end
     dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
@@ -79,19 +94,17 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
             grad = back(1f0)
             Flux.Optimise.update!(opt, ps, grad)
             if training_args.progress
-                next!(progress; showvalues=[(:loss, curloss)])   
+                next!(progress; showvalues=[(:loss, curloss)]) 
             elseif (train_steps % training_args.verbose_freq == 0) && training_args.verbose
                 @info "epoch $(epoch):" loss=curloss
-                with_logger(logger) do
-                    @info string("training_loss") Total_loss=curloss
-                
-                end
             end
-            train_steps += 1  
+            train_steps += 1
         end
+        training_args.register_losses && register_losses!(m, Float32.(adata.countmatrix[train_inds,:]'); kl_weight=kl_weight)
     end
     @info "training complete!"
-    adata.is_trained = true
+    m.is_trained = true
+    #adata.is_trained = true
     return m, adata
 end
 
