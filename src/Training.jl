@@ -1,3 +1,28 @@
+"""
+mutable struct TrainingArgs
+
+Struct to store hyperparameters to control and customise the training process of an `scVAE` or `scMultiVAE_` model. 
+Can be constructed using keywords. 
+
+**Keyword arguments:**
+----------------------
+ - `trainsize::Float32=0.9f0`: proportion of data to be used for training when using a train-test split for training. Has no effect when `train_test_split==false`.
+ - `train_test_split::Bool=false`: whether or not to randomly split the data into training and test set. 
+ - `batchsize::Int=128`: batchsize to be used when partitioning the data into minibatches for training based on stochastic gradient descent 
+ - `max_epochs::Int=400`: number of epochs to train the model 
+ - `lr::Float64=1e-3`: learning rate (=stepsize) of the ADAM optimiser during the stochastic descent optimisation for model training (for details, see `?ADAM`). 
+ - `weight_decay::Float32=0.0f0`: rate of weight decay to apply in the ADAM optimiser (for details, see `?ADAM`).
+ - `n_steps_kl_warmup::Union{Int, Nothing}=nothing`: number of steps (one gradient descent optimiser update for one batch) over which to perform gradual increase (warm-up, annealing) of the weight of the regularising KL-divergence term in the loss function (ensuring the consistency between variational posterior and standard normal prior). Empirically, this improves model inference.
+ - `n_epochs_kl_warmup::Union{Int, Nothing}=400`: number of epochs (one update for all batches) over which to perform gradual increase (warm-up, annealing) of the weight of the regularising KL-divergence term in the loss function (ensuring the consistency between variational posterior and standard normal prior). Empirically, this improves model inference.
+ - `progress::Bool=true`: whether or not to print a progress bar and the current value of the loss function to the REPL.
+ - `register_losses::Bool=false`: whether or not to record the values of the different loss components after each training epoch in the `loss_registry` of the `scVAE` model. If `true`, for each loss component (reconstruction error, KL divergences, total loss), an array will be created in the dictionary with the name of the loss component as key, where after each epoch, the value of the component is saved.
+ - `verbose::Bool=false`: only kicks in if `progress==false`: whether or not to print the current epoch and value of the loss function every `verbose_freq` epoch. 
+ - `infotime::Int=1`: frequency with which to display the current epoch and current value of the loss function (only if epoch mod infotime==0 ).
+ - `tblogger::Bool=true`: if true the losses will be logged on a tensorboard.
+ - `savepath::String=nothing`: directory to save the model. 
+ - `use_cuda::Bool=false`: moves the training to a GPU if available.
+ - `checktime::Int=5`: the model will be saved if `args.checktime > 0 && epoch % args.checktime == 0`
+"""
 Base.@kwdef mutable struct TrainingArgs
     trainsize::Float32 = 0.9f0
     train_test_split::Bool=false
@@ -7,6 +32,9 @@ Base.@kwdef mutable struct TrainingArgs
     weight_decay::Float32 = 0.0f0
     n_steps_kl_warmup = nothing
     n_epochs_kl_warmup::Int=1
+    n_steps_kl_warmup::Union{Int, Nothing}=nothing
+    n_epochs_kl_warmup::Union{Int, Nothing}=400
+    register_losses::Bool=false
     progress::Bool=false
     verbose::Bool=true
     infotime::Int=1
