@@ -251,7 +251,7 @@ end
 #-------------------------------------------------------------------------------------
 
 using Loess
-using Statistics
+using StatsBase
 
 function check_nonnegative_integers(X::AbstractArray) 
     if eltype(X) == Integer
@@ -266,19 +266,23 @@ function check_nonnegative_integers(X::AbstractArray)
 end
 
 # expects batch key in "obs" Dict
+# results are comparable to scanpy.highly_variable_genes, but differ slightly. 
+# when using the Python results of the Loess fit though, genes are identical. 
 function _highly_variable_genes_seurat_v3(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
     span::Float64=0.3,
-    inplace::Bool=true
+    inplace::Bool=true,
+    verbose::Bool=false
     )
     X = !isnothing(layer) ? adata.layers[layer] : adata.countmatrix
     !check_nonnegative_integers(X) && @warn "flavor Seurat v3 expects raw count data, but non-integers were found"
-
+    verbose && @info "input checks passed..."
     means, vars = mean(X, dims=1), var(X, dims=1)
     batch_info = isnothing(batch_key) ? zeros(size(X,1)) : adata.obs[batch_key]
     norm_gene_vars = []
+    verbose && @info "calculating variances per batch..."
     for b in unique(batch_info)
         X_batch = X[findall(x -> x==b, batch_info),:]
         m, v = vec(mean(X_batch, dims=1)), vec(var(X_batch, dims=1))
@@ -287,7 +291,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
         y = Float64.(log10.(v[not_const]))
         x = Float64.(log10.(m[not_const]))
         loess_model = loess(x, y, span=span, degree=2);
-        fitted_values = predict(loess_model,x)
+        fitted_values = Loess.predict(loess_model,x)
         estimat_var[not_const] = fitted_values
         reg_std = sqrt.(10 .^estimat_var)
 
@@ -303,13 +307,14 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
         norm_gene_var = (1 ./((N-1) .* reg_std.^2)) .* ((N.*m.^2) .+ squared_batch_counts_sum .- 2 .* batch_counts_sum .* m)
         push!(norm_gene_vars, norm_gene_var)
     end
+    verbose && @info "identifying top HVGs..."
     norm_gene_vars = hcat(norm_gene_vars...)'
     # argsort twice gives ranks, small rank means most variable
     ranked_norm_gene_vars = mapslices(row -> sortperm(sortperm(-row)), norm_gene_vars,dims=2)
     # this is done in SelectIntegrationFeatures() in Seurat v3
     num_batches_high_var = sum(mapslices(row -> row .< n_top_genes, ranked_norm_gene_vars, dims=2), dims=1)
     ranked_norm_gene_vars = Float32.(ranked_norm_gene_vars)
-    ranked_norm_gene_vars[findall(x -> x >= n_top_genes, ranked_norm_gene_vars)] .= NaN
+    ranked_norm_gene_vars[findall(x -> x > n_top_genes, ranked_norm_gene_vars)] .= NaN
     median_ranked = mapslices(col -> mymedian(col[findall(x -> !isnan(x), col)]), ranked_norm_gene_vars, dims=1)
 
     sortdf = DataFrame(row = collect(1:length(vec(median_ranked))),
@@ -332,7 +337,11 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     end
 
     if inplace 
-        adata.vars = merge(adata.vars, hvg_info)
+        if isnothing(adata.vars)
+            adata.vars = hvg_info
+        else
+            adata.vars = merge(adata.vars, hvg_info)
+        end
         return adata
     else
         return hvg_info
@@ -341,18 +350,59 @@ end
 
 mymedian(X::AbstractArray) = length(X) == 0 ? NaN : median(X)
 
-function highly_variable_genes(adata::AnnData; 
+"""
+    highly_variable_genes!(adata::AnnData;
+        layer::Union{String,Nothing} = nothing,
+        n_top_genes::Int=2000,
+        batch_key::Union{String,Nothing} = nothing,
+        span::Float64=0.3
+        )
+
+Computes highly variable genes per batch according to the workflows on `scanpy` and Seurat v3 in-place. 
+
+More specifically, it is the Julia re-implementation of the corresponding 
+[`scanpy` function](https://github.com/scverse/scanpy/blob/master/scanpy/preprocessing/_highly_variable_genes.py)
+
+For implementation details, please check the `scanpy`/Seurat documentations or the source code of the 
+lower-level `_highly_variable_genes_seurat_v3` function in this package. 
+Results are almost identical to the `scanpy` function. The differences have been traced back to differences in 
+the local regression for the mean-variance relationship implemented in the Loess.jl package, that differs slightly 
+from the corresponding Python implementation. 
+
+**Arguments**
+------------------------
+- `adata`: `AnnData` object 
+- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.countmatrix` is used. 
+- `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
+- `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
+- `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
+
+**Returns**
+------------------------
+This is the in-place version that adds an dictionary containing information on the highly variable genes directly 
+to the `adata.vars` and returns the modified `AnnData` object. 
+Specifically, a dictionary with the following keys is added: 
+ - `highly_variable`: vector of `Bool`s indicating which genes are highly variable
+ - `highly_variable_rank`: rank of the highly variable genes according to (corrected) variance 
+ - `means`: vector with means of each gene
+ - `variances`: vector with variances of each gene 
+ - `variances_norm`: normalized variances of each gene 
+ - `highly_variable_nbatches`: if there are batches in the dataset, logs the number of batches in which each highly variable gene was actually detected as highly variable. 
+"""
+function highly_variable_genes!(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
+    span::Float64=0.3, 
+    verbose::Bool=false
     )
     return _highly_variable_genes_seurat_v3(adata; 
                 layer=layer, 
                 n_top_genes=n_top_genes, 
                 batch_key=batch_key,
                 span=span,
-                inplace=false
+                inplace=true, 
+                verbose=verbose
     )
 end
 
@@ -363,8 +413,10 @@ end
         batch_key::Union{String,Nothing} = nothing,
         span::Float64=0.3
         )
+
 Computes highly variable genes according to the workflows on `scanpy` and Seurat v3 per batch and returns a dictionary with 
 the information on the joint HVGs. For the in-place version, see `highly_variable_genes!`
+
 More specifically, it is the Julia re-implementation of the corresponding 
 [`scanpy` function](https://github.com/scverse/scanpy/blob/master/scanpy/preprocessing/_highly_variable_genes.py)
 For implementation details, please check the `scanpy`/Seurat documentations or the source code of the 
@@ -372,6 +424,7 @@ lower-level `_highly_variable_genes_seurat_v3` function in this package.
 Results are almost identical to the `scanpy` function. The differences have been traced back to differences in 
 the local regression for the mean-variance relationship implemented in the Loess.jl package, that differs slightly 
 from the corresponding Python implementation. 
+
 **Arguments**
 ------------------------
 - `adata`: `AnnData` object 
@@ -379,6 +432,8 @@ from the corresponding Python implementation.
 - `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
 - `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
 - `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
+- `verbose`: whether or not to print info on current status
+
 **Returns**
 ------------------------
 Returns a dictionary containing information on the highly variable genes, specifically containing the following keys is added: 
@@ -393,16 +448,19 @@ function highly_variable_genes(adata::AnnData;
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
+    span::Float64=0.3,
+    verbose::Bool=false
     )
     return _highly_variable_genes_seurat_v3(adata; 
                 layer=layer, 
                 n_top_genes=n_top_genes, 
                 batch_key=batch_key,
                 span=span,
-                inplace=false
+                inplace=false,
+                verbose=verbose
     )
 end
+
 """
     subset_to_hvg!(adata::AnnData;
         layer::Union{String,Nothing} = nothing,
@@ -410,22 +468,26 @@ end
         batch_key::Union{String,Nothing} = nothing,
         span::Float64=0.3
     )
+
 Calculates highly variable genes with `highly_variable_genes!` and subsets the `AnnData` object to the calculated HVGs. 
 For description of input arguments, see `highly_variable_genes!`
+
 Returns: `adata` object subset to the calculated HVGs, both in the countmatrix/layer data used for HVG calculation and in the `adata.vars` dictionary.
 """
 function subset_to_hvg!(adata::AnnData;
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
     batch_key::Union{String,Nothing} = nothing,
-    span::Float64=0.3
+    span::Float64=0.3,
+    verbose::Bool=true
     )
-    if !haskey(adata.vars,"highly_variable")
+    if isnothing(adata.vars) || (!isnothing(adata.vars) && !haskey(adata.vars,"highly_variable"))
         highly_variable_genes!(adata; 
             layer=layer, 
             n_top_genes=n_top_genes,
             batch_key=batch_key,
-            span=span
+            span=span,
+            verbose=verbose
         )
     end
 
@@ -444,15 +506,16 @@ function subset_to_hvg!(adata::AnnData;
     return adata
 end
 
-
 #-------------------------------------------------------------------------------------
 # estimate size factors and normalize (based on Seurat)
 #-------------------------------------------------------------------------------------
 
 """
-estimate_size_factors(mat; locfunc=median)
+    estimate_size_factors(mat; locfunc=median)
+
 Estimates size factors to use for normalization, based on the corresponding Seurat functionality. 
 Assumes a countmatrix `mat` in cell x gene format as input, returns a vector of size factors. 
+
 For details, please see the Seurat documentation. 
 """
 function estimate_size_factors(mat; locfunc=median)
@@ -468,8 +531,10 @@ function estimate_size_factors(mat; locfunc=median)
     end
     return size_factors
 end
+
 """
-normalize_counts(mat::Abstractmatrix)
+    normalize_counts(mat::Abstractmatrix)
+
 Normalizes the countdata in `mat` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Assumes a countmatrix `mat` in cell x gene format as input, returns the normalized matrix.
 """
@@ -480,6 +545,7 @@ end
 
 """
     normalize_counts(adata::AnnData)
+
 Normalizes the `adata.countmatrix` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Adds the normalized count matrix to `adata.layers` and returns `adata`.
 """
