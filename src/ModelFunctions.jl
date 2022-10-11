@@ -71,6 +71,61 @@ function loss(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S 
     #return lossval#, reconst_loss, kl_local, kl_global
     return lossval
 end
+function register_losses!(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S <: Real 
+    x = [x]
+    z, qz_m, qz_v, ql_m, ql_v, library = do_inference(m, x)
+    z = [z]
+    px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library)
+    kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
+    # equivalent to kl_divergence_z = torch.distributions.kl.kl_divergence(torch.distributions.Normal(qz_m, qz_v.sqrt()), torch.distributions.Normal(mean, scale)).sum(dim=1)
+
+    if !m.use_observed_lib_size # TODO!
+        local_library_log_means,local_library_log_vars = _compute_local_library_params() 
+        kl_divergence_l = kl(Normal(ql_m, ql_v.sqrt()),Normal(local_library_log_means, local_library_log_vars.sqrt())).sum(dim=1)
+    else
+        kl_divergence_l = 0.0f0
+    end
+    d = x[1]
+    reconst_loss = get_reconstruction_loss(m, Float32.(d), Float32.(px_rate), px_r, px_dropout)
+    kl_local_for_warmup = kl_divergence_z
+    kl_local_no_warmup = kl_divergence_l
+    weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
+
+    lossval = mean(reconst_loss + weighted_kl_local)
+
+    push!(m.loss_registry["kl_z"], mean(kl_divergence_z))
+    push!(m.loss_registry["kl_l"], mean(kl_divergence_l))
+    push!(m.loss_registry["reconstruction"], mean(reconst_loss))
+    push!(m.loss_registry["total_loss"], lossval)
+    #kl_local = Dict("kl_divergence_l" => kl_divergence_l, "kl_divergence_z" => kl_divergence_z)
+    #kl_global = [0.0]
+    #return lossval#, reconst_loss, kl_local, kl_global
+    return m
+end
+function supervised_loss(m::scVAE, x::AbstractMatrix{S}, y::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S <: Real 
+    x = [x]
+    z, qz_m, qz_v, ql_m, ql_v, library = do_inference(m,x)
+    z = [z]
+    px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library)
+    kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) 
+
+    if !m.use_observed_lib_size # TODO!
+        local_library_log_means,local_library_log_vars = _compute_local_library_params() 
+        kl_divergence_l = kl(Normal(ql_m, ql_v.sqrt()),Normal(local_library_log_means, local_library_log_vars.sqrt())).sum(dim=1)
+    else
+        kl_divergence_l = 0.0f0
+    end
+    d = x[1]
+    reconst_loss = get_reconstruction_loss(m, d, px_rate, px_r, px_dropout)
+    kl_local_for_warmup = kl_divergence_z
+    kl_local_no_warmup = kl_divergence_l
+    weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
+
+    enc_loss = Flux.mse(qz_m, y)
+    lossval = mean(reconst_loss + weighted_kl_local)
+    total_loss = enc_loss + lossval
+    return total_loss
+end
 
 function get_reconstruction_loss(m::scVAE, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}, Nothing}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
     return get_reconstruction_loss(Val(m.modality_likelihood), x, px_rate, px_r, px_dropout)
@@ -104,14 +159,33 @@ function get_kl_weight(n_epochs_kl_warmup, n_steps_kl_warmup, current_epoch, glo
     end 
     return kl_weight 
 end
+"""
+    get_latent_representation(m::scVAE, countmatrix::Matrix; 
+        cellindices=nothing, give_mean::Bool=true
+    )
 
-function get_latent_representation(m::scVAE, countmatrix::Matrix; cellindices=nothing, give_mean::Bool=true)
+Computes the latent representation of an `scVAE` model on input count data by applying the `scVAE` encoder. 
+
+Returns the mean (default) or a sample of the latent representation (can be controlled by `give_mean` keyword argument).
+
+**Arguments:**
+-----------------
+ - `m::scVAE`: `scVAE` model from which the encoder is applied to get the latent representation
+ - `countmatrix::Matrix`: matrix of counts (e.g., `countmatrix` field of an `AnnData` object), which is to be embedded with the `scVAE` model encoder. Is assumed to be in a (cell x gene) format.
+
+ **Keyword arguments:**
+ -----------------
+ - `cellindices=nothing`: optional; indices of cells (=rows) on which to subset the `countmatrix` before embedding it 
+ - `give_mean::Bool=true`: optional; if `true`, returns the mean of the latent representation, else returns a sample. 
+"""
+function get_latent_representation(m::scVAE, countmatrix::Matrix; 
+    cellindices=nothing, give_mean::Bool=true
+    )
     # countmatrix assumes cells x genes 
     if !isnothing(cellindices)
         countmatrix = countmatrix[cellindices,:]
     end
-    x = [countmatrix'] 
-    z, qz_m, qz_v, ql_m, ql_v, library = do_inference(m,x)
+    z, qz_m, qz_v, ql_m, ql_v, library = inference(m,countmatrix')
     if give_mean
         return qz_m
     else
