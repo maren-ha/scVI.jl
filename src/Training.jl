@@ -247,7 +247,7 @@ function train_model!(::Type{scMultiVAE_},m,multi_adata::AbstractArray{AnnData},
             
     end
     @info "training complete!"
-    multi_adata.is_trained = true
+    model.is_trained = true
     
     return model, multi_adata, 
     (moes_train=moes_loss, mod1_train=loss_rnas, mod2_train=loss_proteins, 
