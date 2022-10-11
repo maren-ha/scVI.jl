@@ -1,5 +1,4 @@
-"""
-mutable struct TrainingArgs
+"""mutable struct TrainingArgs
 
 Struct to store hyperparameters to control and customise the training process of an `scVAE` or `scMultiVAE_` model. 
 Can be constructed using keywords. 
@@ -30,7 +29,6 @@ Base.@kwdef mutable struct TrainingArgs
     max_epochs::Int = 50
     lr::Float64 = 1e-3
     weight_decay::Float32 = 0.0f0
-    n_epochs_kl_warmup::Int=1
     n_steps_kl_warmup::Union{Int, Nothing}=nothing
     n_epochs_kl_warmup::Union{Int, Nothing}=400
     register_losses::Bool=false
