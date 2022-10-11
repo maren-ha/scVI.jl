@@ -1,6 +1,7 @@
 module scVI
 
 # for data handling
+using DelimitedFiles: include
 using CSV
 using DataFrames
 using HDF5
@@ -36,6 +37,7 @@ include("Utils.jl")
 include("EncoderDecoder.jl")
 include("scVAEmodel.jl")
 include("scVAEmultimodel.jl")
+include("scvis.jl")
 include("scLDVAE.jl")
 include("CountDistributions.jl")
 include("ModelFunctions.jl")
@@ -53,7 +55,8 @@ export
     load_cortex, load_pbmc, init_benchmarking_from_h5ad,load_tasic, subset_tasic!,
     scVAE, scEncoder, scDecoder, scLinearDecoder,scMultiVAE_,scLDVAE,
     TrainingArgs, 
-    train_model!, 
+    train_model!,
+    train_scvis_model!, 
     get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!,
     plot_umap_on_latent, 
