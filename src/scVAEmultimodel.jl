@@ -13,10 +13,12 @@ Base.@kwdef mutable struct scMultiVAE_
     n_layers::Int=1
     dispersion::AbstractArray{Symbol}  # =:gene or =:gene_cell
     dropout_rate::Float32=0.0f0
+    is_trained::Bool=false
     gene_likelihood::Symbol=:zinb
     protein_likelihood::Symbol=:nb
     latent_distribution::Symbol=:normal
     log_variational::Bool=true
+    loss_registry::Dict=Dict()
     use_observed_lib_size::Bool=true
     z_encoder::AbstractArray{scEncoder}
     l_encoder::Union{Nothing, scEncoder}
