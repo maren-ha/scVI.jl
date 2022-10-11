@@ -50,16 +50,18 @@ export
     AnnData,
     init_cortex_from_h5ad, init_library_size,
     highly_variable_genes, highly_variable_genes!, 
-    #subset_to_hvg!,
-    #estimatesizefactorsformatrix, normalizecountdata,
     load_cortex, load_pbmc, init_benchmarking_from_h5ad,load_tasic, subset_tasic!,
+    subset_to_hvg!, estimate_size_factors, normalize_counts, normalize_counts!, 
     scVAE, scEncoder, scDecoder, scLinearDecoder,scMultiVAE_,scLDVAE,
     TrainingArgs, 
     train_model!,
     train_scvis_model!, 
+    #train_supervised_model!,
+    train_scvis_model!, 
     get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!,
     plot_umap_on_latent, 
-    plot_pca_on_latent
+    plot_pca_on_latent,
+    sample_from_prior, sample_from_posterior
 # 
 end
