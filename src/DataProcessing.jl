@@ -23,7 +23,6 @@ Base.@kwdef mutable struct AnnData
     scVI_mod2_latent_umap=nothing
     scVI_mod3_latent_umap=nothing
     scVI_integrated_latent_umap=nothing
-    is_trained::Bool=false
 end
 
 function Base.show(io::IO, a::AnnData)
@@ -404,7 +403,6 @@ function highly_variable_genes(adata::AnnData;
                 inplace=false
     )
 end
-
 """
     subset_to_hvg!(adata::AnnData;
         layer::Union{String,Nothing} = nothing,
