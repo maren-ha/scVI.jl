@@ -30,7 +30,7 @@ function Base.show(io::IO, a::AnnData)
     !isnothing(a.layers) && println(io, "   layers dict with the following keys: $(keys(a.layers))")
     !isnothing(a.summary_stats) && println(io, "   summary statistics dict with the following keys: $(keys(a.summary_stats))")
     !isnothing(a.celltypes) && println(io, "   unique celltypes: $(unique(a.celltypes))")
-    a.is_trained ? println(io, "training status: trained") : println(io, "training status: not trained")
+    #a.is_trained ? println(io, "training status: trained") : println(io, "training status: not trained")
     nothing 
 end
 
