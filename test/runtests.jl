@@ -10,8 +10,7 @@ using TensorBoardLogger: TBLogger, tb_overwrite
     using scVI
     @info "loading data..."
     #adata = load_pbmc()
-    #path_to_gex = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
-    path_to_gex = "./data_sampled/adata_cite_gex_subsample_5000_cells_rep_0_dense.h5ad"
+    path_to_gex = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
     adata = init_benchmarking_from_h5ad(path_to_gex)
 
     library_log_means, library_log_vars = scVI.init_library_size(adata,1) 
