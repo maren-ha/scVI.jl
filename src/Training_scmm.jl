@@ -56,7 +56,7 @@ function train_model!(m::scmmVAE, adata::AnnData, training_args::TrainingArgs,lo
         end
     end
     @info "training complete!"
-    adata.is_trained = true
+    m.is_trained = true
     return m, adata
 end
 ##########################################################################################################################
