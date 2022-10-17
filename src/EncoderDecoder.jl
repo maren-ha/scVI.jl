@@ -130,6 +130,8 @@ function scEncoder(
     end
     if z_tsne
         tsne_space = Dense(n_output,tsne_components)
+    else
+        tsne_space = nothing
     end 
     var_activation = isnothing(var_activation) ? exp : var_activation
 
@@ -144,17 +146,18 @@ function scEncoder(
         var_encoder=var_encoder,
         var_eps=var_eps,
         z_transformation=z_transformation,
-        z_tsne=tsne_space
+        z_tsne=tsne_space,
+        tsne_components=tsne_components
     )
 end
 
-function (Encoder::scEncoder)(x)
+function (Encoder::scEncoder)(x, tsne_turn)
     #x = randn(n_in, batch_size)
     q = Encoder.encoder(x)
     q_m = Encoder.mean_encoder(q)
     q_v = Encoder.var_activation.(Encoder.var_encoder(q)) .+ Encoder.var_eps
     latent = Encoder.z_transformation(reparameterize_gaussian(q_m, q_v))
-    if Encoder.z_tsne
+    if Encoder.z_tsne && tsne_turn
         tsne_latent = Encoder.tsne_space(latent)
     else
         tsne_latent = nothing
@@ -359,11 +362,21 @@ function scDecoder(n_input, n_output;
     end
 
     if z_tsne
-        tsne_t_output = Chain(
+        tsne_t_output = FCLayers(tsne_components, n_hidden; 
+        activation_fn=activation_fn,      
+        bias=bias,
+        dropout_rate=dropout_rate,
+        n_hidden=n_hidden,
+        n_layers=n_layers,
+        use_activation=use_activation,
+        use_batch_norm=use_batch_norm,
+        use_layer_norm=use_layer_norm
+    )
+        "Chain(
             Dense(tsne_components, n_input), # tsne_t_z
             Dense(n_input,n_hidden), # tsne_t_hidden
             Dense(n_hidden,n_output) #  tsne_t_output = size of input data
-        )
+        )"
     else
         tsne_t_output = nothing 
     end
@@ -386,21 +399,20 @@ function scDecoder(n_input, n_output;
     )
 end
 
-function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S},z_tsne::AbstractVecOrMat{S}) where S <: Real
+function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S},tsne_turn::Bool) where S <: Real
     #z = randn(10,1200)
-    px = Decoder.px_decoder(z)
+    
+    if Decoder.z_tsne && tsne_turn
+        px = Decoder.tsne_output(z)
+    else
+        px = Decoder.px_decoder(z) 
+    end
     px_scale = Decoder.px_scale_decoder(px)
     px_dropout = apply_px_dropout_decoder(Decoder.px_dropout_decoder, px)
     px_rate = exp.(library) .* px_scale # # Clamp to high value: exp(12) ~ 160000 to avoid nans (computational stability) # torch.clamp(, max=12)
     px_r = apply_px_r_decoder(Decoder.px_r_decoder, px)
     
-    if Decoder.z_tsne
-        tsne_out = Decoder.tsne_output(z_tsne)
-    else
-        tsne_out = nothing
-    end
-    
-    return px_scale, px_r, px_rate, px_dropout, tsne_out
+    return px_scale, px_r, px_rate, px_dropout
 end
 
 apply_px_dropout_decoder(px_dropout_decoder::Nothing, px::AbstractVecOrMat{S}) where S <: Real = nothing 
