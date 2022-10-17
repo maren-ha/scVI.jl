@@ -48,6 +48,8 @@ Base.@kwdef mutable struct scVAE
     z_encoder::scEncoder
     l_encoder::Union{Nothing, scEncoder}
     decoder::AbstractDecoder
+    train_w_tsne::Bool=false
+    n_tsne_components::Int=2
 end
 
 """
@@ -123,7 +125,9 @@ function scVAE(n_input::Int;
     use_observed_lib_size::Bool=true,
     var_activation=nothing,
     var_eps::Float32=Float32(1e-4),
-    seed::Int=1234
+    seed::Int=1234,
+    train_w_tsne::Bool=false,
+    n_tsne_components::Int=2
     )
 
     Random.seed!(seed)
@@ -167,7 +171,9 @@ function scVAE(n_input::Int;
         use_batch_norm=use_batch_norm_encoder,
         use_layer_norm=use_layer_norm_encoder,
         var_activation=var_activation,
-        var_eps=var_eps
+        var_eps=var_eps,
+        z_tsne=train_w_tsne,
+        tsne_components=n_tsne_components
     )
     # l encoder goes from n_input-dimensional data to 1-d library size
     if use_observed_lib_size
@@ -187,6 +193,29 @@ function scVAE(n_input::Int;
             var_activation=var_activation
         )
     end
+    "
+    if train_w_tsne
+        # input of this encoder is n_latent 
+        # output of this encoder is n_tsne_components
+        tsne_encoder = scEncoder(
+            n_latent, 
+            n_tsne_components; 
+            activation_fn=activation_fn, 
+            bias=bias_encoder, 
+            n_hidden=n_hidden,
+            n_layers=n_layers,
+            distribution=latent_distribution,
+            dropout_rate=dropout_rate,
+            use_activation=use_activation_encoder, 
+            use_batch_norm=use_batch_norm_encoder,
+            use_layer_norm=use_layer_norm_encoder,
+            var_activation=var_activation,
+            var_eps=var_eps
+        )
+    else
+        tsne_encoder = nothing
+    end
+    "
     # decoder goes from n_latent to n_input-dimensional reconstruction 
     n_input_decoder = n_latent
     decoder = scDecoder(n_input_decoder, n_input;
@@ -199,7 +228,9 @@ function scVAE(n_input::Int;
         n_layers=n_layers,
         use_activation=use_activation_decoder,
         use_batch_norm=use_batch_norm_decoder,
-        use_layer_norm=use_layer_norm_decoder
+        use_layer_norm=use_layer_norm_decoder,
+        z_tsne=train_w_tsne,
+        tsne_components=n_tsne_components
     )
 
     return scVAE(n_input=n_input,
@@ -221,12 +252,14 @@ end
 
 function Base.summary(m::scVAE)
     training_status = m.is_trained ? "trained" : "not trained"
+    train_with_tsne_loss = m.train_w_tsne ? "train with tsne loss" : "don't train with tsne loss"
     println("SCVI Model with the following parameters:
      n_hidden: $(m.n_hidden), n_latent: $(m.n_latent), n_layers: $(m.n_layers),
      dropout_rate:$(m.dropout_rate),
      dispersion: $(m.dispersion),
      gene_likelihood: $(m.gene_likelihood),
      latent_distribution: $(m.latent_distribution),
-     training status: $(training_status)"
+     training status: $(training_status),
+     training with tsne: $(train_with_tsne_loss)"
     )
 end
