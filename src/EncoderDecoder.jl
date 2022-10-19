@@ -150,18 +150,20 @@ function scEncoder(
         tsne_components=tsne_components
     )
 end
-
-function (Encoder::scEncoder)(x, tsne_turn)
+#TODO fix the variable names, for training with tsne, they're confusing
+function (Encoder::scEncoder)(x, train_w_tsne ,tsne_turn)
     #x = randn(n_in, batch_size)
     q = Encoder.encoder(x)
     q_m = Encoder.mean_encoder(q)
     q_v = Encoder.var_activation.(Encoder.var_encoder(q)) .+ Encoder.var_eps
     latent = Encoder.z_transformation(reparameterize_gaussian(q_m, q_v))
-    if Encoder.z_tsne && tsne_turn
+    
+    if train_w_tsne && tsne_turn # train tsne latent space ...
         tsne_latent = Encoder.tsne_space(latent)
     else
         tsne_latent = nothing
-    end 
+    end
+
     return q_m, q_v, latent, tsne_latent
 end
 
@@ -399,16 +401,17 @@ function scDecoder(n_input, n_output;
     )
 end
 
-function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S},tsne_turn::Bool) where S <: Real
+function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S},train_w_tsne::Bool,tsne_turn::Bool) where S <: Real
     #z = randn(10,1200)
     
-    if Decoder.z_tsne && tsne_turn
+    if train_w_tsne && tsne_turn
         px = Decoder.tsne_output(z)
     else
         px = Decoder.px_decoder(z) 
     end
     px_scale = Decoder.px_scale_decoder(px)
     px_dropout = apply_px_dropout_decoder(Decoder.px_dropout_decoder, px)
+    #TODO ask Maren about clamping a value 
     px_rate = exp.(library) .* px_scale # # Clamp to high value: exp(12) ~ 160000 to avoid nans (computational stability) # torch.clamp(, max=12)
     px_r = apply_px_r_decoder(Decoder.px_r_decoder, px)
     
