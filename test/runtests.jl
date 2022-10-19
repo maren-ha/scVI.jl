@@ -13,6 +13,7 @@ using CUDA
     using scVI
     @info "loading data..."
     #adata = load_pbmc()
+    # change to your path, or ask Martin for the benchmarking sampled data
     path_to_gex = "/Users/sarajamal/multigrate/data/adata_cite_GEX_subsample_5000_cells_rep_0_dense.h5ad"
     adata = init_benchmarking_from_h5ad(path_to_gex)
 
