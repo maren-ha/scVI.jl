@@ -1,7 +1,10 @@
 using scVI
 using Test
 using Dates
-using TensorBoardLogger: TBLogger, tb_overwrite
+# For logging with tensorboard
+using TensorBoardLogger: TBLogger, tb_overwrite, set_step!, set_step_increment!
+using Logging: with_logger
+using CUDA
 
 
 @testset "scVI.jl" begin
@@ -10,7 +13,7 @@ using TensorBoardLogger: TBLogger, tb_overwrite
     using scVI
     @info "loading data..."
     #adata = load_pbmc()
-    path_to_gex = "./data_sampled/adata_cite_protein_subsample_5000_cells_rep_0_dense.h5ad"
+    path_to_gex = "/Users/sarajamal/multigrate/data/adata_cite_GEX_subsample_5000_cells_rep_0_dense.h5ad"
     adata = init_benchmarking_from_h5ad(path_to_gex)
 
     library_log_means, library_log_vars = scVI.init_library_size(adata,1) 
@@ -32,23 +35,21 @@ using TensorBoardLogger: TBLogger, tb_overwrite
     m = scVAE(size(adata.countmatrix,2);
             library_log_means=library_log_means,
             n_latent=10,
-            modality_likelihood=:zinb, 
-            dispersion=:gene
+            gene_likelihood=:zinb, 
+            dispersion=:gene,
+            train_w_tsne=false
     )
     print(summary(m))
     training_args = TrainingArgs(
-        max_epochs=10, 
+        max_epochs=50, 
         lr = 1e-3,
         weight_decay=Float32(1e-6),
-        log_path = logging_path,
-        verbose=true,
-        verbose_freq=1
-    )
-    logger = TBLogger(training_args.log_path, tb_overwrite)
-    x = [adata]
-    # calling training by model ...
-    m, adata = scVI.start_training(m, x, training_args,logger)
-    #train_model!(m, adata, training_args,logger)
+        savepath = logging_path,
+        verbose=true
+        )
+    logger = TBLogger(training_args.savepath, tb_overwrite)
+    x = [adata] # this is an ugly adaptation so our inference can work with 1 modality & more ...
+    m, adata, losses = scVI.start_training!(m, x, training_args,logger)
     register_latent_representation!(adata, m)
     plot_umap_on_latent(m, adata, filename="$(figures_path)/UMAP_on_latent_ZINB_RNA.pdf")
 end
