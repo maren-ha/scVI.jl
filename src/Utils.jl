@@ -63,3 +63,6 @@ function plot_losses(nepoch,
     xlabel="number of epoch", ylabel="log10(MultiVAE loss)", legend=:topright)
     savefig(figure,"$(figure_path)/traing_loss.png")
 end 
+
+num_params(model) = sum(length, Flux.params(model))
+round4(x) = round(x, digits=4)
