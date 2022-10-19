@@ -1,6 +1,7 @@
 module scVI
 
 # for data handling
+using Base: Bool
 using DelimitedFiles: include
 using CSV
 using DataFrames
@@ -25,7 +26,7 @@ using UMAP
 using VegaLite
 
 #logging 
-using TensorBoardLogger: TBLogger, tb_overwrite
+using TensorBoardLogger: TBLogger, tb_overwrite, set_step!, set_step_increment!
 using Logging: with_logger
 # adata_rna.obs.rename(columns = {'':'n_genes_by_counts', :''}, inplace = True)
 
@@ -37,7 +38,6 @@ include("Utils.jl")
 include("EncoderDecoder.jl")
 include("scVAEmodel.jl")
 include("scVAEmultimodel.jl")
-include("scvis.jl")
 include("scLDVAE.jl")
 include("CountDistributions.jl")
 include("ModelFunctions.jl")
@@ -55,9 +55,7 @@ export
     scVAE, scEncoder, scDecoder, scLinearDecoder,scMultiVAE_,scLDVAE,
     TrainingArgs, 
     train_model!,
-    train_scvis_model!, 
     #train_supervised_model!,
-    train_scvis_model!, 
     get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!,
     plot_umap_on_latent, 
