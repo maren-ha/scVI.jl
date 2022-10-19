@@ -1,19 +1,19 @@
-function do_inference(m, x::AbstractVector{Matrix{S}}) where S <: Real
-    inference(typeof(m),m,x::AbstractVector{Matrix{S}})
+function do_inference(m, x::AbstractVector{Matrix{S}},tsne_turn::Bool=false) where S <: Real
+    inference(typeof(m),m,x,tsne_turn)
 end
 
-function do_generative(m, z::AbstractVector{Matrix{S}}, library::AbstractMatrix{S})where S <: Real
-    generative(typeof(m),m,z,library)
+function do_generative(m, z::AbstractVector{Matrix{S}}, library::AbstractMatrix{S},tsne_turn::Bool=false)where S <: Real
+    generative(typeof(m),m,z,library,m.train_w_tsne,tsne_turn)
 end
 
-function inference(::Type{scVAE},m, x::AbstractVector{Matrix{S}}) where S <: Real 
+function inference(::Type{scVAE},m, x::AbstractVector{Matrix{S}},tsne_turn::Bool=false) where S <: Real 
     # unpack the data 
     x = x[1]
     encoder_input = m.log_variational ? log.(one(S) .+ x) : x
-    qz_m, qz_v, z = m.z_encoder(encoder_input)
+    qz_m, qz_v, z, z_tsne = m.z_encoder(encoder_input,m.train_w_tsne,tsne_turn)
     ql_m, ql_v = nothing, nothing 
     library = get_library(m, x, encoder_input)
-    return z, qz_m, qz_v, ql_m, ql_v, library
+    return z, qz_m, qz_v, ql_m, ql_v, library, z_tsne
 end
 
 function get_library(m, x::AbstractMatrix{S}, encoder_input::AbstractMatrix{S}) where S <: Real
@@ -32,10 +32,10 @@ function get_library(::Val{:false}, x::AbstractMatrix{S}, encoder_input::Abstrac
     return library
 end
 
-function generative(::Type{scVAE},m, z::AbstractVector{Matrix{S}}, library::AbstractMatrix{S}) where S <: Real 
+function generative(::Type{scVAE},m, z::AbstractVector{Matrix{S}}, library::AbstractMatrix{S},train_w_tsne::Bool=false,tsne_turn::Bool=false) where S <: Real 
     decoder_input = z[1]
     # categorical_input=()
-    px_scale, px_r, px_rate, px_dropout = m.decoder(decoder_input, library)
+    px_scale, px_r, px_rate, px_dropout = m.decoder(decoder_input, library,m.train_w_tsne,tsne_turn)
     #px_scale, px_r, px_rate = m.decoder(decoder_input, library)
     #if m.dispersion == :gene # some other cases (:gene-batch, :gene-label ignored)
     #    px_r = m.px_r
@@ -44,12 +44,12 @@ function generative(::Type{scVAE},m, z::AbstractVector{Matrix{S}}, library::Abst
     return px_scale, px_r, px_rate, px_dropout
    
 end
-function loss(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S <: Real
+function loss(m::scVAE, x::AbstractMatrix{S}; tsne_turn::Bool=false, kl_weight::Float32=1.0f0) where S <: Real
     # pack the data in an array 
     x = [x]
-    z, qz_m, qz_v, ql_m, ql_v, library = do_inference(m, x)
+    z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m, x,tsne_turn)
     z = [z]
-    px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library)
+    px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library,tsne_turn)
     kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
     # equivalent to kl_divergence_z = torch.distributions.kl.kl_divergence(torch.distributions.Normal(qz_m, qz_v.sqrt()), torch.distributions.Normal(mean, scale)).sum(dim=1)
 
@@ -60,11 +60,15 @@ function loss(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S 
         kl_divergence_l = 0.0f0
     end
     d = x[1] 
-    reconst_loss = get_reconstruction_loss(m, Float32.(d), Float32.(px_rate), (px_r), (px_dropout))
+    reconst_loss = get_reconstruction_loss(m, Float32.(d), Float32.(px_rate), Float32.(px_r), Float32.(px_dropout))
     kl_local_for_warmup = kl_divergence_z
     kl_local_no_warmup = kl_divergence_l
     weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
 
+    #TODO add the tsne loss
+    if tsne_turn & m.train_w_tsne
+        # calculate tsne loss 
+    end 
     lossval = mean(reconst_loss + weighted_kl_local)
     #kl_local = Dict("kl_divergence_l" => kl_divergence_l, "kl_divergence_z" => kl_divergence_z)
     #kl_global = [0.0]
@@ -86,7 +90,7 @@ function register_losses!(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0
         kl_divergence_l = 0.0f0
     end
     d = x[1]
-    reconst_loss = get_reconstruction_loss(m, Float32.(d), Float32.(px_rate), px_r, px_dropout)
+    reconst_loss = get_reconstruction_loss(m, Float32.(d), Float32.(px_rate), Float32.(px_r), Float32.(px_dropout))
     kl_local_for_warmup = kl_divergence_z
     kl_local_no_warmup = kl_divergence_l
     weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
@@ -128,7 +132,7 @@ function supervised_loss(m::scVAE, x::AbstractMatrix{S}, y::AbstractMatrix{S}; k
 end
 
 function get_reconstruction_loss(m::scVAE, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}, Nothing}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
-    return get_reconstruction_loss(Val(m.modality_likelihood), x, px_rate, px_r, px_dropout)
+    return get_reconstruction_loss(Val(m.gene_likelihood), x, px_rate, px_r, px_dropout)
 end
 
 function get_reconstruction_loss(::Val{:zinb}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::AbstractArray{S}, px_dropout::AbstractMatrix{S}) where S <: Real 
@@ -179,13 +183,20 @@ Returns the mean (default) or a sample of the latent representation (can be cont
  - `give_mean::Bool=true`: optional; if `true`, returns the mean of the latent representation, else returns a sample. 
 """
 function get_latent_representation(m::scVAE, countmatrix::Matrix; 
-    cellindices=nothing, give_mean::Bool=true
-    )
+    cellindices=nothing, give_mean::Bool=true)
     # countmatrix assumes cells x genes 
     if !isnothing(cellindices)
         countmatrix = countmatrix[cellindices,:]
+        countmatrix = copy(countmatrix')
+    else
+        countmatrix = copy(countmatrix')
     end
-    z, qz_m, qz_v, ql_m, ql_v, library = inference(m,countmatrix')
+
+    if m.train_w_tsne
+        z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m,[countmatrix],false)
+    else
+        z, qz_m, qz_v, ql_m, ql_v, library, _ = do_inference(m,[countmatrix],false)
+    end
     if give_mean
         return qz_m
     else
@@ -227,7 +238,7 @@ function loss(m::scMultiVAE_, x::AbstractVector{Matrix{S}}; kl_weight::Float32=1
 end
 
 #### multimodal inferenc ####
-function inference(::Type{scMultiVAE_},m, x::AbstractVector{Matrix{S}}) where S <: Real
+function inference(::Type{scMultiVAE_},m, x::AbstractVector{Matrix{S}},train_w_tsne,tsne_turn) where S <: Real
     
     mod1, mod2 = x[1], x[2]
 
@@ -248,7 +259,7 @@ function inference(::Type{scMultiVAE_},m, x::AbstractVector{Matrix{S}}) where S 
     return Float32.(z_gex),Float32.(z_protein), Float32.(qz_m), Float32.(qz_v),Float32.(qz_m_p), Float32.(qz_v_p), ql_m, ql_v, Float32.(library)
 end 
 
-function generative(::Type{scMultiVAE_},m, z::AbstractVector{Matrix{S}},library::AbstractMatrix{S}) where S <: Real
+function generative(::Type{scMultiVAE_},m, z::AbstractVector{Matrix{S}},library::AbstractMatrix{S},train_w_tsne,tsne_turn) where S <: Real
     
     z_rna, z_protein = z[1], z[2]
     # unpack decoders 
