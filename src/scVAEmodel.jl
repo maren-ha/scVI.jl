@@ -48,7 +48,7 @@ Base.@kwdef mutable struct scVAE
     z_encoder::scEncoder
     l_encoder::Union{Nothing, scEncoder}
     decoder::AbstractDecoder
-    train_w_tsne::Bool=false
+    train_w_tsne::Bool=true
     n_tsne_components::Int=2
 end
 
@@ -126,7 +126,7 @@ function scVAE(n_input::Int;
     var_activation=nothing,
     var_eps::Float32=Float32(1e-4),
     seed::Int=1234,
-    train_w_tsne::Bool=false,
+    train_w_tsne::Bool=true,
     n_tsne_components::Int=2
     )
 
@@ -172,7 +172,7 @@ function scVAE(n_input::Int;
         use_layer_norm=use_layer_norm_encoder,
         var_activation=var_activation,
         var_eps=var_eps,
-        z_tsne=train_w_tsne,
+        train_tsne=train_w_tsne,
         tsne_components=n_tsne_components
     )
     # l encoder goes from n_input-dimensional data to 1-d library size
@@ -217,6 +217,13 @@ function scVAE(n_input::Int;
     end
     "
     # decoder goes from n_latent to n_input-dimensional reconstruction 
+    ""
+    if train_w_tsne
+        tsne_components = n_tsne_components
+    else
+        n_input_decoder = n_latent
+    end  
+    ""
     n_input_decoder = n_latent
     decoder = scDecoder(n_input_decoder, n_input;
         activation_fn=activation_fn, 
@@ -246,8 +253,8 @@ function scVAE(n_input::Int;
         use_observed_lib_size=use_observed_lib_size,
         z_encoder=z_encoder,
         l_encoder=l_encoder,
-        decoder=decoder
-    )
+        decoder=decoder,
+        train_w_tsne=train_w_tsne)
 end
 
 function Base.summary(m::scVAE)
