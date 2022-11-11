@@ -5,6 +5,8 @@ using Dates
 using TensorBoardLogger: TBLogger, tb_overwrite, set_step!, set_step_increment!
 using Logging: with_logger
 using CUDA
+using VegaLite
+using UMAP 
 
 
 @testset "scVI.jl" begin
@@ -22,7 +24,7 @@ using CUDA
     isdir("./src/runs/") || mkdir("./src/runs/")
     ############ Folders for experiments documentation ###############
     timestamp = Dates.format(now(),"dd_mm_yyyy_HHMM")
-    remarks = "test_uni_scvi"
+    remarks = "test_scvi_tsne"
     isdir("./src/runs/experiment_$(remarks)_$(timestamp)") || mkdir("./src/runs/experiment_$(remarks)_$(timestamp)")
     experiment_path = "./src/runs/experiment_$(remarks)_$(timestamp)"
     isdir("$(experiment_path)/log/") || mkdir("$(experiment_path)/log/")
@@ -38,19 +40,39 @@ using CUDA
             n_latent=10,
             gene_likelihood=:zinb, 
             dispersion=:gene,
-            train_w_tsne=false
+            train_w_tsne = true
     )
     print(summary(m))
     training_args = TrainingArgs(
-        max_epochs=50, 
+        max_epochs=25, 
         lr = 1e-3,
         weight_decay=Float32(1e-6),
         savepath = logging_path,
-        verbose=true
-        )
+        verbose=true,
+        progress=true,
+        train_w_tsne=true)
     logger = TBLogger(training_args.savepath, tb_overwrite)
-    x = [adata] # this is an ugly adaptation so our inference can work with 1 modality & more ...
+    # this is an ugly adaptation so our inference can work with 1 modality & more ...
+    x = [adata]
     m, adata, losses = scVI.start_training!(m, x, training_args,logger)
-    register_latent_representation!(adata, m)
-    plot_umap_on_latent(m, adata, filename="$(figures_path)/UMAP_on_latent_ZINB_RNA.pdf")
+    if m.train_w_tsne
+        adata=register_latent_representation!(adata, m,false)
+        # plot - to be changed and wrapped in a function ... 
+        tsne_plot = @vlplot(:point, title="TSNE latent representation", 
+                            x = adata.scVI_tsne_latent[1,:], 
+                            y = adata.scVI_tsne_latent[2,:], 
+                            color = adata.celltypes, 
+                            width = 800, height=500)
+        
+        adata.scVI_latent_umap = umap(adata.scVI_latent, 2; min_dist=0.3)
+        umap_plot = @vlplot(:point, title="UMAP latent representation", 
+        x = adata.scVI_latent_umap[1,:], 
+        y = adata.scVI_latent_umap[2,:], 
+        color = adata.celltypes, 
+        width = 800, height=500)
+        tsne(copy(adata.scVI_latent')) # expects cells x dim
+    else
+        register_latent_representation!([adata], m)
+        plot_umap_on_latent(m, adata, filename="$(figures_path)/UMAP_on_latent_ZINB_RNA.pdf")
+    end 
 end
