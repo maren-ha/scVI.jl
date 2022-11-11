@@ -34,6 +34,7 @@ Base.@kwdef mutable struct scEncoder
     var_encoder
     var_eps
     z_transformation
+    train_tsne
     z_tsne
     tsne_components
 end
@@ -59,8 +60,8 @@ Flux.@functor scEncoder
         use_layer_norm::Bool=false,
         var_activation=nothing,
         var_eps::Float32=Float32(1e-4),
-        z_tsne::Bool=true,
-        tsne_components::Int=2
+        tsne_components::Int=2,
+        z_tsne::Bool=true
     )
 
 Constructor for an `scVAE` encoder. Initialises an `scEncoder` object according to the input parameters. 
@@ -101,8 +102,8 @@ function scEncoder(
     use_layer_norm::Bool=false,
     var_activation=nothing,
     var_eps::Float32=Float32(1e-4),
-    z_tsne::Bool=false,
-    tsne_components::Int=2
+    tsne_components::Int=2,
+    train_tsne::Bool=false
     )
 
     encoder = FCLayers(n_input, n_hidden;
@@ -128,7 +129,7 @@ function scEncoder(
         distribution = :normal
         z_transformation = identity
     end
-    if z_tsne
+    if train_tsne
         tsne_space = Dense(n_output,tsne_components)
     else
         tsne_space = nothing
@@ -146,11 +147,12 @@ function scEncoder(
         var_encoder=var_encoder,
         var_eps=var_eps,
         z_transformation=z_transformation,
-        z_tsne=tsne_space,
-        tsne_components=tsne_components
+        train_tsne=train_tsne,
+        tsne_components=tsne_components,
+        z_tsne=tsne_space
     )
 end
-#TODO fix the variable names, for training with tsne, they're confusing
+#TODO unify the datatype for the whole code to Float32, this means we need to run test for all settings
 function (Encoder::scEncoder)(x, train_w_tsne ,tsne_turn)
     #x = randn(n_in, batch_size)
     q = Encoder.encoder(x)
@@ -159,12 +161,12 @@ function (Encoder::scEncoder)(x, train_w_tsne ,tsne_turn)
     latent = Encoder.z_transformation(reparameterize_gaussian(q_m, q_v))
     
     if train_w_tsne && tsne_turn # train tsne latent space ...
-        tsne_latent = Encoder.tsne_space(latent)
+        tsne_latent = Encoder.z_tsne(latent)
     else
         tsne_latent = nothing
     end
 
-    return q_m, q_v, latent, tsne_latent
+    return (q_m), (q_v), (latent), (tsne_latent)
 end
 
 #-------------------------------------------------------------------------------------
@@ -298,7 +300,7 @@ Julia implementation of the [`scvi-tools` decoder](https://github.com/scverse/sc
 
 **Arguments:**
 ---------------------------
-- `n_input`: input dimension of the decoder = latent space dimension
+- `n_input`: input dimension of the decoder = latent space dimension/ or tsne latent space 
 - `n_output`: output dimension = number of genes/features in the data 
 
 **Keyword arguments:**
@@ -326,11 +328,14 @@ function scDecoder(n_input, n_output;
     use_activation::Bool=true,
     use_batch_norm::Bool=true,
     use_layer_norm::Bool=false,
-    z_tsne::Bool=false,
+    z_tsne::Bool=true,
     tsne_components::Int=2
     )
+    
+    if z_tsne
+        tsne_t_output = Dense(tsne_components, n_input) # tsne_t_z 2 x 10
 
-    px_decoder = FCLayers(n_input, n_hidden; 
+        px_decoder = FCLayers(n_input,n_hidden ; 
         activation_fn=activation_fn,      
         bias=bias,
         dropout_rate=dropout_rate,
@@ -338,9 +343,19 @@ function scDecoder(n_input, n_output;
         n_layers=n_layers,
         use_activation=use_activation,
         use_batch_norm=use_batch_norm,
-        use_layer_norm=use_layer_norm
-    )
-
+        use_layer_norm=use_layer_norm)
+    else
+        px_decoder = FCLayers(n_input, n_hidden; 
+        activation_fn=activation_fn,      
+        bias=bias,
+        dropout_rate=dropout_rate,
+        n_hidden=n_hidden,
+        n_layers=n_layers,
+        use_activation=use_activation,
+        use_batch_norm=use_batch_norm,
+        use_layer_norm=use_layer_norm)
+        tsne_t_output = nothing 
+    end
     # mean Gamma 
     px_scale_decoder = Chain(
         Dense(n_hidden, n_output), 
@@ -362,27 +377,6 @@ function scDecoder(n_input, n_output;
     else
         px_r_decoder = nothing 
     end
-
-    if z_tsne
-        tsne_t_output = FCLayers(tsne_components, n_hidden; 
-        activation_fn=activation_fn,      
-        bias=bias,
-        dropout_rate=dropout_rate,
-        n_hidden=n_hidden,
-        n_layers=n_layers,
-        use_activation=use_activation,
-        use_batch_norm=use_batch_norm,
-        use_layer_norm=use_layer_norm
-    )
-        "Chain(
-            Dense(tsne_components, n_input), # tsne_t_z
-            Dense(n_input,n_hidden), # tsne_t_hidden
-            Dense(n_hidden,n_output) #  tsne_t_output = size of input data
-        )"
-    else
-        tsne_t_output = nothing 
-    end
-
     px_dropout_decoder = (gene_likelihood == :zinb) ? Dense(n_hidden, n_output) : nothing
 
     return scDecoder(
@@ -403,9 +397,10 @@ end
 
 function (Decoder::scDecoder)(z::AbstractVecOrMat{S}, library::AbstractVecOrMat{S},train_w_tsne::Bool,tsne_turn::Bool) where S <: Real
     #z = randn(10,1200)
-    
-    if train_w_tsne && tsne_turn
-        px = Decoder.tsne_output(z)
+    # this is an alternative solution in case solution1 did not work since there is no
+    if train_w_tsne
+        px_tsne = Decoder.tsne_output(z) # tsne_components = 2 x latent = 10 
+        px = Decoder.px_decoder(px_tsne) # latent = 10 x 128
     else
         px = Decoder.px_decoder(z) 
     end
