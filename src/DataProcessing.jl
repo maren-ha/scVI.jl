@@ -14,6 +14,7 @@ Base.@kwdef mutable struct AnnData
     train_inds=nothing
     dataloader=nothing
     scVI_latent=nothing
+    scVI_tsne_latent=nothing
     scVI_mod1_latent=nothing
     scVI_mod2_latent=nothing
     scVI_mod3_latent=nothing
