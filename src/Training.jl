@@ -76,7 +76,8 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
     end
     adata = adata[1]
     ## move the model to a device ...
-    model = m|> device
+    #model = m|> device
+    model = m
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(args.weight_decay), ADAM(args.lr))
     ps = Flux.params(model)
     
@@ -90,7 +91,8 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
         train_inds = collect(1:adata.ncells);
     end
 
-    tsne_turn = false 
+    tsne_turn = false
+    #TODO I need to fix this like Maren's code ...
     if args.register_losses
         model.loss_registry["kl_l"] = []
         model.loss_registry["kl_z"] = []
@@ -108,11 +110,13 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
         
     function report(epoch,kl_weight) 
         
-        train = objective_unimodel_callback(model,adata.countmatrix[train_inds,:]',tsne_turn=false,kl_weight=kl_weight)
+        train = objective_unimodel_callback(model,copy(adata.countmatrix[train_inds,:]'),tsne_turn=false,kl_weight=kl_weight)
         push!(kl_z,train.kl_d)
         push!(recon_loss,train.recon_loss)
         push!(total_loss,train.total_loss)
-            
+        if tsne_turn && model.train_w_tsne
+            push!(tsne_loss,train.tsne_signal)
+        end   
         println("Epoch: $epoch   Train: $(train)")
             
         if args.tblogger
@@ -120,8 +124,9 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
             with_logger(logger) do
                 @info "train_reconstruction_error" reconstruction=train.recon_loss 
                 @info "train_kl_divergence" kl_divergence=train.kl_d
-                if tsne_turn
-                    @info "train_tsne_loss" tsne_loss=train.tsne_loss
+                @info "the tsne turn is:" tsne_turn
+                if model.train_w_tsne
+                    @info "train_tsne_loss" tsne_loss=train.tsne_signal
                 end
                 @info "train_total_loss" total_loss=train.total_loss
 
@@ -136,10 +141,13 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
 
     for epoch in 1:args.max_epochs
         kl_weight = get_kl_weight(args.n_epochs_kl_warmup, args.n_steps_kl_warmup, epoch, 0)
+        if epoch % 1 == 0 && model.train_w_tsne
+            tsne_turn = true
+        end
         for d in dataloader
             d = d |> device
             curloss, back = Flux.pullback(ps) do 
-                loss(model, d; tsne_turn, kl_weight=kl_weight)    
+                loss(model, d; tsne_turn,epoch, kl_weight=kl_weight)    
             end
             grad = back(1f0)
             if args.progress
@@ -150,7 +158,6 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
         end
         #TODO activate the registry from Maren!
         #args.register_losses && register_losses!(model, Float32.(adata.countmatrix[train_inds,:]'); kl_weight=kl_weight)
-        
         ## Printing and logging
         epoch % args.infotime == 0 && report(epoch,kl_weight)
         if args.checktime > 0 && epoch % args.checktime == 0
@@ -160,50 +167,75 @@ function train_model!(::Type{scVAE},m, adata::AbstractArray{AnnData}, training_a
                   BSON.@save modelpath model epoch
             end
             @info "Model saved in \"$(modelpath)\""
-        end        
+        end
+        tsne_turn = false      
     end
     @info "training complete!"
     model.is_trained = true
     if model.train_w_tsne #TODO in the coming comits we will have tsne loss added
-        return model, adata ,(total_loss=total_loss, reconstruction_loss=recon_loss, kl_d=kl_z,tsne_loss=0)
+        return model, adata ,(total_loss=total_loss, reconstruction_loss=recon_loss, kl_d=kl_z,tsne_signal=tsne_loss)
     else
         return model, adata ,(total_loss=total_loss, reconstruction_loss=recon_loss, kl_d=kl_z)
     end
 end
 #############################################
 #TODO this fuction for reporting while training, I will move it to train utils in the coming commits
-function objective_unimodel_callback(m::scVAE, x::AbstractMatrix{S}; tsne_turn=false,kl_weight::Float32=1.0f0) where S <: Real 
-        # pack the data in an array 
-        x = copy(x)# to get rid of adjoint
-        x = [x] 
-        z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m, x,tsne_turn)
-        z = copy(z)# to get rid of adjoint
-        z = [z] 
+# We are not computing the loss at every epoch 
+# Rather that every a few epochs when the z is trained however, we are training the (Dense=10x2) and (Dense=2x10) 
+function objective_unimodel_callback(m::scVAE, x::AbstractMatrix{S}; epoch::Int64=1,tsne_turn=true,kl_weight::Float32=1.0f0) where S <: Real 
+    # pack the data in an array 
+    x = [x]
+    z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m, x,true)
+    #z_copy = deepcopy(z)
+    if  m.train_w_tsne
+            # compute the prob matrix
+            X = z' * (1.0/std(z')::eltype(z')) # cell x vars
+            # comput the distance matrix of the high dimensional data
+            D = pairwise(SqEuclidean(), X') # (n_samples x n_samples) 
+            (issymmetric(D) && all(x -> x >= 0, D)) ||
+            throw(ArgumentError("Distance matrix D must be symmetric and positive"))
+            P = compute_transition_probs(D) # because z is 10 x 128 and we need n_samples x n_samples
+            #P = copy(P') # go back to original dimentsion 
+    end
+    # save z_tsne for plotting
+    z = [z]
+    if m.train_w_tsne
+        z_tsne = [z_tsne]
+        px_scale, px_r, px_rate, px_dropout = do_generative(m, z_tsne, library,true)
+    else 
         px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library,tsne_turn)
-        kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
-        # equivalent to kl_divergence_z = torch.distributions.kl.kl_divergence(torch.distributions.Normal(qz_m, qz_v.sqrt()), torch.distributions.Normal(mean, scale)).sum(dim=1)
-    
-        if !m.use_observed_lib_size # TODO!
-            local_library_log_means,local_library_log_vars = _compute_local_library_params() 
-            kl_divergence_l = kl(Normal(ql_m, ql_v.sqrt()),Normal(local_library_log_means, local_library_log_vars.sqrt())).sum(dim=1)
-        else
-            kl_divergence_l = 0.0f0
-        end
-        d = x[1]
-        reconst_loss = get_reconstruction_loss(m, copy(Float32.(d)), Float32.(px_rate), Float32.(px_r), Float32.(px_dropout))
-        kl_local_for_warmup = kl_divergence_z
-        kl_local_no_warmup = kl_divergence_l
-        weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
-    
-        #TODO add the tsne loss
-        if tsne_turn & m.train_w_tsne
-            # calculate tsne loss 
-        end 
+    end 
+   
+    kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
+    # equivalent to kl_divergence_z = torch.distributions.kl.kl_divergence(torch.distributions.Normal(qz_m, qz_v.sqrt()), torch.distributions.Normal(mean, scale)).sum(dim=1)
+
+    if !m.use_observed_lib_size # TODO!
+        local_library_log_means,local_library_log_vars = _compute_local_library_params() 
+        kl_divergence_l = kl(Normal(ql_m, ql_v.sqrt()),Normal(local_library_log_means, local_library_log_vars.sqrt())).sum(dim=1)
+    else
+        kl_divergence_l = 0.0f0
+    end
+    d = x[1] 
+    reconst_loss = get_reconstruction_loss(m, Float32.(d), Float32.(px_rate), Float32.(px_r), Float32.(px_dropout))
+    kl_local_for_warmup = kl_divergence_z
+    kl_local_no_warmup = kl_divergence_l
+    weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
+
+    #TODO add the tsne loss
+    # tsne_turn & m.train_w_tsne
+    if  m.train_w_tsne
+        # calculate tsne loss 
+        #tsne_repel expects z = batch_size x num_dims
+        tsne_loss = tsne_repel(copy(Float32.(z[1])'), P) *  min(epoch, size(x,1))
+        lossval = mean(reconst_loss + weighted_kl_local) + tsne_loss
+    else
         lossval = mean(reconst_loss + weighted_kl_local)
-        #kl_local = Dict("kl_divergence_l" => kl_divergence_l, "kl_divergence_z" => kl_divergence_z)
-        #kl_global = [0.0]
-        #return lossval#, reconst_loss, kl_local, kl_global
+    end 
+    if m.train_w_tsne
+        return (total_loss=lossval |> round4 , recon_loss=mean(reconst_loss) |> round4, kl_d=mean(kl_divergence_z) |> round4, tsne_signal=(tsne_loss)|> round4)
+    else 
         return (total_loss=lossval |> round4 , recon_loss=mean(reconst_loss) |> round4, kl_d=mean(kl_divergence_z) |> round4)
+    end
 end
 ##########################################################################################################################
 #TODO make this ugly implementation nicer abnd move it to a train utils file 
