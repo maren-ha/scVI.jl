@@ -1,7 +1,12 @@
-function register_latent_representation!(adata::AnnData, m::scVAE)
-    adata.scVI_latent = get_latent_representation(m, adata.countmatrix)
-    @info "latent representation added"
-    return adata 
+function register_latent_representation!(adata::AnnData, m::scVAE, give_mean::Bool=true)
+    if m.train_w_tsne
+        adata.scVI_latent, adata.scVI_tsne_latent = get_latent_representation(m, adata.countmatrix, give_mean=give_mean)
+        @info "latent representation & tsne latent added!"
+    else
+        adata.scVI_latent = get_latent_representation(m, adata.countmatrix, give_mean=give_mean)
+        @info "latent representation added!"
+    end
+        return adata 
 end
 
 function register_multilatent_representation!(multiadata::AnnData, model::scMultiVAE_ ;save_latent::Bool=false,experiment_path::String="integrated_latent_space.csv")
