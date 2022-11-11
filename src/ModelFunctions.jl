@@ -1,3 +1,4 @@
+#TODO write String Doc for this file
 function do_inference(m, x::AbstractVector{Matrix{S}},tsne_turn::Bool=false) where S <: Real
     inference(typeof(m),m,x,tsne_turn)
 end
@@ -44,12 +45,30 @@ function generative(::Type{scVAE},m, z::AbstractVector{Matrix{S}}, library::Abst
     return px_scale, px_r, px_rate, px_dropout
    
 end
-function loss(m::scVAE, x::AbstractMatrix{S}; tsne_turn::Bool=false, kl_weight::Float32=1.0f0) where S <: Real
+function loss(m::scVAE, x::AbstractMatrix{S}; tsne_turn::Bool=false, epoch::Int64=1,kl_weight::Float32=1.0f0) where S <: Real
     # pack the data in an array 
     x = [x]
     z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m, x,tsne_turn)
+    #z_copy = deepcopy(z)
+    if tsne_turn & m.train_w_tsne
+            # compute the prob matrix
+            X = z' * (1.0/std(z')::eltype(z')) # cell x vars
+            # comput the distance matrix of the high dimensional data
+            D = pairwise(SqEuclidean(), X') # (n_samples x n_samples) 
+            (issymmetric(D) && all(x -> x >= 0, D)) ||
+            throw(ArgumentError("Distance matrix D must be symmetric and positive"))
+            P = compute_transition_probs(D) # because z is 10 x 128 and we need n_samples x n_samples
+            #P = copy(P') # go back to original dimentsion 
+    end
+    # save z_tsne for plotting
     z = [z]
-    px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library,tsne_turn)
+    if m.train_w_tsne
+        z_tsne = [z_tsne]
+        px_scale, px_r, px_rate, px_dropout = do_generative(m, z_tsne, library,tsne_turn)
+    else 
+        px_scale, px_r, px_rate, px_dropout = do_generative(m, z, library,tsne_turn)
+    end 
+   
     kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
     # equivalent to kl_divergence_z = torch.distributions.kl.kl_divergence(torch.distributions.Normal(qz_m, qz_v.sqrt()), torch.distributions.Normal(mean, scale)).sum(dim=1)
 
@@ -68,8 +87,13 @@ function loss(m::scVAE, x::AbstractMatrix{S}; tsne_turn::Bool=false, kl_weight::
     #TODO add the tsne loss
     if tsne_turn & m.train_w_tsne
         # calculate tsne loss 
+        #tsne_repel expects z = batch_size x num_dims
+        tsne_loss = tsne_repel(copy(Float32.(z[1])'), P) *  min(epoch, size(x,1))
+        lossval = mean(reconst_loss + weighted_kl_local) + tsne_loss
+    else
+        lossval = mean(reconst_loss + weighted_kl_local)
     end 
-    lossval = mean(reconst_loss + weighted_kl_local)
+    
     #kl_local = Dict("kl_divergence_l" => kl_divergence_l, "kl_divergence_z" => kl_divergence_z)
     #kl_global = [0.0]
     #return lossval#, reconst_loss, kl_local, kl_global
@@ -163,6 +187,25 @@ function get_kl_weight(n_epochs_kl_warmup, n_steps_kl_warmup, current_epoch, glo
     end 
     return kl_weight 
 end
+
+function tsne_repel(z::AbstractMatrix{S}, P::AbstractMatrix{S}) where S <: Real 
+    batchsize = S.(size(z,1))
+    nu = batchsize - one(S) # 127
+    sum_y = vec(sum(z'.^2, dims=1)) # 128
+    num = SliceMap.mapcols(x -> x + sum_y, -2.0f0 .* (z*z'))' # 128 x 128
+    num = SliceMap.mapcols(x -> x + sum_y, num)# 128 x 128
+    num = num ./ nu  # 128 x 128
+
+    p = P .+ (0.1f0/size(z,2)) # 128 x 128
+    sum_p = vec(sum(p, dims=2)) # 128
+    p = SliceMap.maprows(x -> x ./ sum_p, p)
+    num = (1.0f0 .+ num).^(-(0.5f0*(nu .+ 1.0f0)))
+
+    attraction = -sum(p .* (log.(num)))
+    repellant = sum((log.(sum(num, dims=2)).- 1.0f0))
+    return (repellant + attraction) ./ batchsize
+end
+
 """
     get_latent_representation(m::scVAE, countmatrix::Matrix; 
         cellindices=nothing, give_mean::Bool=true
@@ -193,14 +236,19 @@ function get_latent_representation(m::scVAE, countmatrix::Matrix;
     end
 
     if m.train_w_tsne
-        z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m,[countmatrix],false)
+        z, qz_m, qz_v, ql_m, ql_v, library, z_tsne = do_inference(m,[countmatrix],true)
+        if give_mean
+            return qz_m
+        else
+            return z,z_tsne
+        end 
     else
         z, qz_m, qz_v, ql_m, ql_v, library, _ = do_inference(m,[countmatrix],false)
-    end
-    if give_mean
-        return qz_m
-    else
-        return z
+        if give_mean
+            return qz_m
+        else
+            return z
+        end
     end
 end
 ###################################################### Multimodality Functions ##########################################################################
