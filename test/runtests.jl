@@ -24,7 +24,7 @@ using UMAP
     isdir("./src/runs/") || mkdir("./src/runs/")
     ############ Folders for experiments documentation ###############
     timestamp = Dates.format(now(),"dd_mm_yyyy_HHMM")
-    remarks = "test_scvi_tsne"
+    remarks = "scvi_tsne_P"
     isdir("./src/runs/experiment_$(remarks)_$(timestamp)") || mkdir("./src/runs/experiment_$(remarks)_$(timestamp)")
     experiment_path = "./src/runs/experiment_$(remarks)_$(timestamp)"
     isdir("$(experiment_path)/log/") || mkdir("$(experiment_path)/log/")
