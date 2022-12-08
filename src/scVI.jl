@@ -32,6 +32,7 @@ include("CountDistributions.jl")
 include("ModelFunctions.jl")
 include("Training.jl")
 include("Evaluate.jl")
+#include("scvis.jl")
 
 export 
     AnnData,
