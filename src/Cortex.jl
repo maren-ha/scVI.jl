@@ -144,6 +144,7 @@ function load_cortex(path::String="data/"; verbose::Bool=false)
     if isfile(filename)
         adata = init_cortex_from_h5ad(filename)
     else
+        !isdir(path) && mkdir(path)
         adata = init_cortex_from_url(path, verbose=verbose)
     end
     return adata 
