@@ -117,9 +117,12 @@ end # to check: scvi.model._utils._init_library_size(pydata, n_batch)
 using Loess
 using StatsBase
 
+is_nonnegative_integer(x::Integer) = x ≥ 0
+is_nonnegative_integer(x) = false
+
 function check_nonnegative_integers(X::AbstractArray) 
     if eltype(X) == Integer
-        return true 
+        return all(is_nonnegative_integer.(X)) 
     elseif any(sign.(X) .< 0)
         return false 
     elseif !(all(X .% 1 .≈ 0))
