@@ -47,7 +47,7 @@ Flux.@functor scEncoder
         n_output::Int;
         activation_fn::Function=relu, # to use in FC_layers
         bias::Bool=true,
-        n_hidden::Int=128,
+        n_hidden::Union{Int,Vector{Int}}=128,
         n_layers::Int=1,
         distribution::Symbol=:normal,
         dropout_rate::Float32=0.1f0,
@@ -70,7 +70,8 @@ Julia implementation of the [`scvi-tools` encoder](https://github.com/scverse/sc
 ---------------------------
 - `activation_fn`: function to use as activation in all encoder neural network layers 
 - `bias`: whether or not to use bias parameters in the encoder neural network layers
-- `n_hidden`: number of hidden units to use in each hidden layer 
+- `n_hidden`: number of hidden units to use in each hidden layer (if an `Int` is passed, this number is used in all hidden layers, 
+    alternatively an array of `Int`s can be passed, in which case the kth element corresponds to the number of units in the kth layer.
 - `n_layers`: number of hidden layers in encoder 
 - `distribution` :whether to use a `:normal` or lognormal (`:ln`) distribution for the latent z  
 - `dropout_rate`: dropout to use in all encoder layers. Setting the rate to 0.0 corresponds to no dropout. 
@@ -85,7 +86,7 @@ function scEncoder(
     n_output::Int;
     activation_fn::Function=relu, # to use in FC_layers
     bias::Bool=true,
-    n_hidden::Int=128,
+    n_hidden::Union{Int, Vector{Int}}=128,
     n_layers::Int=1,
     distribution::Symbol=:normal,
     dropout_rate::Float32=0.1f0,
@@ -96,19 +97,33 @@ function scEncoder(
     var_eps::Float32=Float32(1e-4)
     )
 
-    encoder = FCLayers(n_input, n_hidden;
-        activation_fn=activation_fn,      
+    l_n_hid = length(n_hidden)
+    if l_n_hid > 1
+        if l_n_hid != n_layers
+            @warn "Length of `n_hidden` is $(l_n_hid), but `n_layers` is $(n_layers) -needs to coincide! Defaulting to n_hidden=128 for all layers"
+            n_hidden = 128
+            n_out_enc = n_hidden_inner = n_hidden
+        else
+            n_out_enc = n_hidden[end]
+            n_hidden_inner = n_hidden[1:(end-1)]
+        end
+    else
+        n_out_enc = n_hidden_inner = n_hidden
+    end
+        
+    encoder = FCLayers(n_input, n_out_enc;
+        activation_fn=activation_fn, 
         bias=bias,
         dropout_rate=dropout_rate,
-        n_hidden=n_hidden,
+        n_hidden=n_hidden_inner,
         n_layers=n_layers,
         use_activation=use_activation,
         use_batch_norm=use_batch_norm,
         use_layer_norm=use_layer_norm
     )
 
-    mean_encoder = Dense(n_hidden, n_output)
-    var_encoder = Dense(n_hidden, n_output)
+    mean_encoder = Dense(n_out_enc, n_output)
+    var_encoder = Dense(n_out_enc, n_output)
 
     if distribution == :normal
         z_transformation = identity
@@ -164,24 +179,38 @@ function scAEncoder(n_input, n_output;
     bias::Bool=true,
     dropout_rate::Float32=0.1f0,
     distribution::Symbol=:normal,
-    n_hidden::Int=128, 
+    n_hidden::Union{Int, Vector{Int}}=128, 
     n_layers::Int=1,
     use_activation::Bool=true,
     use_batch_norm::Bool=true,
     use_layer_norm::Bool=false)
 
-    encoder = FCLayers(n_input, n_hidden;
-        activation_fn=activation_fn,      
+    l_n_hid = length(n_hidden)
+    if l_n_hid > 1
+        if l_n_hid != n_layers
+            @warn "Length of `n_hidden` is $(l_n_hid), but `n_layers` is $(n_layers) -needs to coincide! Defaulting to n_hidden=128 for all layers"
+            n_hidden = 128
+            n_out_enc = n_hidden_inner = n_hidden
+        else
+            n_out_enc = n_hidden[end]
+            n_hidden_inner = n_hidden[1:(end-1)]
+        end
+    else
+        n_out_enc = n_hidden_inner = n_hidden
+    end
+
+    encoder = FCLayers(n_input, n_out_enc;
+        activation_fn=activation_fn, 
         bias=bias,
         dropout_rate=dropout_rate,
-        n_hidden=n_hidden,
+        n_hidden=n_hidden_inner,
         n_layers=n_layers,
         use_activation=use_activation,
         use_batch_norm=use_batch_norm,
         use_layer_norm=use_layer_norm
     )
 
-    mean_encoder = Dense(n_hidden, n_output)
+    mean_encoder = Dense(n_out_enc, n_output)
 
     if distribution == :normal
         z_transformation = identity
@@ -225,7 +254,8 @@ Can be constructed using keywords.
 **Keyword arguments**
 -------------------------
  - `n_input`: input dimension = dimension of latent space 
- - `n_hidden`: number of hidden units to use in each hidden layer 
+ - `n_hidden`: number of hidden units to use in each hidden layer (if an `Int` is passed, this number is used in all hidden layers, 
+    alternatively an array of `Int`s can be passed, in which case the kth element corresponds to the number of units in the kth layer.
  - `n_output`: output dimension of the decoder = number of genes/features
  - `n_layers`: number of hidden layers in decoder 
  - `px_decoder`: `Flux.Chain` of fully connected layers realising the first part of the decoder (before the split in mean, dispersion and dropout decoder). For details, see the source code of `FC_layers` in `src/Utils`.
@@ -237,7 +267,7 @@ Can be constructed using keywords.
 """
 Base.@kwdef mutable struct scDecoder <: AbstractDecoder
     n_input::Int
-    n_hidden::Int=128
+    n_hidden::Union{Int,Vector{Int}}=128
     n_output::Int
     n_layers::Int=1
     px_decoder
@@ -257,7 +287,7 @@ Flux.@functor scDecoder
         dispersion::Symbol=:gene,
         dropout_rate::Float32=0.0f0,
         gene_likelihood::Symbol=:zinb,
-        n_hidden::Int=128,
+        n_hidden::Union{Int,Vector{Int}}=128,
         n_layers::Int=1, 
         use_activation::Bool=true,
         use_batch_norm::Bool=true,
@@ -278,7 +308,8 @@ Julia implementation of the [`scvi-tools` decoder](https://github.com/scverse/sc
 - `bias`: whether or not to use bias parameters in the decoder neural network layers
 - `dispersion`: whether to estimate the dispersion parameter for the (zero-inflated) negative binomial generative distribution per gene (`:gene`) or per gene and cell (`:gene_cell`) 
 - `dropout_rate`: dropout to use in all decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
-- `n_hidden`: number of hidden units to use in each hidden layer 
+- `n_hidden`: number of hidden units to use in each hidden layer (if an `Int` is passed, this number is used in all hidden layers, 
+    alternatively an array of `Int`s can be passed, in which case the kth element corresponds to the number of units in the kth layer.
 - `n_layers`: number of hidden layers in decoder 
 - `use_activation`: whether or not to use an activation function in the decoder neural network layers; if `false`, overrides choice in `actication_fn`
 - `use_batch_norm`: whether or not to apply batch normalization in the decoder layers
@@ -290,18 +321,32 @@ function scDecoder(n_input, n_output;
     dispersion::Symbol=:gene,
     dropout_rate::Float32=0.0f0,
     gene_likelihood::Symbol=:zinb,
-    n_hidden::Int=128,
+    n_hidden::Union{Int,Vector{Int}}=128,
     n_layers::Int=1, 
     use_activation::Bool=true,
     use_batch_norm::Bool=true,
     use_layer_norm::Bool=false
     )
 
-    px_decoder = FCLayers(n_input, n_hidden; 
+    l_n_hid = length(n_hidden)
+    if l_n_hid > 1
+        if l_n_hid != n_layers
+            @warn "Length of `n_hidden` is $(l_n_hid), but `n_layers` is $(n_layers) -needs to coincide! Defaulting to n_hidden=128 for all layers"
+            n_hidden = 128
+            n_out_dec = n_hidden_inner = n_hidden
+        else
+            n_out_dec = n_hidden[end]
+            n_hidden_inner = n_hidden[1:(end-1)]
+        end
+    else
+        n_out_dec = n_hidden_inner = n_hidden
+    end
+
+    px_decoder = FCLayers(n_input, n_out_dec; 
         activation_fn=activation_fn,      
         bias=bias,
         dropout_rate=dropout_rate,
-        n_hidden=n_hidden,
+        n_hidden=n_hidden_inner,
         n_layers=n_layers,
         use_activation=use_activation,
         use_batch_norm=use_batch_norm,
@@ -310,7 +355,7 @@ function scDecoder(n_input, n_output;
 
     # mean Gamma 
     px_scale_decoder = Chain(
-        Dense(n_hidden, n_output), 
+        Dense(n_out_dec, n_output), 
         x -> softmax(x, dims=1)
     )
 
@@ -320,7 +365,7 @@ function scDecoder(n_input, n_output;
             #px_r= torch.nn.Parameter(torch.randn(n_input)) # 1200-element vector
             #px_r_ps = px_r.detach().numpy()
         elseif dispersion == :gene_cell
-            px_r_decoder = Dense(n_hidden, n_output)
+            px_r_decoder = Dense(n_out_dec, n_output)
         else
             @warn "dispersion has to be one of `:gene` or `:gene_cell`. Your choice $(dispersion) is currently not supported, defaulting to `:gene`."
             dispersion = :gene
@@ -330,7 +375,7 @@ function scDecoder(n_input, n_output;
         px_r_decoder = nothing 
     end
 
-    px_dropout_decoder = (gene_likelihood == :zinb) ? Dense(n_hidden, n_output) : nothing
+    px_dropout_decoder = (gene_likelihood == :zinb) ? Dense(n_out_dec, n_output) : nothing
 
     return scDecoder(
             n_input=n_input, 

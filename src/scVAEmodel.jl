@@ -34,7 +34,7 @@ Can be constructed using keywords.
 Base.@kwdef mutable struct scVAE
     n_input::Int
     n_batch::Int=0
-    n_hidden::Int=128
+    n_hidden::Union{Int,Vector{Int}}=128
     n_latent::Int=10
     n_layers::Int=1
     dispersion::Symbol=:gene
@@ -62,7 +62,7 @@ end
         library_log_vars=nothing,
         log_variational::Bool=true,
         n_batch::Int=1,
-        n_hidden::Int=128,
+        n_hidden::Union{Int,Vector{Int}}=128,
         n_latent::Int=10,
         n_layers::Int=1,
         use_activation::Symbol=:both, 
@@ -92,7 +92,8 @@ Basic Julia implementation of the [`scvi-tools` VAE object](https://github.com/s
  - `library_log_vars`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
  - `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
  - `n_batch`: number of batches in the data 
- - `n_hidden`: number of hidden units to use in each hidden layer 
+ - `n_hidden`: number of hidden units to use in each hidden layer (if an `Int` is passed, this number is used in all hidden layers, 
+     alternatively an array of `Int`s can be passed, in which case the kth element corresponds to the number of units in the kth layer.
  - `n_latent`: dimension of latent space 
  - `n_layers`: number of hidden layers in encoder and decoder 
  - `use_activation`: whether or not to use an activation function in the neural network layers of encoder and decoder; if `false`, overrides choice in `actication_fn`
@@ -114,7 +115,7 @@ function scVAE(n_input::Int;
     library_log_vars=nothing,
     log_variational::Bool=true,
     n_batch::Int=1,
-    n_hidden::Int=128,
+    n_hidden::Union{Int,Vector{Int}}=128,
     n_latent::Int=10,
     n_layers::Int=1,
     use_activation::Symbol=:both, 
@@ -153,13 +154,15 @@ function scVAE(n_input::Int;
 
     # z encoder goes from the n_input-dimensional data to an n_latent-d latent space representation
     n_input_encoder = n_input
+    n_hidden_encoder = n_hidden
+    n_hidden_decoder = length(n_hidden) > 1 ? reverse(n_hidden) : n_hidden # if n_hidden is an array, reverse it for the decoder 
 
     z_encoder = scEncoder(
         n_input_encoder, 
         n_latent; 
         activation_fn=activation_fn, 
         bias=bias_encoder, 
-        n_hidden=n_hidden,
+        n_hidden=n_hidden_encoder,
         n_layers=n_layers,
         distribution=latent_distribution,
         dropout_rate=dropout_rate,
@@ -178,7 +181,7 @@ function scVAE(n_input::Int;
             1;
             activation_fn=activation_fn, 
             bias=bias_encoder, 
-            n_hidden=n_hidden,
+            n_hidden=n_hidden_encoder,
             n_layers=1,
             dropout_rate=dropout_rate,
             use_activation=use_activation_encoder, 
@@ -195,7 +198,7 @@ function scVAE(n_input::Int;
         dispersion=dispersion, 
         dropout_rate=dropout_rate,
         gene_likelihood=gene_likelihood,
-        n_hidden=n_hidden,
+        n_hidden=n_hidden_decoder,
         n_layers=n_layers,
         use_activation=use_activation_decoder,
         use_batch_norm=use_batch_norm_decoder,

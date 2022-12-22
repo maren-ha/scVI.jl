@@ -14,7 +14,7 @@ function FCLayers(
     activation_fn::Function=relu,
     bias::Bool=true,
     dropout_rate::Float32=0.1f0, 
-    n_hidden::Int=128, 
+    n_hidden::Union{Int, Vector{Int}}=128, 
     n_layers::Int=1, 
     use_batch_norm::Bool=true,
     use_layer_norm::Bool=false,
@@ -30,7 +30,17 @@ function FCLayers(
     batchnorm = use_batch_norm ? BatchNorm(n_out, momentum = Float32(0.01), ϵ = Float32(0.001)) : identity
     layernorm = use_layer_norm ? LayerNorm(n_out, affine=false) : identity
 
-    innerdims = [n_hidden for _ in 1:n_layers-1]
+    l_n_hid = length(n_hidden)
+    if l_n_hid > 1
+        if l_n_hid != n_layers-1
+            @warn "number of inner hidden layers is $(l_n_hid), but number of inner layers is $(n_layers-1), needs to coincide! Defaulting to n_hidden = 128 for all layers"
+            n_hidden = 128
+        end
+        innerdims = [n_hidden[i] for i in 1:n_layers-1]
+    else
+        innerdims = [n_hidden[1] for _ in 1:n_layers-1] # "[1]" is necessary in case n_hidden is a 1-element list here (if n_layers = 2)
+    end
+
     layerdims = [n_in, innerdims..., n_out]
     
     layerlist = [
