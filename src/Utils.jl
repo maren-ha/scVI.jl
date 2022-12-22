@@ -27,9 +27,6 @@ function FCLayers(
 
     activation_fn = use_activation ? activation_fn : identity
 
-    batchnorm = use_batch_norm ? BatchNorm(n_out, momentum = Float32(0.01), ϵ = Float32(0.001)) : identity
-    layernorm = use_layer_norm ? LayerNorm(n_out, affine=false) : identity
-
     l_n_hid = length(n_hidden)
     if l_n_hid > 1
         if l_n_hid != n_layers-1
@@ -46,8 +43,8 @@ function FCLayers(
     layerlist = [
         Chain(
             Dense(layerdims[i], layerdims[i+1], bias=bias),
-            batchnorm, 
-            layernorm,
+            use_batch_norm ? BatchNorm(layerdims[i+1], momentum = Float32(0.01), ϵ = Float32(0.001)) : identity,
+            use_layer_norm ? LayerNorm(layerdims[i+1], affine=false) : identity,
             x -> activation_fn.(x),
             Dropout(dropout_rate) # if dropout_rate > 0 
         ) 
