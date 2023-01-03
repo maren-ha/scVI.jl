@@ -15,6 +15,10 @@ using ProgressMeter
 using SpecialFunctions # for loggamma
 using StatsBase
 
+# scvis 
+using Distances
+using SliceMap
+
 # evaluation: UMAP, PCA and plots  
 using LinearAlgebra
 using UMAP 
@@ -32,7 +36,9 @@ include("CountDistributions.jl")
 include("ModelFunctions.jl")
 include("Training.jl")
 include("Evaluate.jl")
-#include("scvis.jl")
+include("scvis/scvis.jl")
+include("scvis/scvis_diff.jl")
+include("scvis/scvis_train.jl")
 
 export 
     AnnData,
@@ -47,6 +53,9 @@ export
     register_latent_representation!, register_umap_on_latent!,
     plot_umap_on_latent, 
     plot_pca_on_latent,
-    sample_from_prior, sample_from_posterior
+    sample_from_prior, sample_from_posterior,
+    train_scvis_model!, 
+    compute_transition_probs, compute_differentiable_transition_probs,
+    tsne_repel, scvis_loss, tsne_loss
 # 
 end
