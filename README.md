@@ -115,5 +115,22 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [ ] deploy docs 
 - [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
 - [ ] support `gene_batch` and `gene_label` dispersion 
+- [ ] support categorical covariates (e.g., batch information)
+- [ ] revise docstrings for scvis functions
+- [ ] make `data` and `scvis` into proper submodules
+- [ ] refactor data processing
+	- [x] copying /subsetting 
+	- [ ] re-write `DataProcessing.jl`
+	- [ ] re-write `Cortex.jl`
+	- [ ] re-write `PBMC.jl`
+	- [ ] re-write `Tasic.jl`
+	- [ ] add `Embryoid.jl`
+	- [ ] re-write the rest 
+	- [ ] add preprocessing: 
+		- [ ] log-transform 
+		- [ ] re-scaling 
+		- [ ] filtering (?) 
+	- [ ]  add docstrings
+	- [ ]  write test cases
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
