@@ -42,6 +42,23 @@ function do_perplexity_loop(i, D::AbstractMatrix{S}, Pcol::AbstractArray{S}, Hta
     return Pcol, betai
 end
 
+"""
+    Compute the differentiable perplexities of a symmetric and positive distance matrix D.
+    This function compute the differentiable perplexities for the given symmetric and positive distance matrix D. 
+        The perplexity is a scalar value that describes the effective number of nearest neighbours for each point in the data set. 
+        The perplexity can be used to control the balance between preserving the local structure of the data and the global structure of the data.
+    
+    Parameters:
+    - D : AbstractMatrix{S} : symmetric and positive distance matrix 
+    - tol : S : tolerance for the perplexity error (default: 1e-5)
+    - perplexity : S : target perplexity (default: 30.0)
+    - max_iter : Integer : maximum number of iterations (default: 50)
+    - verbose : Bool : print the progress of the calculation (default: false)
+    
+    Returns:
+    - P : matrix :  final P-matrix
+    - beta : vector : the final beta value for each datapoint
+"""
 function differentiable_perplexities(D::AbstractMatrix{S}, tol::S = Float32(1e-5), perplexity::S = 30.0f0;
     max_iter::Integer = 50,
     verbose::Bool=false) where S<:Real
@@ -62,6 +79,19 @@ function differentiable_perplexities(D::AbstractMatrix{S}, tol::S = Float32(1e-5
     return P, beta
 end
 
+"""
+    Compute differentiable transition probabilities from a given matrix X.
+    Parameters:
+    -----------
+    X : AbstractMatrix{S}
+        The matrix from which to compute the differentiable transition probabilities.
+    perplexity : S
+        The perplexity to use for the computation of the transition probabilities.
+    Returns:
+    --------
+    P : matrix of type S
+        The differentiable transition probabilities.
+"""
 function compute_differentiable_transition_probs(X::AbstractMatrix{S}, perplexity::S=30.0f0) where S <: Real # X: shape obs x vars
     X = X * (one(S)/std(X)::eltype(X))
     D = pairwise(SqEuclidean(), X)
@@ -69,6 +99,19 @@ function compute_differentiable_transition_probs(X::AbstractMatrix{S}, perplexit
     return Float32.(P)
 end
 
+"""
+Computes the t-SNE loss for the given scVAE model, tsne network, input data, and transition probabilities.
+
+Parameters:
+    - m: scVAE model
+    - tsne_net: Dense network for t-SNE
+    - x: Input data, shape obs x vars 
+    - P: Transition probabilities, shape obs x obs, defaults to `Nothing`
+    - epoch: Current training epoch
+    
+Returns:
+    - kl_qp: t-SNE loss
+"""
 function tsne_loss(m::scVAE, tsne_net::Dense, x::AbstractMatrix{S}, P::Union{Nothing, AbstractMatrix{S}}, epoch::Int=1) where S <: Real 
     z, qz_m, qz_v, ql_m, ql_v, library = scVI.inference(m, x)
     latent = z # alternative: qz_m? 

@@ -1,4 +1,23 @@
 # high-level function to dispatch on mode argument 
+"""
+Trains an scVAE model with the given AnnData, TrainingArgs and mode.
+
+Parameters:
+- m::scVAE: the scVAE model to be trained
+- adata::AnnData: the AnnData object containing the dataset
+- training_args::TrainingArgs: the TrainingArgs object containing the training parameters such as batch size, learning rate, etc.
+- mode::Symbol: the training mode, can be one of the following:
+    `:alternating`
+    `:alternating_diff`
+    `:joint`
+    `:joint_diff`
+
+Returns:
+- Nothing. The model is trained in place.
+
+Raises:
+- A warning if an unsupported training mode is selected.
+"""
 function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs, mode::Symbol)
     if !(mode ∈ [:alternating, :alternating_diff, :joint, :joint_diff])
         @warn "unsupported training mode selected, currently supported modes are 
@@ -50,6 +69,19 @@ function register_scvis_losses!(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float
     return m
 end
 
+"""
+Train an scVI model in joint mode.
+
+Parameters:
+- m: scVAE model to be trained
+- adata: AnnData object containing the data to be used for training
+- training_args: TrainingArgs object containing the training hyperparameters, such as weight decay, learning rate, batch size, and maximum number of epochs
+- ::Val{:joint}: Symbol specifying the mode of training, must be :joint
+
+Returns:
+- Tuple of trained scVAE model, AnnData object
+
+"""
 function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs, ::Val{:joint})
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
@@ -182,6 +214,26 @@ function Flux.params(m::scVAE, tsne_net::Dense)
     return ps
 end
 
+"""
+    This function register the losses for scVAE (scVI Variational Autoencoder) model.
+    It calculates the KL divergence, reconstruction loss, and tsne loss, and adds them to the loss_registry of the model.
+    
+    Parameters:
+    - m: scVAE model
+    - tsne_net: Dense network for t-SNE calculation
+    - x: Input data, matrix of size (batchsize, number of genes)
+    - kl_weight: weight for the KL divergence loss, default to 1.0f0
+    - epoch: current epoch number, used for computing tsne loss, default to 1
+    
+    Returns:
+    - m: scVAE model with updated `loss_registry``
+    
+    Example:
+    m = scVAE(...)
+    tsne_net = Dense(...)
+    x = ...
+    register_scvis_losses!(m, tsne_net, x)
+    """
 function register_scvis_losses!(m::scVAE, tsne_net::Dense, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0, epoch::Int=1) where S <: Real 
     z, qz_m, qz_v, ql_m, ql_v, library = scVI.inference(m, x)
     # size(z) = latent_dim x batchsize
