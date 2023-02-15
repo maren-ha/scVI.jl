@@ -24,10 +24,12 @@ using LinearAlgebra
 using UMAP 
 using VegaLite
 
-include("DataProcessing.jl")
-include("Cortex.jl")
-include("PBMC.jl")
-include("Tasic.jl")
+include("data/AnnData.jl")
+include("data/FileIO.jl")
+include("data/DataProcessing.jl")
+include("data/Cortex.jl")
+include("data/PBMC.jl")
+include("data/Tasic.jl")
 include("Utils.jl")
 include("EncoderDecoder.jl")
 include("scVAEmodel.jl")
