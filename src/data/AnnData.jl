@@ -59,9 +59,9 @@ end
 
 # subsetting and copying 
 
-adata = read_h5ad("cortex_julia_anndata.h5ad")
-adata[1:10, 1:20]
-adata[2,3]
+#adata = read_h5ad("cortex_julia_anndata.h5ad")
+#adata[1:10, 1:20]
+#adata[2,3]
 
 import Base.getindex
 
@@ -146,6 +146,7 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
 end
 
 import Base.copy
+
 function copy(adata::AnnData)
     bdata = AnnData(countmatrix = copy(adata.countmatrix))
     for field in fieldnames(AnnData)
