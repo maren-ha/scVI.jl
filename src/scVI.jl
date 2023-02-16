@@ -44,10 +44,14 @@ include("scvis/scvis_train.jl")
 
 export 
     AnnData,
-    init_cortex_from_h5ad, init_library_size,
+    subset_adata, subset_adata!,
+    read_h5ad, write_h5ad,
+    init_library_size,
     highly_variable_genes, highly_variable_genes!, subset_to_hvg!,
     estimate_size_factors, normalize_counts, normalize_counts!, 
-    load_cortex, load_pbmc, load_tasic, subset_tasic!,
+    load_cortex_from_h5ad, load_cortex_from_url, load_cortex, 
+    load_pbmc, 
+    load_tasic, subset_tasic!,
     scVAE, scEncoder, scDecoder, scLinearDecoder, scLDVAE,
     TrainingArgs, 
     train_model!, train_supervised_model!,
