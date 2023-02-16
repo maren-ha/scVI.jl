@@ -9,9 +9,10 @@ Returns the modified `AnnData` object.
 """
 function register_latent_representation!(adata::AnnData, m::scVAE)
     !m.is_trained && @warn("model has not been trained yet!")
-    adata.scVI_latent = get_latent_representation(m, adata.countmatrix)
+    adata.obsm = isnothing(adata.obsm) ? Dict() : adata.obsm
+    adata.obsm["scVI_latent"] = get_latent_representation(m, adata.countmatrix)'
     @info "latent representation added"
-    return adata 
+    return adata
 end
 
 """
@@ -27,11 +28,11 @@ It is then stored in the `scVI_latent_umap` field of the input `AnnData` object.
 Returns the modified `AnnData` object.    
 """
 function register_umap_on_latent!(adata::AnnData, m::scVAE)
-    if isnothing(adata.scVI_latent)
+    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
         register_latent_representation!(adata, m)
     end
-    adata.scVI_latent_umap = umap(adata.scVI_latent, 2; min_dist=0.3)
+    adata.obsm["scVI_latent_umap"] = umap(adata.obsm["scVI_latent"]', 2; min_dist=0.3)'
     @info "UMAP of latent representation added"
     return adata
 end
@@ -48,8 +49,6 @@ Plots a UMAP embedding of the latent representation obtained from encoding the c
 If no UMAP representation is stored in `adata.scVI_latent_umap`, it is calculated and registered by calling `register_umap_on_latent(adata, m)`.
 
 By default, the cells are color-coded according to the `celltypes` field of the `AnnData` object. 
-
-!TODO: add fallback for missing celltype annotation (`adata.celltypes = nothing`)
 
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 
@@ -71,12 +70,14 @@ function plot_umap_on_latent(
     seed::Int=987
     )
 
-    if isnothing(adata.scVI_latent) 
+    plotcolor = isnothing(adata.celltypes) ? fill("#ff7f0e", size(adata.countmatrix,1)) : adata.celltypes
+
+    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
         register_latent_representation!(adata, m)
     end
 
-    if isnothing(adata.scVI_latent_umap)
+    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent_umap")
         @info "no UMAP of latent representation saved in AnnData object, calculating it now..."
         Random.seed!(seed)
         register_umap_on_latent!(adata, m)
@@ -84,9 +85,9 @@ function plot_umap_on_latent(
 
     umap_plot = @vlplot(:point, 
                         title="UMAP of scVI latent representation", 
-                        x=adata.scVI_latent_umap[1,:], 
-                        y = adata.scVI_latent_umap[2,:], 
-                        color = adata.celltypes, 
+                        x = adata.obsm["scVI_latent_umap"][:,1], 
+                        y = adata.obsm["scVI_latent_umap"][:,2], 
+                        color = plotcolor,
                         width = 800, height=500
     )
     save_plot && save(filename, umap_plot)
@@ -140,20 +141,21 @@ function plot_pca_on_latent(
     filename::String="PCA_on_latent.pdf"
     )
 
-    if isnothing(adata.scVI_latent)
+    plotcolor = isnothing(adata.celltypes) ? fill("#ff7f0e", size(adata.countmatrix,1)) : adata.celltypes
+
+    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-        adata.scVI_latent = get_latent_representation(m, adata.countmatrix)
-        @info "latent representation added"
+        register_latent_representation!(adata, m)
     end
 
-    pca_input = adata.scVI_latent'
+    pca_input = adata.obsm["scVI_latent"]
     pcs = prcomps(pca_input)
 
     pca_plot = @vlplot(:point, 
                         title="PCA of scVI latent representation", 
                         x = pcs[:,1], 
                         y = pcs[:,2], 
-                        color = adata.celltypes, 
+                        color = plotcolor, 
                         width = 800, height=500
     )
     save_plot && save(filename, pca_plot)

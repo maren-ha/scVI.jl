@@ -49,15 +49,17 @@ Returns the trained `scVAE` model.
 """
 function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
 
+    ncells, ngenes = size(adata.countmatrix)
+
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:size(ncells))[1:Int(ceil(trainsize*ncells))])
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     if training_args.register_losses
@@ -118,7 +120,9 @@ Returns the trained `scVAE` model.
 """
 function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOrMat{S}, training_args::TrainingArgs) where S <: Real
 
-    @assert size(labels) == (adata.ncells, m.n_latent)
+    ncells, ngenes = size(adata.countmatrix)
+
+    @assert size(labels) == (ncells, m.n_latent)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
@@ -126,9 +130,9 @@ function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOr
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:ncells))[1:Int(ceil(trainsize*ncells))]
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     dataloader = Flux.DataLoader((adata.countmatrix[train_inds,:]', labels[train_inds,:]'), batchsize=training_args.batchsize, shuffle=true)

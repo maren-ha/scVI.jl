@@ -2,58 +2,26 @@
 # cortex data 
 #-------------------------------------------------------------------------------------
 
-"""
-    load_cortex_from_h5ad(anndata::HDF5.File)
-
-Reads cortex data from an `AnnData` object created and used with the Python `scvi-tools` and saved as HDF5 file. 
-
-Returns 
-    the count matrix \n
-    the contents of `adata.layers` \n
-    the contents of `adata.obs` \n
-    the contents of `adata["uns"]["_scvi"]["summary_stats"]` \n
-    the contents of `adata["uns"]["_scvi"]["data_registry"]` \n
-    the cell type information in `adata["obs"]["__categories"]["cell_type"]`
-"""
-function load_cortex_from_h5ad(anndata::HDF5.File)
-    countmatrix = read(anndata, "layers")["counts"]' # shape: cell x gene 
-    summary_stats = read(anndata, "uns")["_scvi"]["summary_stats"]
-    layers = read(anndata, "layers")
-    obs = read(anndata, "obs")
-    data_registry = read(anndata, "uns")["_scvi"]["data_registry"]
-    celltype_numbers = read(anndata, "obs")["cell_type"] .+1 # for Julia-Python index conversion
-    celltype_categories = read(anndata, "obs")["__categories"]["cell_type"]
-    celltypes = celltype_categories[celltype_numbers]
-    return Matrix(countmatrix), layers, obs, summary_stats, data_registry, celltypes
-end
-
 # assumes Python adata object 
 """
-    init_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
+    load_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
 
-Opens a connection to the HDF5 file saved at `filename` that stores the corresponding Python `AnnData` object created and used with `scvi-tools`. \n
-Reads cortex data from an `AnnData` object created and used with the Python scVI and saved as HDF5 file. \n
-Information is extracted from the file with the `load_cortex_from_h5ad` function. \n
-Uses this information to fill the fields of a Julia `AnnData` object and returns it.
+Reads cortex data from an `anndata` object created and used with the Python scVI and saved as H5AD file, based on the `read_h5ad` function. \n
+Extracts information to populate a corresponding Julia `AnnData` object and returns it.
 """
-function init_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
-    anndata = open_h5_data(filename)
-    countmatrix, layers, obs, summary_stats, data_registry, celltypes = load_cortex_from_h5ad(anndata)
-    ncells, ngenes = size(countmatrix)
-    adata = AnnData(
-        countmatrix=countmatrix,
-        ncells=ncells,
-        ngenes=ngenes,
-        layers=layers,
-        obs=obs,
-        summary_stats=summary_stats,
-        registry=data_registry,
-        celltypes=celltypes
-    )
+function load_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
+    adata = read_h5ad(filename)
+    celltype_numbers = adata.obs[!,:cell_type] .+ 1 # for Julia-Python index conversion
+    file=open_h5_data(filename)
+    celltype_categories = read(file, "obs")["__categories"]["cell_type"]
+    celltypes = celltype_categories[celltype_numbers]
+    adata.obs[!,:celltypes] = celltypes
+    rename!(adata.obs, :cell_type => :celltypes_numbers)
+    adata.celltypes = celltypes
     return adata
 end
 
-function init_cortex_from_url(save_path::String=""; verbose::Bool=false)
+function load_cortex_from_url(save_path::String=""; verbose::Bool=false)
 
     url = "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt"
     path_to_file = joinpath(save_path, "expression.bin")
@@ -99,10 +67,8 @@ function init_cortex_from_url(save_path::String=""; verbose::Bool=false)
     verbose && @info "populating AnnData object..."
     adata = AnnData(
         countmatrix = countmatrix,
-        ncells = size(countmatrix,1),
-        ngenes = size(countmatrix,2),
-        obs = cellinfos, 
-        vars = geneinfos, 
+        obs = DataFrame(cellinfos), 
+        var = DataFrame(geneinfos), 
         celltypes = cellinfos["cell_type"]
     )
     return adata
@@ -142,7 +108,7 @@ Returns the Julia `AnnData` object.
 function load_cortex(path::String="data/"; verbose::Bool=false)
     filename = joinpath(path, "cortex_anndata.h5ad")
     if isfile(filename)
-        adata = init_cortex_from_h5ad(filename)
+        adata = load_cortex_from_h5ad(filename)
     else
         !isdir(path) && mkdir(path)
         adata = init_cortex_from_url(path, verbose=verbose)
