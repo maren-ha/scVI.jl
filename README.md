@@ -109,23 +109,17 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 ------------
 ## TODO 
 
-- [x] fix data loading --> from GoogleDrive
-- [x] document `loss_registry` field and option during training!
-- [x] implement and export functions for prior and posterior sampling 
 - [ ] deploy docs 
+- [ ] write tests
 - [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
 - [ ] revise docstrings for scvis functions
 - [ ] make `data` and `scvis` into proper submodules
 - [ ] refactor data processing
-	- [x] copying /subsetting 
-	- [ ] re-write `DataProcessing.jl`
-	- [ ] re-write `Cortex.jl`
 	- [ ] re-write `PBMC.jl`
 	- [ ] re-write `Tasic.jl`
 	- [ ] add `Embryoid.jl`
-	- [ ] re-write the rest 
 	- [ ] add preprocessing: 
 		- [ ] log-transform 
 		- [ ] re-scaling 
