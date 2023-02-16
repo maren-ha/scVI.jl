@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------------
 # I/O
 #-------------------------------------------------------------------------------------
-include("AnnData.jl")
+#include("AnnData.jl")
 
 # reading from H5AD 
 open_h5_data(filename::String; mode::String="r+") = h5open(filename, mode)
@@ -25,7 +25,7 @@ end
 function build_df_from_h5_dict!(dict::Dict, df::DataFrame=DataFrame())    
     for key in keys(dict)
         if isa(dict[key], Dict)
-            build_df_from_nested_dict!(dict[key], df)
+            build_df_from_h5_dict!(dict[key], df)
         else
             append_key_as_column!(df, key, dict)
         end
