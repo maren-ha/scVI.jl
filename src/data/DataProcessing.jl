@@ -1,73 +1,4 @@
-#-------------------------------------------------------------------------------------
-# AnnData struct
-#-------------------------------------------------------------------------------------
-"""
-    mutable struct AnnData
-
-Minimal Julia implementation of the Python `AnnData` object (see [package documentation](https://anndata.readthedocs.io/en/latest/)
-and [Github repository](https://github.com/scverse/anndata)).
-
-**Keyword arguments** 
----------------------
- - `countmatrix::Union{Matrix,Nothing}=nothing`: countmatrix in cell x gene shape
- - `ncells::Union{Int,Nothing}=nothing`: number of cells; `size(countmatrix,1)`
- - `ngenes::Union{Int,Nothing}=nothing`: number of genes; `size(countmatrix,2)`
- - `layers::Union{Dict,Nothing}=nothing`: dictionary of other layers (e.g., normalized counts), corresponds to `adata.layers`
- - `obs::Union{Dict,Nothing}=nothing`: dictionary of information about cells, e.g., celltypes
- - `summary_stats::Union{Dict, Nothing}=nothing`: dictionary of summary information, corresponds to `adata.uns["_scvi"]["summary_stats"]`
- - `registry::Union{Dict, Nothing}=nothing`: dictionary corresponding to `adata.uns["_scvi"]["data_registry"]`
- - `vars::Union{Dict, Nothing}=nothing`: dictionary of information about genes/features, e.g., gene names or highly variable genes
- - `celltypes=nothing`: vector of cell type names, shorthand for `adata.obs["cell_type"]`
- - `train_inds=nothing`: vector of cell indices used for training an `scVAE` model 
- - `dataloader=nothing`: `Flux.DataLoader` object used for training an `scVAE` model
- - `scVI_latent=nothing`: latent representation of trained `scVAE` model 
- - `scVI_latent_umap=nothing`: UMAP of latent representation from trained `scVAE` model 
-
- **Example**
- ------------------
-    julia> adata = load_tasic("scvi/data/")
-        AnnData object with a countmatrix with 1679 cells and 15119 genes
-            layers dict with the following keys: ["normalized_counts", "counts"]
-            unique celltypes: ["Vip", "L4", "L2/3", "L2", "Pvalb", "Ndnf", "L5a", "SMC", "Astro", "L5", "Micro", "Endo", "Sst", "L6b", "Sncg", "Igtp", "Oligo", "Smad3", "OPC", "L5b", "L6a"]
-"""
-Base.@kwdef mutable struct AnnData
-    countmatrix::Union{Matrix,Nothing}=nothing # shape: cells by genes 
-    ncells::Union{Int,Nothing}=nothing
-    ngenes::Union{Int,Nothing}=nothing
-    layers::Union{Dict,Nothing}=nothing
-    obs::Union{Dict,Nothing}=nothing
-    summary_stats::Union{Dict,Nothing}=nothing
-    registry::Union{Dict,Nothing}=nothing
-    vars::Union{Dict, Nothing}=nothing
-    celltypes=nothing
-    train_inds=nothing
-    dataloader=nothing
-    scVI_latent=nothing
-    scVI_latent_umap=nothing
-    #is_trained::Bool=false
-end
-
-function Base.show(io::IO, a::AnnData)
-    println(io, "$(typeof(a)) object with a countmatrix with $(a.ncells) cells and $(a.ngenes) genes")
-    !isnothing(a.layers) && println(io, "   layers dict with the following keys: $(keys(a.layers))")
-    !isnothing(a.summary_stats) && println(io, "   summary statistics dict with the following keys: $(keys(a.summary_stats))")
-    !isnothing(a.celltypes) && println(io, "   unique celltypes: $(unique(a.celltypes))")
-    #a.is_trained ? println(io, "    training status: trained") : println(io, "   training status: not trained")
-    nothing 
-end
-
-#-------------------------------------------------------------------------------------
-# general functions 
-#-------------------------------------------------------------------------------------
-
-open_h5_data(filename::String; mode::String="r+") = h5open(filename, mode)
-
-function get_from_registry(adata::AnnData, key)
-    data_loc = adata.registry[key]
-    attr_name, attr_key = data_loc["attr_name"], data_loc["attr_key"]
-    data = getfield(adata, Symbol(attr_name))[attr_key]
-    return data
-end
+#include("AnnData.jl")
 
 """
     init_library_size(adata::AnnData)
@@ -80,14 +11,13 @@ containing the means and variances of the library size in each batch in `adata`.
 function init_library_size(adata::AnnData)
     data = adata.countmatrix
     #
-    if !isnothing(adata.obs) && haskey(adata.obs, "batch")
-        batch_indices = adata.obs["batch"]
-    else
-        batch_indices = try 
-            get_from_registry(adata, "batch_indices") .+ 1 # for Python-Julia index conversion 
-        catch
-            ones(Int,size(data,1)) 
+    if !isnothing(adata.obs) && hasproperty(adata.obs, :batch)
+        batch_indices = adata.obs[!,:batch]
+        if 0 ∈ batch_indices
+            batch_indices .+= 1 # for Julia-Python index conversion 
         end
+    else
+        batch_indices = ones(Int,size(data,1))
     end
 
     n_batch = length(unique(batch_indices))
@@ -132,22 +62,23 @@ function check_nonnegative_integers(X::AbstractArray)
     end
 end
 
-# expects batch key in "obs" Dict
+# expects batch key in "obs" dataframe
 # results are comparable to scanpy.highly_variable_genes, but differ slightly. 
 # when using the Python results of the Loess fit though, genes are identical. 
 function _highly_variable_genes_seurat_v3(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
-    batch_key::Union{String,Nothing} = nothing,
+    batch_key::Union{Symbol, String, Nothing} = nothing,
     span::Float64=0.3,
     inplace::Bool=true,
+    replace_hvgs::Bool=true,
     verbose::Bool=false
     )
     X = !isnothing(layer) ? adata.layers[layer] : adata.countmatrix
     !check_nonnegative_integers(X) && @warn "flavor Seurat v3 expects raw count data, but non-integers were found"
     verbose && @info "input checks passed..."
     means, vars = mean(X, dims=1), var(X, dims=1)
-    batch_info = isnothing(batch_key) ? zeros(size(X,1)) : adata.obs[batch_key]
+    batch_info = isnothing(batch_key) ? zeros(size(X,1)) : adata.obs[!,Symbol(batch_key)]
     norm_gene_vars = []
     verbose && @info "calculating variances per batch..."
     for b in unique(batch_info)
@@ -193,21 +124,26 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     highly_variable = fill(false, length(median_ranked))
     highly_variable[sorted_index[1:n_top_genes]] .= true
 
-    hvg_info = Dict("highly_variable" => highly_variable,
-                "highly_variable_rank" => vec(median_ranked),
-                "means" => means,
-                "variances" => vars, 
-                "variances_norm" => vec(mean(norm_gene_vars, dims=1))
+    hvg_info = DataFrame(highly_variable = highly_variable,
+                highly_variable_rank = vec(median_ranked),
+                means = vec(means),
+                variances = vec(vars), 
+                variances_norm = vec(mean(norm_gene_vars, dims=1))
     )
     if !isnothing(batch_key)
-        hvg_info["highly_variable_nbatches"] = vec(num_batches_high_var)
+        hvg_info[!,:highly_variable_nbatches] = vec(num_batches_high_var)
     end
 
     if inplace 
-        if isnothing(adata.vars)
-            adata.vars = hvg_info
+        if isnothing(adata.var)
+            adata.var = hvg_info
         else
-            adata.vars = merge(adata.vars, hvg_info)
+            if !isempty(intersect(names(hvg_info), names(adata.var))) && replace_hvgs # if there is already HVG information present and it should be replaced
+                other_col_inds = findall(x -> !(x ∈ names(hvg_info)), names(adata.var)) # find indices of all columns that are not contained in the new hvg_info df
+                adata.var = hcat(adata.var[!,other_col_inds], hvg_info) # keep only the cols not recalculated in the new hvg_info df, and append the hvg_info df
+            else
+                adata.var = hcat(adata.var, hvg_info, makeunique=true)
+            end
         end
         return adata
     else
@@ -222,45 +158,22 @@ mymedian(X::AbstractArray) = length(X) == 0 ? NaN : median(X)
         layer::Union{String,Nothing} = nothing,
         n_top_genes::Int=2000,
         batch_key::Union{String,Nothing} = nothing,
-        span::Float64=0.3
+        span::Float64=0.3,
+        replace_hvgs::Bool=true,
+        verbose::Bool=false
         )
 
 Computes highly variable genes per batch according to the workflows on `scanpy` and Seurat v3 in-place. 
-
-More specifically, it is the Julia re-implementation of the corresponding 
-[`scanpy` function](https://github.com/scverse/scanpy/blob/master/scanpy/preprocessing/_highly_variable_genes.py)
-
-For implementation details, please check the `scanpy`/Seurat documentations or the source code of the 
-lower-level `_highly_variable_genes_seurat_v3` function in this package. 
-Results are almost identical to the `scanpy` function. The differences have been traced back to differences in 
-the local regression for the mean-variance relationship implemented in the Loess.jl package, that differs slightly 
-from the corresponding Python implementation. 
-
-**Arguments**
-------------------------
-- `adata`: `AnnData` object 
-- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.countmatrix` is used. 
-- `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
-- `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
-- `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
-
-**Returns**
-------------------------
 This is the in-place version that adds an dictionary containing information on the highly variable genes directly 
-to the `adata.vars` and returns the modified `AnnData` object. 
-Specifically, a dictionary with the following keys is added: 
- - `highly_variable`: vector of `Bool`s indicating which genes are highly variable
- - `highly_variable_rank`: rank of the highly variable genes according to (corrected) variance 
- - `means`: vector with means of each gene
- - `variances`: vector with variances of each gene 
- - `variances_norm`: normalized variances of each gene 
- - `highly_variable_nbatches`: if there are batches in the dataset, logs the number of batches in which each highly variable gene was actually detected as highly variable. 
+to the `adata.var` and returns the modified `AnnData` object. 
+For details, see the not-in-place version `?highly_variable_genes`. 
 """
 function highly_variable_genes!(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
-    batch_key::Union{String,Nothing} = nothing,
+    batch_key::Union{Symbol,String,Nothing} = nothing,
     span::Float64=0.3, 
+    replace_hvgs::Bool=true,
     verbose::Bool=false
     )
     return _highly_variable_genes_seurat_v3(adata; 
@@ -269,6 +182,7 @@ function highly_variable_genes!(adata::AnnData;
                 batch_key=batch_key,
                 span=span,
                 inplace=true, 
+                replace_hvgs=replace_hvgs,
                 verbose=verbose
     )
 end
@@ -299,6 +213,7 @@ from the corresponding Python implementation.
 - `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
 - `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
 - `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
+- `replace_hvgs`: whether or not to replace the hvg information if there are already hvgs calculated. If false, the new values are added with a "_1" suffix. Default:true,
 - `verbose`: whether or not to print info on current status
 
 **Returns**
@@ -314,8 +229,9 @@ Returns a dictionary containing information on the highly variable genes, specif
 function highly_variable_genes(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
-    batch_key::Union{String,Nothing} = nothing,
+    batch_key::Union{String,Symbol,Nothing} = nothing,
     span::Float64=0.3,
+    replace_hvgs::Bool=true,
     verbose::Bool=false
     )
     return _highly_variable_genes_seurat_v3(adata; 
@@ -324,6 +240,7 @@ function highly_variable_genes(adata::AnnData;
                 batch_key=batch_key,
                 span=span,
                 inplace=false,
+                replace_hvgs=replace_hvgs,
                 verbose=verbose
     )
 end
@@ -333,43 +250,46 @@ end
         layer::Union{String,Nothing} = nothing,
         n_top_genes::Int=2000,
         batch_key::Union{String,Nothing} = nothing,
-        span::Float64=0.3
+        span::Float64=0.3,
+        verbose::Bool=true
     )
 
 Calculates highly variable genes with `highly_variable_genes!` and subsets the `AnnData` object to the calculated HVGs. 
 For description of input arguments, see `highly_variable_genes!`
 
-Returns: `adata` object subset to the calculated HVGs, both in the countmatrix/layer data used for HVG calculation and in the `adata.vars` dictionary.
+Returns: `adata` object subset to the calculated HVGs, both in the countmatrix/layer data used for HVG calculation and in the `adata.var` dictionary.
 """
 function subset_to_hvg!(adata::AnnData;
     layer::Union{String,Nothing} = nothing,
     n_top_genes::Int=2000,
-    batch_key::Union{String,Nothing} = nothing,
+    batch_key::Union{String,Symbol,Nothing} = nothing,
     span::Float64=0.3,
     verbose::Bool=true
     )
-    if isnothing(adata.vars) || (!isnothing(adata.vars) && !haskey(adata.vars,"highly_variable"))
+    if isnothing(adata.var) || (!isnothing(adata.var) && !hasproperty(adata.var,:highly_variable))
+        verbose && @info "no HVGs found, calculating highly variabls genes using flavor seurat v3 in-place..."
         highly_variable_genes!(adata; 
             layer=layer, 
             n_top_genes=n_top_genes,
             batch_key=batch_key,
             span=span,
+            replace_hvgs=true,
             verbose=verbose
         )
     end
 
-    hvgs = adata.vars["highly_variable"]
+    hvgs = adata.var[!,:highly_variable]
     @assert size(adata.countmatrix,2) == length(hvgs)
     adata.countmatrix = adata.countmatrix[:,hvgs]
-    adata.ngenes = size(adata.countmatrix,2)
-    for key in keys(adata.vars)
-        if length(adata.vars[key]) == length(hvgs)
-            adata.vars[key] = adata.vars[key][hvgs]
+    #adata.ngenes = size(adata.countmatrix,2)
+    for colname in names(adata.var)
+        if length(adata.var[!,colname]) == length(hvgs)
+            adata.var[!,colname] = adata.var[!,colname][hvgs]
         end
     end
     # some basic checks 
-    @assert sum(adata.vars["highly_variable"]) == adata.ngenes
-    @assert !any(isnan.(adata.vars["highly_variable_rank"]))
+    @assert sum(adata.var[!,:highly_variable]) == size(adata.countmatrix,2)
+    @assert !any(isnan.(adata.var[!,:highly_variable_rank]))
     return adata
 end
 
@@ -422,6 +342,6 @@ function normalize_counts!(adata::AnnData)
     if !isnothing(adata.layers)
         adata.layers = Dict()
     end
-    adata.layers["normalised"] = mat_norm
+    adata.layers["size_factor_normalized"] = mat_norm
     return adata
 end
