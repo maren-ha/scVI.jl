@@ -41,11 +41,9 @@ function load_pbmc(path::String = "data/")
         counts = Float32.(counts')
 
         adata = AnnData(countmatrix=counts, 
-                    ncells=size(counts,1), 
-                    ngenes=size(counts,2), 
                     celltypes = celltypes,
-                    obs=Dict("cell_type" => celltypes),
-                    vars = Dict("gene_names" => genenames)
+                    obs = DataFrame(cell_type = celltypes),
+                    var = DataFrame(gene_names = genenames)
         )
     else 
         filename_jld2 = joinpath(path, "pbmc.jld2")

@@ -73,17 +73,17 @@ function load_tasic(path::String = "data/")
     gabagluta = fill("non_neural", length(celltypes))
     gabagluta[neuralcells] = [gabaglutamap[i] for i in celltypes[neuralcells]]
 
-    obs = Dict("cell_type" => celltypes,
-                "neuralcells" => neuralcells,
-                "GABAvsGluta" => gabagluta
+    obs = DataFrame(cell_type = celltypes,
+                neural_cells = neuralcells,
+                GABA_vs_Gluta = gabagluta
     )
 
     # build final gene set
     receptorandmarker_inds = [i in receptorandmarkers for i in genenames]
-    vars = Dict("gene_names" => genenames,
-                "receptorandmarkers" => receptorandmarkers,
-                "receptorandmarker_inds" => vec(receptorandmarker_inds)
+    vars = DataFrame(gene_names = vec(genenames),
+            receptor_and_marker_inds = vec(receptorandmarker_inds)
     )
+    uns = Dict("receptor_and_markers" => vec(receptorandmarkers))
 
     # build layers for AnnData struct
     normalized_counts = normalize_counts(countmat)
@@ -92,19 +92,15 @@ function load_tasic(path::String = "data/")
     )
 
     countmatrix = Float32.(countmat')
-    ncells = size(countmatrix,1)
-    ngenes = size(countmatrix,2)
-    @assert ncells == length(obs["cell_type"])
-    @assert ngenes == length(vars["gene_names"])
+    @assert size(countmatrix,1) == length(obs[!,:cell_type])
+    @assert size(countmatrix,2) == length(vars[!,:gene_names])
 
     adata = AnnData(
         countmatrix = countmatrix,
-        ncells = ncells,
-        ngenes = ngenes,
         layers=layers,
         obs=obs,
-        vars=vars,
-        celltypes = String.(obs["cell_type"])
+        var=vars,
+        celltypes = String.(obs[!,:cell_type])
     )
     return adata
 end
@@ -122,18 +118,17 @@ Returns the modified `AnnData` object.
 """
 function subset_tasic!(adata::AnnData)
     # subset to receptors and markers and neural cells only. 
-    receptorandmarker_inds = adata.vars["receptorandmarker_inds"]
-    neuralcells = adata.obs["neuralcells"]
+    receptorandmarker_inds = adata.var[!,:receptor_and_marker_inds]
+    neuralcells = adata.obs[!,:neural_cells]
     @assert size(adata.countmatrix) == (length(neuralcells), length(receptorandmarker_inds))
     adata.countmatrix = adata.countmatrix[neuralcells,receptorandmarker_inds]
-    adata.ncells, adata.ngenes = size(adata.countmatrix,1), size(adata.countmatrix,2)
     adata.celltypes = String.(adata.celltypes[neuralcells])
-    adata.obs = Dict(
-        "cell_type" => adata.obs["cell_type"][neuralcells],
-        "GABAvsGluta" => adata.obs["GABAvsGluta"][neuralcells]
+    adata.obs = DataFrame(
+        cell_type = adata.obs[!,:cell_type][neuralcells],
+        GABA_vs_Gluta = adata.obs[!,:GABA_vs_Gluta][neuralcells]
     )
-    adata.vars = Dict(
-        "gene_names" => adata.vars["gene_names"][receptorandmarker_inds]
+    adata.var = DataFrame(
+        gene_names = adata.var[!,:gene_names][receptorandmarker_inds]
     )
     return adata
 end
