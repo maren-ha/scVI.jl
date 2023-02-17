@@ -117,8 +117,8 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [ ] revise docstrings for scvis functions
 - [ ] make `data` and `scvis` into proper submodules
 - [ ] refactor data processing
-	- [ ] re-write `PBMC.jl`
-	- [ ] re-write `Tasic.jl`
+	- [x] re-write `PBMC.jl`
+	- [x] re-write `Tasic.jl`
 	- [ ] add `Embryoid.jl`
 	- [ ] add preprocessing: 
 		- [ ] log-transform 
