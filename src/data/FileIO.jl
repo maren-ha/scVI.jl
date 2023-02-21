@@ -71,10 +71,14 @@ julia> adata = read_h5ad("mydata.h5ad")
 function read_h5ad(filename::String)
     file = open_h5_data(filename)
 
-    if !haskey(file, "layers") || (haskey(file, "layers") && !(haskey(file["layers"], "counts")))
+    if !haskey(file, "countmatrix") || (haskey(file, "layers") && !(haskey(file["layers"], "counts")))
         error("countmatrix not found in standard location, stopping here")
+    elseif haskey(file, "countmatrix")
+        countmatrix = read(file, "countmatrix") # shape: cell x gene 
+    elseif (haskey(file, "layers") && (haskey(file["layers"], "counts")))
+        countmatrix = read(file, "layers")["counts"]
     else
-        countmatrix = read(file, "layers")["counts"]' # shape: cell x gene 
+        error("problem encountered finding/reading countmatrix")
     end
     adata = AnnData(countmatrix)
 
