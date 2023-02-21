@@ -87,12 +87,14 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
 
+    ncells, ngenes = size(adata.countmatrix)
+
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:ncells))[1:Int(ceil(trainsize*ncells))]
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     if training_args.register_losses
@@ -147,12 +149,14 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
 
+    ncells, ngenes = size(adata.countmatrix)
+
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:ncells))[1:Int(ceil(trainsize*ncells))]
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     if training_args.register_losses
@@ -277,12 +281,14 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     tsne_opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     tsne_ps = Flux.params(m, tsne_net)
 
+    ncells, ngenes = size(adata.countmatrix)
+
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:ncells))[1:Int(ceil(trainsize*ncells))]
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     if training_args.register_losses
@@ -346,12 +352,14 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     tsne_opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     tsne_ps = Flux.params(m, tsne_net)
 
+    ncells, ngenes = size(adata.countmatrix)
+
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:ncells))[1:Int(ceil(trainsize*ncells))]
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     if training_args.register_losses
