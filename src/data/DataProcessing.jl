@@ -281,12 +281,13 @@ function subset_to_hvg!(adata::AnnData;
     hvgs = adata.var[!,:highly_variable]
     @assert size(adata.countmatrix,2) == length(hvgs)
     adata.countmatrix = adata.countmatrix[:,hvgs]
+    adata.var = adata.var[hvgs,:]
     #adata.ngenes = size(adata.countmatrix,2)
-    for colname in names(adata.var)
-        if length(adata.var[!,colname]) == length(hvgs)
-            adata.var[!,colname] = adata.var[!,colname][hvgs]
-        end
-    end
+    #for colname in names(adata.var)
+    #    if length(adata.var[!,colname]) == length(hvgs)
+    #        adata.var[!,colname] = adata.var[!,colname][hvgs]
+    #    end
+    #end
     # some basic checks 
     @assert sum(adata.var[!,:highly_variable]) == size(adata.countmatrix,2)
     @assert !any(isnan.(adata.var[!,:highly_variable_rank]))
