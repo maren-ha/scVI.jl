@@ -40,14 +40,16 @@ function load_pbmc(path::String = "data/")
         @assert length(celltypes) == length(barcodes) == size(counts,2)
         counts = Float32.(counts')
 
-        adata = AnnData(countmatrix=counts, 
+        adata = AnnData(countmatrix = counts, 
                     celltypes = celltypes,
                     obs = DataFrame(cell_type = celltypes),
-                    var = DataFrame(gene_names = genenames)
+                    var = DataFrame(gene_names = genenames), 
+                    layers = Dict("counts" => counts)
         )
-    else 
+    else
         filename_jld2 = joinpath(path, "pbmc.jld2")
         filename_in_scvi = string(dirname(pathof(scVI)),"/../data/pbmc.jld2")
+        # saved via save(filename_jld2, Dict("adata_pbmc" => adata)); save(filename_in_scvi, Dict("adata_pbmc" => adata))
         if isfile(filename_jld2)
             adata = jldopen(filename_jld2)["adata_pbmc"]
         elseif isfile(filename_in_scvi)
