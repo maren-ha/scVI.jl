@@ -44,9 +44,9 @@ function load_cortex_from_url(save_path::String=""; verbose::Bool=false)
     end
 
     cellinfos = Dict(
-        "cell_type" => clusters,
+        "cell_type" => String.(clusters),
         "labels" => labels,
-        "precise_labels" => precise_clusters,
+        "precise_labels" => Int.(precise_clusters),
         "tissue" => String.(csvfile[1,3:end]),
         "group" => Int.(csvfile[2,3:end]),
         "totalmRNA" => Int.(csvfile[3,3:end]),
@@ -69,7 +69,8 @@ function load_cortex_from_url(save_path::String=""; verbose::Bool=false)
         countmatrix = countmatrix,
         obs = DataFrame(cellinfos), 
         var = DataFrame(geneinfos), 
-        celltypes = cellinfos["cell_type"]
+        celltypes = cellinfos["cell_type"], 
+        layers = Dict("counts" => countmatrix)
     )
     return adata
 end
@@ -108,10 +109,11 @@ Returns the Julia `AnnData` object.
 function load_cortex(path::String="data/"; verbose::Bool=false)
     filename = joinpath(path, "cortex_anndata.h5ad")
     if isfile(filename)
-        adata = load_cortex_from_h5ad(filename)
+        #adata = load_cortex_from_h5ad(filename)
+        adata = read_h5ad(filename)
     else
         !isdir(path) && mkdir(path)
-        adata = init_cortex_from_url(path, verbose=verbose)
+        adata = load_cortex_from_url(path, verbose=verbose)
     end
     return adata 
 end
