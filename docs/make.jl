@@ -16,6 +16,9 @@ makedocs(
     ]    
 )
 
+deploydocs(
+    repo = "github.com/maren-ha/scVI.jl.git",
+)
 # Docs rules 
 # if there are explicit documented constructors for user-defined types, 
 # types and default values of structs are not documented in struct docstring, 
