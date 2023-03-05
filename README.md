@@ -1,5 +1,7 @@
 # README
 
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://maren-ha.github.io/scVI.jl/)
+
 ![](logo/scvi-julia-logo.jpg)
 
 A Julia package for fitting VAEs to single-cell data using count distributions. 
@@ -80,8 +82,6 @@ plot_umap_on_latent(m, adata; save_plot=true)
 
 [Current version of docs.](https://maren-ha.github.io/scVI.jl/)
 
-This is the manual deployment of the local build. Automatic deployment with GithubActions/TravisCI is work in progress and will (hopefully) be available soon. 
-
 As with every Julia package, you can access the docstrings of exported function by typing `?` into the REPL, followed by the function name. E.g., `?normalize_counts` prints the following to the REPL:
 
 ```
@@ -109,13 +109,14 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 ------------
 ## TODO 
 
-- [ ] deploy docs 
+- [x] deploy docs
 - [ ] write tests
 - [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
 - [ ] revise docstrings for scvis functions
-- [ ] make `data` and `scvis` into proper submodules
+- [ ] turn `data` and `scvis` into submodules
+- [ ] fix library size integration 
 - [ ] refactor data processing
 	- [x] re-write `PBMC.jl`
 	- [x] re-write `Tasic.jl`
