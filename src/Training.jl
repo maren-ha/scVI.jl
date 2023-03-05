@@ -36,6 +36,50 @@ end
 
 Flux.params(m::scVAE) = Flux.params(m.z_encoder, m.l_encoder, m.decoder)
 
+function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch_key::Symbol, verbose::Bool)
+
+    batch_indices = ones(Int64, size(adata.countmatrix,1))
+
+    if !m.use_observed_lib_size 
+        # breaking conditions: if something is really wrong, default to using observed library size 
+        if (isnothing(m.library_log_means) || isnothing(m.library_log_vars))
+            @warn "If encoding library during training, `library_log_means` and `library_log_vars` must be provided, defaulting to using observed library size!"
+            m.use_observed_lib_size=true
+        elseif !hasproperty(adata.obs, batch_key)
+            @warn "batch_key $(batch_key) not found in adata.obs, defaulting to using observed library size!"
+            m.use_observed_lib_size=true
+        elseif length(m.library_log_means) != length(unique(adata.obs[!,batch_key]))
+            @warn "length of $(m.library_log_means) = $(length(m.library_log_means)) does not match number of unique values in adata.obs[!,batch_key] = $(length(unique(adata.obs[!,batch_key]))), defaulting to using observed library size!"
+            m.use_observed_lib_size=true
+        else 
+            verbose && @info "library size will be encoded"
+            l_library_means = length(m.library_log_means)
+            l_unique_batch_keys = length(unique(adata.obs[!,batch_key]))
+            # some last checks 
+            if m.n_batch != l_library_means
+                @warn "m.n_batch = $(m.n_batch) different from length(library_log_means) = $(l_library_means) -- overriding m.n_batch and setting to $(l_library_means)"
+                m.n_batch = l_library_means
+            elseif m.n_batch != l_unique_batch_keys
+                @warn "m.n_batch = $(m.n_batch) different from number of unique values in adata.obs[!,batch_key] = $(l_unique_batch_keys) -- overriding m.n_batch and setting to $(l_unique_batch_keys)"
+                m.n_batch = l_unique_batch_keys
+            end
+            @assert m.n_batch == l_library_means == l_unique_batch_keys
+            for (id_ind, batch_id) in enumerate(unique(adata.obs[!,batch_key]))
+                cur_batch_inds = findall(x -> x == batch_id, adata.obs[!,batch_key])
+                batch_indices[cur_batch_inds] .= id_ind
+            end
+        end
+    elseif m.use_observed_lib_size
+        if m.n_batch > 1 || (!isnothing(m.library_log_means) && length(m.library_log_means) > 1)
+            @warn "m.n_batch = $(m.n_batch) > 1, but observed library size is used, thus ignoring potential batch effects"
+        end
+        verbose && @info "Using observed library size in each training batch, thus ignoring potential experimental batch effects"
+       @assert batch_indices == ones(Int64, size(adata.countmatrix,1))
+    end
+
+    return batch_indices
+end
+
 """
     train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
 
@@ -47,7 +91,9 @@ optionally prints out progress and current loss values.
 
 Returns the trained `scVAE` model.
 """
-function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
+function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; batch_key::Symbol=:batch)
+
+    ncells, ngenes = size(adata.countmatrix)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
@@ -55,9 +101,9 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:size(ncells))[1:Int(ceil(trainsize*ncells))])
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     if training_args.register_losses
@@ -67,7 +113,9 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
         m.loss_registry["total_loss"] = []
     end
 
-    dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
+    batch_indices = setup_batch_indices_for_library_scaling(m, adata, batch_key, training_args.verbose)
+    dataloader = Flux.DataLoader((adata.countmatrix[train_inds,:]', batch_indices[train_inds]), batchsize=training_args.batchsize, shuffle=true)
+    # dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."
@@ -118,7 +166,9 @@ Returns the trained `scVAE` model.
 """
 function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOrMat{S}, training_args::TrainingArgs) where S <: Real
 
-    @assert size(labels) == (adata.ncells, m.n_latent)
+    ncells, ngenes = size(adata.countmatrix)
+
+    @assert size(labels) == (ncells, m.n_latent)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
@@ -126,9 +176,9 @@ function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOr
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:adata.ncells))[1:Int(ceil(trainsize*adata.ncells))]
+        train_inds = shuffle!(collect(1:ncells))[1:Int(ceil(trainsize*ncells))]
     else
-        train_inds = collect(1:adata.ncells);
+        train_inds = collect(1:ncells);
     end
 
     dataloader = Flux.DataLoader((adata.countmatrix[train_inds,:]', labels[train_inds,:]'), batchsize=training_args.batchsize, shuffle=true)
