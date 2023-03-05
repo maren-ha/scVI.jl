@@ -1,18 +1,18 @@
 #include("AnnData.jl")
 
 """
-    init_library_size(adata::AnnData)
+    init_library_size(adata::AnnData; batch_key::Symbol=:batch)
 
 Computes and returns library size based on `AnnData` object. \n
 Based on the `scvi-tools` function from [here](https://github.com/scverse/scvi-tools/blob/04389f74f3e94d7d2986f93eac85cb4543a8608f/scvi/model/_utils.py#L229) \n
-Returns a tupe of arrays of length equal to the number of batches in `adata` as stored in `adata.obs["batch_indices"]`, 
-containing the means and variances of the library size in each batch in `adata`. If no batch indices are given, defaults to 1 batch.     
+Returns a tupe of arrays of length equal to the number of batches in `adata` as stored in `adata.obs[!,:batch_key]`, 
+containing the means and variances of the library size in each batch in `adata`. Default batch key: `:batch`, if it is not found, defaults to 1 batch.     
 """
-function init_library_size(adata::AnnData)
+function init_library_size(adata::AnnData; batch_key::Symbol=:batch)
     data = adata.countmatrix
     #
-    if !isnothing(adata.obs) && hasproperty(adata.obs, :batch)
-        batch_indices = adata.obs[!,:batch]
+    if !isnothing(adata.obs) && hasproperty(adata.obs, batch_key)
+        batch_indices = adata.obs[!,batch_key]
         if 0 ∈ batch_indices
             batch_indices .+= 1 # for Julia-Python index conversion 
         end
@@ -22,18 +22,18 @@ function init_library_size(adata::AnnData)
 
     n_batch = length(unique(batch_indices))
 
-    library_log_means = zeros(n_batch)
-    library_log_vars = ones(n_batch)
+    library_log_means = zeros(Float32, n_batch)
+    library_log_vars = ones(Float32, n_batch)
 
-    for i_batch in unique(batch_indices)
+    for (ind, i_batch) in enumerate(unique(batch_indices))
         # @info size(data,2)  
         idx_batch = findall(batch_indices.==i_batch)
         data_batch = data[idx_batch,:]
         sum_counts = vec(sum(data_batch, dims=2))
         masked_log_sum = log.(sum_counts[findall(sum_counts.>0)])
 
-        library_log_means[i_batch] = mean(masked_log_sum)
-        library_log_vars[i_batch] = var(masked_log_sum)
+        library_log_means[ind] = mean(masked_log_sum)
+        library_log_vars[ind] = var(masked_log_sum)
     end
     return library_log_means, library_log_vars
 end # to check: scvi.model._utils._init_library_size(pydata, n_batch)
