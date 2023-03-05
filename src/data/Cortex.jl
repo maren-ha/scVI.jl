@@ -111,6 +111,7 @@ function load_cortex(path::String="data/"; verbose::Bool=false)
     if isfile(filename)
         #adata = load_cortex_from_h5ad(filename)
         adata = read_h5ad(filename)
+        adata.celltypes = adata.obs[!,:cell_type]
     else
         !isdir(path) && mkdir(path)
         adata = load_cortex_from_url(path, verbose=verbose)
