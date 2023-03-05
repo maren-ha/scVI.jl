@@ -10,6 +10,7 @@ using JLD2
 # core package functionality 
 using Distributions
 using Flux
+using Flux:onehotbatch
 using Random 
 using ProgressMeter
 using SpecialFunctions # for loggamma
