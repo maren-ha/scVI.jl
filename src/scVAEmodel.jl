@@ -24,6 +24,8 @@ Can be constructed using keywords.
  - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
  - `gene_likelihood::Symbol=:zinb`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
  - `latent_distribution::Symbol=:normal`: whether or not to log-transform the input data in the encoder (for numerical stability)
+ -  `library_log_means::Union{Nothing, Vector{Float32}}`: log-transformed means of library size; has to be provided when not using observed library size, but encoding it
+ -  `library_log_vars::Union{Nothing, Vector{Float32}}`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
  - `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
  - `loss_registry::Dict=Dict()`: dictionary in which to record the values of the different loss components (reconstruction error, KL divergence(s)) during training 
  - `use_observed_lib_size::Bool=true`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
@@ -42,6 +44,8 @@ Base.@kwdef mutable struct scVAE
     is_trained::Bool=false
     gene_likelihood::Symbol=:zinb
     latent_distribution::Symbol=:normal
+    library_log_means::Union{Nothing, Vector{Float32}}
+    library_log_vars::Union{Nothing, Vector{Float32}}
     log_variational::Bool=true
     loss_registry::Dict=Dict()
     use_observed_lib_size::Bool=true
@@ -214,6 +218,8 @@ function scVAE(n_input::Int;
         dropout_rate=dropout_rate,
         gene_likelihood=gene_likelihood,
         latent_distribution=latent_distribution,
+        library_log_means=library_log_means,
+        library_log_vars=library_log_vars,
         log_variational=log_variational,
         use_observed_lib_size=use_observed_lib_size,
         z_encoder=z_encoder,
