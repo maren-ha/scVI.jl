@@ -114,9 +114,9 @@ end
 
 #-------------- loss registry -------------------------------
 
-register_losses!(m::scVAE, d::Tuple; kl_weight::Float32=1.0f0) = register_losses(m, d...; kl_weight=kl_weight)
+register_losses!(m::scVAE, d::Tuple; kl_weight::Float32=1.0f0) = register_losses!(m, d...; kl_weight=kl_weight)
 
-register_losses!(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S <: Real = register_losses(m, x, fill(1, size(x,2)); kl_weight=kl_weight)
+register_losses!(m::scVAE, x::AbstractMatrix{S}; kl_weight::Float32=1.0f0) where S <: Real = register_losses!(m, x, fill(1, size(x,2)); kl_weight=kl_weight)
 
 function register_losses!(m::scVAE, x::AbstractMatrix{S}, batch_indices::Vector{Int}; kl_weight::Float32=1.0f0) where S <: Real 
     z, qz_m, qz_v, ql_m, ql_v, library = inference(m, x)
