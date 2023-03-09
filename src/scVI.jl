@@ -27,7 +27,8 @@ using VegaLite
 
 include("data/AnnData.jl")
 include("data/FileIO.jl")
-include("data/DataProcessing.jl")
+include("data/HighlyVariableGenes.jl")
+include("data/LibrarySizeNormalization.jl")
 include("data/Cortex.jl")
 include("data/PBMC.jl")
 include("data/Tasic.jl")
@@ -50,7 +51,7 @@ export
     read_h5ad, write_h5ad,
     init_library_size,
     highly_variable_genes, highly_variable_genes!, subset_to_hvg!,
-    estimate_size_factors, normalize_counts, normalize_counts!, 
+    estimate_size_factors, normalize_size_factors, normalize_size_factors!, 
     load_cortex_from_h5ad, load_cortex_from_url, load_cortex, 
     load_pbmc, 
     load_tasic, subset_tasic!,
