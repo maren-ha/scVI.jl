@@ -17,11 +17,11 @@ estimate_size_factors(mat; locfunc=median)
 ```
 
 ```@docs
-normalize_counts(mat::AbstractMatrix)
+normalize_size_factors(mat::AbstractMatrix)
 ```
 
 ```@docs
-normalize_counts!(adata::AnnData)
+normalize_size_factors!(adata::AnnData)
 ```
 
 ## Highly variable genes 

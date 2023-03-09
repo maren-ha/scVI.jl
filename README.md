@@ -82,13 +82,13 @@ plot_umap_on_latent(m, adata; save_plot=true)
 
 [Current version of docs.](https://maren-ha.github.io/scVI.jl/)
 
-As with every Julia package, you can access the docstrings of exported function by typing `?` into the REPL, followed by the function name. E.g., `?normalize_counts` prints the following to the REPL:
+As with every Julia package, you can access the docstrings of exported function by typing `?` into the REPL, followed by the function name. E.g., `?normalize_size_factors` prints the following to the REPL:
 
 ```
-help?> normalize_counts
-search: normalize_counts normalize_counts!
+help?> normalize_size_factors
+search: normalize_size_factors normalize_size_factors!
 
-  normalize_counts(mat::Abstractmatrix)
+  normalize_size_factors(mat::Abstractmatrix)
 
   Normalizes the countdata in mat by dividing it by the size factors calculated with estimate_size_factors. Assumes a countmatrix mat in cell x gene format as
   input, returns the normalized matrix.

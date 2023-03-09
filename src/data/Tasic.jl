@@ -86,7 +86,7 @@ function load_tasic(path::String = "data/")
     uns = Dict("receptor_and_markers" => vec(receptorandmarkers))
 
     # build layers for AnnData struct
-    normalized_counts = normalize_counts(countmat)
+    normalized_counts = normalize_size_factors(countmat)
     layers = Dict("counts" => Float32.(countmat'),
                 "normalized_counts" => Float32.(normalized_counts')
     )
