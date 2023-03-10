@@ -94,19 +94,6 @@ function plot_umap_on_latent(
     return umap_plot
 end
 
-function standardize(x)
-    (x .- mean(x, dims = 1)) ./ std(x, dims = 1)
-end
-
-function prcomps(mat, standardizeinput = true)
-    if standardizeinput
-        mat = standardize(mat)
-    end
-    u,s,v = svd(mat)
-    prcomps = u * Diagonal(s)
-    return prcomps
-end
-
 """
     plot_pca_on_latent(
         m::scVAE, adata::AnnData; 

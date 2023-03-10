@@ -71,7 +71,7 @@ function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch
         end
     elseif m.use_observed_lib_size
         if m.n_batch > 1 || (!isnothing(m.library_log_means) && length(m.library_log_means) > 1)
-            @warn "m.n_batch = $(m.n_batch) > 1, but observed library size is used, thus ignoring potential batch effects"
+            @warn "either m.n_batch > 1 or length of observed library_log_means/vars vector > 1, but observed library size is used, thus ignoring potential batch effects"
         end
         verbose && @info "Using observed library size in each training batch, thus ignoring potential experimental batch effects"
        @assert batch_indices == ones(Int64, size(adata.countmatrix,1))
@@ -81,7 +81,7 @@ function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch
 end
 
 """
-    train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
+    train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; batch_key::Symbol=:batch)
 
 Trains an `scVAE` model on an `AnnData` object, where the behaviour is controlled by a `TrainingArgs` object: 
 Defines the ADAM SGD optimiser, collects the model parameters, optionally splits data in training and testdata and 

@@ -82,13 +82,13 @@ plot_umap_on_latent(m, adata; save_plot=true)
 
 [Current version of docs.](https://maren-ha.github.io/scVI.jl/)
 
-As with every Julia package, you can access the docstrings of exported function by typing `?` into the REPL, followed by the function name. E.g., `?normalize_counts` prints the following to the REPL:
+As with every Julia package, you can access the docstrings of exported function by typing `?` into the REPL, followed by the function name. E.g., `?normalize_size_factors` prints the following to the REPL:
 
 ```
-help?> normalize_counts
-search: normalize_counts normalize_counts!
+help?> normalize_size_factors
+search: normalize_size_factors normalize_size_factors!
 
-  normalize_counts(mat::Abstractmatrix)
+  normalize_size_factors(mat::Abstractmatrix)
 
   Normalizes the countdata in mat by dividing it by the size factors calculated with estimate_size_factors. Assumes a countmatrix mat in cell x gene format as
   input, returns the normalized matrix.
@@ -115,17 +115,16 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
 - [ ] revise docstrings for scvis functions
-- [ ] turn `data` and `scvis` into submodules
-- [ ] fix library size integration 
+- [x] turn `data` and `scvis` into submodules
+- [x] fix library size integration 
 - [ ] refactor data processing
 	- [x] re-write `PBMC.jl`
 	- [x] re-write `Tasic.jl`
 	- [ ] add `Embryoid.jl`
 	- [ ] add preprocessing: 
-		- [ ] log-transform 
-		- [ ] re-scaling 
+		- [x] log-transform 
+		- [x] re-scaling 
 		- [ ] filtering (?) 
 	- [ ]  add docstrings
-	- [ ]  write test cases
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
