@@ -1,8 +1,24 @@
 module scVI
 
 # for data handling
-include("data/DataProcessing.jl")
-using .DataProcessing
+using CSV
+using DataFrames
+using HDF5
+using DelimitedFiles
+using JLD2
+using LinearAlgebra
+using StatsBase
+using UMAP 
+
+include("data/AnnData.jl")
+include("data/FileIO.jl")
+include("data/DimensionReduction.jl")
+include("data/HighlyVariableGenes.jl")
+include("data/LibrarySizeNormalization.jl")
+include("data/Transformations.jl")
+include("data/Cortex.jl")
+include("data/PBMC.jl")
+include("data/Tasic.jl")
 
 export
     AnnData,
@@ -11,6 +27,8 @@ export
     init_library_size,
     highly_variable_genes, highly_variable_genes!, subset_to_hvg!,
     estimate_size_factors, normalize_size_factors, normalize_size_factors!, 
+    normalize_total!, normalize_total, rescale!, log_transform!, sqrt_transform!,
+    rescale!, pca!, umap!,
     load_cortex_from_h5ad, load_cortex_from_url, load_cortex, 
     load_pbmc, 
     load_tasic, subset_tasic!
@@ -26,8 +44,6 @@ using SpecialFunctions # for loggamma
 using StatsBase
 
 # evaluation: UMAP, PCA and plots  
-using LinearAlgebra
-using UMAP 
 using VegaLite
 
 include("Utils.jl")
