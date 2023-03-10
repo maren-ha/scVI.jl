@@ -91,12 +91,20 @@ optionally prints out progress and current loss values.
 
 Returns the trained `scVAE` model.
 """
-function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; batch_key::Symbol=:batch)
-
-    ncells, ngenes = size(adata.countmatrix)
+function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; batch_key::Symbol=:batch, layer::Union{String, Nothing}=nothing)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
+
+    # get matrix on which to operate 
+    if m.gene_likelihood ∈ [:gaussian, :bernoulli]
+        isnothing(layer) && error("if using Gaussian or Bernoulli generative distribution, the adata layer on which to train has to be specified explicitly")
+        X = adata.layers[layer]
+    else
+        X = adata.countmatrix
+    end
+
+    ncells, ngenes = size(X)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
@@ -114,7 +122,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
     end
 
     batch_indices = setup_batch_indices_for_library_scaling(m, adata, batch_key, training_args.verbose)
-    dataloader = Flux.DataLoader((adata.countmatrix[train_inds,:]', batch_indices[train_inds]), batchsize=training_args.batchsize, shuffle=true)
+    dataloader = Flux.DataLoader((X[train_inds,:]', batch_indices[train_inds]), batchsize=training_args.batchsize, shuffle=true)
     # dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
@@ -136,7 +144,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
             end
             train_steps += 1
         end
-        training_args.register_losses && register_losses!(m, Float32.(adata.countmatrix[train_inds,:]'); kl_weight=kl_weight)
+        training_args.register_losses && register_losses!(m, Float32.(X[train_inds,:]'); kl_weight=kl_weight)
     end
     @info "training complete!"
     m.is_trained = true

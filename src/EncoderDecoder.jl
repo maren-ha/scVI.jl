@@ -371,6 +371,10 @@ function scDecoder(n_input, n_output;
             dispersion = :gene
             px_r_decoder = randn(Float32, n_output)
         end
+    elseif gene_likelihood == :gaussian
+        px_r_decoder = Dense(n_out_dec, n_output)
+        # overwrite px_scale_decoder 
+        # px_scale_decoder = Dense(n_out_dec, n_output)
     else
         px_r_decoder = nothing 
     end

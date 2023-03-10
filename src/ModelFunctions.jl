@@ -80,9 +80,18 @@ function get_reconstruction_loss(::Val{:nb}, x::AbstractMatrix{S}, px_rate::Abst
     return reconst_loss
 end
 
-function get_reconstruction_loss(::Val{:poisson}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}}, px_dropout::Union{AbstractMatrix{S}}) where S <: Real 
-    #error("not yet implemented")
+function get_reconstruction_loss(::Val{:poisson}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}, Nothing}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
     reconst_loss = sum(-log_poisson(x, px_rate), dims=1)
+    return reconst_loss
+end
+
+function get_reconstruction_loss(::Val{:gaussian}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::AbstractArray{S}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
+    reconst_loss = sum(-log_normal(x, px_rate, px_r), dims=1)
+    return reconst_loss
+end
+
+function get_reconstruction_loss(::Val{:bernoulli}, x::AbstractMatrix{S}, px_rate::AbstractMatrix{S}, px_r::Union{AbstractArray{S}, Nothing}, px_dropout::Union{AbstractMatrix{S}, Nothing}) where S <: Real 
+    reconst_loss = sum(-log_binary(x, px_rate), dims=1)
     return reconst_loss
 end
 

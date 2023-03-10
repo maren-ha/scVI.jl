@@ -140,8 +140,8 @@ function scVAE(n_input::Int;
         # + some register_buffer thing I ignored for now: https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L129
     end
 
-    if !(gene_likelihood ∈ [:zinb, :nb, :poisson])
-        @warn "gene likelihood has to be one of `:zinb`, `:nb`, or `:poisson`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
+    if !(gene_likelihood ∈ [:zinb, :nb, :poisson, :gaussian, :bernoulli])
+        @warn "gene likelihood has to be one of `:zinb`, `:nb`, `:poisson`, `gaussian`, or `bernoulli`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
     end
 
     use_activation_encoder = (use_activation == :encoder || use_activation == :both) # true

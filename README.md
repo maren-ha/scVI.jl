@@ -116,8 +116,8 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [ ] support categorical covariates (e.g., batch information)
 - [x] turn `data` and `scvis` into submodules
 - [x] fix library size integration 
-- [ ] add Gaussian generative distribution
-- [ ] add Bernoulli generative distribution 
+- [x] add Gaussian generative distribution
+- [x] add Bernoulli generative distribution 
 - [ ] refactor data processing
 	- [x] re-write `PBMC.jl`
 	- [x] re-write `Tasic.jl`
