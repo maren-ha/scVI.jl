@@ -18,7 +18,7 @@ makedocs(
 
 deploydocs(
     repo = "github.com/maren-ha/scVI.jl.git",
-    devbranch="dev"
+    devbranch="main"
 )
 # Docs rules 
 # if there are explicit documented constructors for user-defined types, 
