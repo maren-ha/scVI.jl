@@ -4,7 +4,7 @@ using scVI
 makedocs(
     sitename = "scVI",
     authors = "Maren Hackenberg",
-    format = Documenter.HTML(prettyurls=false, edit_link="origin/master"),
+    format = Documenter.HTML(prettyurls=false, edit_link="origin/main"),
     modules = [scVI],
     pages = [
     "Getting started" => "index.md",
