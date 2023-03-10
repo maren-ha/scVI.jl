@@ -91,7 +91,7 @@ end
 
 """
     normalize_total!(adata::AnnData; 
-        target_sum::Union{Nothing, Real}=1e4, 
+        target_sum::Union{Nothing, Real}=nothing, 
         key_added::String="cell_counts",
         layer::Union{Nothing, String}=nothing,
         verbose::Bool=false)
@@ -114,14 +114,14 @@ Basic version of the [scanpy.pp.normalize_total function](https://github.com/scv
 Returns `adata` with normalized version of the original `adata.X` in `adata.layers` and the size factors in `adata.obs`. 
 """
 function normalize_total!(adata::AnnData; 
-            target_sum::Union{Nothing, Real}=1e4, 
+            target_sum::Union{Nothing, Real}=nothing, 
             key_added::String="cell_counts",
             layer::Union{Nothing, String}=nothing,
             verbose::Bool=false
     )
     X, scaled_counts_per_cell = _normalize_total(adata; target_sum=target_sum, layer=layer, verbose=verbose)
     verbose && @info "adding size factors to adata.obs..."
-    adata.obs[!,key_added] = scaled_counts_per_cell
+    adata.obs[!,key_added] = vec(scaled_counts_per_cell)
     if isnothing(adata.layers)
         adata.layers = Dict()
     end
@@ -163,6 +163,6 @@ function _normalize_total(adata::AnnData;
         target_sum = median(counts_greater_zero)
     end
     #counts += counts == 0
-    X .= (X ./ vec(counts_per_cell)) .* target_sum
-    return X, counts_per_cell ./ target_sum 
+    norm_X  = (X ./ vec(counts_per_cell)) .* target_sum
+    return norm_X, counts_per_cell ./ target_sum 
 end
