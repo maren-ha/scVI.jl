@@ -19,9 +19,9 @@ end
         verbose::Bool=false
     )
 
-Performs a PCA on the specified layer of an AnnData object and stores the results in `adata.obsm`. 
+Performs a PCA on the specified layer of an `AnnData` object and stores the results in `adata.obsm`. 
 Uses all variables of the layer by default, but the number of PCs to be stored can also be specified with the `n_pcs` keyword. 
-Returns the modified AnnData object. 
+Returns the modified `AnnData` object. 
 """
 function pca!(adata::AnnData; 
     layer::String="log_transformed", 
@@ -77,7 +77,7 @@ end
         verbose::Bool=true, 
         kwargs...)
 
-Performs UMAP on the specified layer of an AnnData object. 
+Performs UMAP on the specified layer of an `AnnData` object. 
 If the layer is not found, the log-transformed normalized counts are calculated and used. 
 Optionally, UMAP can be run on a PCA representation, the number of PCs can be specified (default=100). 
 For customizing the behaviour or UMAP, see the keyword arguments of the `UMAP.UMAP_` function. 

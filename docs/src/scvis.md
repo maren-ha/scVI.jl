@@ -12,14 +12,6 @@ The model is based on adding a t-SNE objective to the VAE loss function (i.e., t
 Similar to the usual t-SNE objective, a matrix transition of transition probabilities has to be calculated. For this, individual perplexities have to be calculated. 
 
 ```@docs
-perplexities
-```
-
-```@docs
-differentiable_perplexities
-```
-
-```@docs
 compute_transition_probs
 ```
 
@@ -45,8 +37,4 @@ There are different versions how this can be used to train scvis models.
 
 ```@docs
 train_scvis_model!
-```
-
-```@docs
-register_scvis_losses!
 ```

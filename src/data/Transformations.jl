@@ -3,9 +3,9 @@
         layer::String="normalized",
         verbose::Bool=false)
 
-Log-transforms the data, adding a pseudocount of 1. Looks for a layer of normalized counts in adata.layers["normalized"]. 
+Log-transforms the data, adding a pseudocount of 1. Looks for a layer of normalized counts in `adata.layers["normalized"]`. 
 If the layer is not there, it uses `adata.countmatrix`. 
-Returns the adata object with the log-transformed values in a new layer "log_transformed". 
+Returns the adata object with the log-transformed values in a new layer `"log_transformed"`. 
 """
 function log_transform!(adata::AnnData; 
             layer::String="normalized",
@@ -33,9 +33,9 @@ end
         layer::String="normalized",
         verbose::Bool=false)
 
-Sqrt-transforms the data, adding a pseudocount of 1. Looks for a layer of normalized counts in adata.layers["normalized"]. 
+Sqrt-transforms the data. Looks for a layer of normalized counts in `adata.layers["normalized"]`. 
 If the layer is not there, it uses `adata.countmatrix`. 
-Returns the adata object with the sqrt-transformed values in a new layer "sqrt_transformed". 
+Returns the adata object with the sqrt-transformed values in a new layer `"sqrt_transformed"`. 
 """
 function sqrt_transform!(adata::AnnData; 
             layer::String="normalized",
@@ -64,7 +64,7 @@ end
         verbose::Bool=false)
 
 Rescales the data to zero mean and unit variance in each gene, using the specified layer. If none is provided, it uses `adata.countmatrix`. 
-Returns the adata object with the rescales values in a new layer "rescaled". 
+Returns the adata object with the rescales values in a new layer `"rescaled"`. 
 """
 function rescale!(adata::AnnData; 
             layer::Union{String, Nothing}=nothing,

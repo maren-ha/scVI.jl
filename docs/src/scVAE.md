@@ -83,21 +83,3 @@ scVAE(n_input::Int;
     seed::Int=1234
     )
 ```
-
-## Generative distributions
-
-There are different options for specifying the generative distribution parameterized by the decoder. 
-
-### Count distributions
-
-```@docs
-log_poisson
-```
-
-```@docs
-log_nb_positive
-```
-
-```@docs
-log_zinb_positive
-```
