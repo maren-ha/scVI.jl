@@ -115,17 +115,16 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
 - [ ] revise docstrings for scvis functions
-- [ ] turn `data` and `scvis` into submodules
-- [ ] fix library size integration 
+- [x] turn `data` and `scvis` into submodules
+- [x] fix library size integration 
 - [ ] refactor data processing
 	- [x] re-write `PBMC.jl`
 	- [x] re-write `Tasic.jl`
 	- [ ] add `Embryoid.jl`
 	- [ ] add preprocessing: 
-		- [ ] log-transform 
-		- [ ] re-scaling 
+		- [x] log-transform 
+		- [x] re-scaling 
 		- [ ] filtering (?) 
 	- [ ]  add docstrings
-	- [ ]  write test cases
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
