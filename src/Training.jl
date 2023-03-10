@@ -81,7 +81,7 @@ function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch
 end
 
 """
-    train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs)
+    train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; batch_key::Symbol=:batch)
 
 Trains an `scVAE` model on an `AnnData` object, where the behaviour is controlled by a `TrainingArgs` object: 
 Defines the ADAM SGD optimiser, collects the model parameters, optionally splits data in training and testdata and 
