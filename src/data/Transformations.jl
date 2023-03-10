@@ -75,7 +75,10 @@ function rescale!(adata::AnnData;
         adata.layers = Dict()
     end
 
-    if !haskey(adata.layers, layer)
+    if isnothing(layer)
+        @info "rescaling on `adata.countmatrix...`"
+        X = adata.countmatrix
+    elseif !haskey(adata.layers, layer)
         @warn "layer $(layer) not found in `adata.layers`, defaulting to rescaling `adata.countmatrix`..."
         X = adata.countmatrix
     else
