@@ -88,3 +88,81 @@ function normalize_size_factors!(adata::AnnData)
     adata.layers["size_factor_normalized"] = mat_norm
     return adata
 end
+
+"""
+    normalize_total!(adata::AnnData; 
+        target_sum::Union{Nothing, Real}=1e4, 
+        key_added::String="cell_counts",
+        layer::Union{Nothing, String}=nothing,
+        verbose::Bool=false)
+
+Normalizes counts per cell, specifically normalize each cell by total counts over all genes,
+so that every cell has the same total count after normalization.
+If choosing `target_sum=1e6`, this is CPM normalization.
+
+Basic version of the [scanpy.pp.normalize_total function](https://github.com/scverse/scanpy/blob/ed3b277b2f498e3cab04c9416aaddf97eec8c3e2/scanpy/preprocessing/_normalization.py#L45-L241)
+
+**Arguments**
+------------------------
+- `adata`: `AnnData` object 
+- `target_sum`: if `nothing`, after normalization, each observation (cell) has a total count equal to the median of total counts for observations (cells) before normalization.
+- `key_added`: name of the field in `adata.obs` where the normalization factor is stored, set to "cell_counts" by default 
+- `layer`: optional; which layer to normalize on. If `nothing`, `adata.countmatrix` is used. 
+
+**Returns**
+-------
+Returns `adata` with normalized version of the original `adata.X` in `adata.layers` and the size factors in `adata.obs`. 
+"""
+function normalize_total!(adata::AnnData; 
+            target_sum::Union{Nothing, Real}=1e4, 
+            key_added::String="cell_counts",
+            layer::Union{Nothing, String}=nothing,
+            verbose::Bool=false
+    )
+    X, scaled_counts_per_cell = _normalize_total(adata; target_sum=target_sum, layer=layer, verbose=verbose)
+    verbose && @info "adding size factors to adata.obs..."
+    adata.obs[!,key_added] = scaled_counts_per_cell
+    if isnothing(adata.layers)
+        adata.layers = Dict()
+    end
+    verbose && @info "adding normalized counts to adata.layers..."
+    adata.layers["normalized"] = X 
+    return adata
+end 
+
+"""
+    normalize_total(adata::AnnData; 
+        target_sum::Union{Nothing, Real}=1e4, 
+        key_added::String="cell_counts",
+        verbose::Bool=false)
+
+Normalizes counts per cell, specifically normalize each cell by total counts over all genes,
+so that every cell has the same total count after normalization. See `normalize_total!` for details. 
+Unlike the in-place version, this function returns a dictionary with the normalized counts and scaled counts per cell. 
+"""
+function normalize_total(adata::AnnData; 
+            target_sum::Union{Nothing, Real}=1e4, 
+            layer::Union{Nothing, String}=nothing,
+            verbose::Bool=false
+    )
+    X, scaled_counts_per_cell = _normalize_total(adata; target_sum=target_sum, layer=layer, verbose=verbose)
+    return Dict("X" => X, "scaled_counts_per_cell" => scaled_counts_per_cell)
+end 
+
+function _normalize_total(adata::AnnData; 
+            target_sum::Union{Nothing, Real}=1e4,
+            layer::Union{Nothing, String}=nothing,
+            verbose::Bool=false
+    )
+    X = isnothing(layer) ? adata.countmatrix : adata.layers[layer]
+    verbose && @info "normalizing counts per cell..."
+    counts_per_cell = sum(X, dims=2)
+
+    counts_greater_zero = counts_per_cell[counts_per_cell .> 0]
+    if isnothing(target_sum)
+        target_sum = median(counts_greater_zero)
+    end
+    #counts += counts == 0
+    X .= (X ./ vec(counts_per_cell)) .* target_sum
+    return X, counts_per_cell ./ target_sum 
+end
