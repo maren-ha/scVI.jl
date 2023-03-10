@@ -6,6 +6,16 @@
 AnnData
 ```
 
+## I/O 
+
+```@docs
+read_h5ad
+```
+
+```@docs
+write_h5ad
+```
+
 ## Library size and normalization
 
 ```@docs
@@ -97,26 +107,26 @@ I recommend downloading the complete GoogleDrive folder and having it as a subfo
 
 ### Cortex data 
 
-```@docs 
-init_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
+```@docs
+load_cortex_from_h5ad
 ```
 
 ```@docs 
-load_cortex(path::String=""; verbose::Bool=false)
+load_cortex
 ```
 
 ### PBMC data 
 
 ```@docs 
-load_pbmc(path::String = "data/")
+load_pbmc
 ```
 
 ### Tasic data 
 
 ```@docs 
-load_tasic(path::String = "data/")
+load_tasic
 ```
 
 ```@docs 
-subset_tasic!(adata::AnnData)
+subset_tasic!
 ```
