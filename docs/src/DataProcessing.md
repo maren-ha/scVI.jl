@@ -9,19 +9,51 @@ AnnData
 ## Library size and normalization
 
 ```@docs
-init_library_size(adata::AnnData)
+init_library_size
 ```
 
 ```@docs
-estimate_size_factors(mat; locfunc=median)
+estimate_size_factors
 ```
 
 ```@docs
-normalize_size_factors(mat::AbstractMatrix)
+normalize_size_factors
 ```
 
 ```@docs
-normalize_size_factors!(adata::AnnData)
+normalize_size_factors!
+```
+
+```@docs
+normalize_total!
+```
+
+```@docs
+normalize_total
+```
+
+## Simple transformations 
+
+```@docs
+log_transform!
+```
+
+```@docs
+sqrt_transform!
+```
+
+```@docs
+rescale!
+```
+
+## Dimension reduction 
+
+```@docs
+pca!
+```
+
+```@docs
+umap!
 ```
 
 ## Highly variable genes 
