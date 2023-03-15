@@ -121,13 +121,13 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [ ] refactor data processing
 	- [x] re-write `PBMC.jl`
 	- [x] re-write `Tasic.jl`
-	- [ ] add preprocessing: 
+	- [x] add preprocessing: 
 		- [x] log-transform 
 		- [x] sqrt-transform
 		- [x] re-scaling
 		- [x] PCA
 		- [x] UMAP 
-		- [ ] filtering
+		- [x] filtering
 	- [x]  add docstrings
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
