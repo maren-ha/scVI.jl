@@ -118,7 +118,7 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 - [x] fix library size integration 
 - [x] add Gaussian generative distribution
 - [x] add Bernoulli generative distribution 
-- [ ] refactor data processing
+- [x] refactor data processing
 	- [x] re-write `PBMC.jl`
 	- [x] re-write `Tasic.jl`
 	- [x] add preprocessing: 
