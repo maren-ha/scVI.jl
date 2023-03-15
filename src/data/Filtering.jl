@@ -16,10 +16,10 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 Parameters
 ----------
  - `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
- - min_counts: Minimum number of counts required for a cell to pass filtering.
- - min_genes: Minimum number of genes expressed required for a cell to pass filtering.
- - max_counts: Maximum number of counts required for a cell to pass filtering.
- - max_genes: Maximum number of genes expressed required for a cell to pass filtering.
+ - `min_counts`: Minimum number of counts required for a cell to pass filtering.
+ - `min_genes`: Minimum number of genes expressed required for a cell to pass filtering.
+ - `max_counts`: Maximum number of counts required for a cell to pass filtering.
+ - `max_genes`: Maximum number of genes expressed required for a cell to pass filtering.
 
 Returns
 -------
@@ -72,10 +72,10 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 Parameters
 ----------
  - `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
- - min_counts: Minimum number of counts required for a cell to pass filtering.
- - min_genes: Minimum number of genes expressed required for a cell to pass filtering.
- - max_counts: Maximum number of counts required for a cell to pass filtering.
- - max_genes: Maximum number of genes expressed required for a cell to pass filtering.
+ - `min_counts`: Minimum number of counts required for a cell to pass filtering.
+ - `min_genes`: Minimum number of genes expressed required for a cell to pass filtering.
+ - `max_counts`: Maximum number of counts required for a cell to pass filtering.
+ - `max_genes`: Maximum number of genes expressed required for a cell to pass filtering.
 
 Returns
 -------

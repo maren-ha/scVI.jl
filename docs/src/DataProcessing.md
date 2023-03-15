@@ -45,6 +45,10 @@ normalize_total
 ## Filtering
 
 ```@docs
+filter_cells
+```
+
+```@docs
 filter_cells!
 ```
 
@@ -53,7 +57,7 @@ filter_genes!
 ```
 
 ```@docs
-normalize_total
+filter_genes
 ```
 
 ## Simple transformations 
