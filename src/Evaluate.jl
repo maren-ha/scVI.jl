@@ -95,6 +95,63 @@ function plot_umap_on_latent(
 end
 
 """
+    function plot_latent_representation(
+        m::scVAE, adata::AnnData; 
+        save_plot::Bool=false, 
+        seed::Int=987, 
+        filename::String="UMAP_on_latent.pdf"
+    )
+
+Plots the latent representation obtained from encoding the countmatrix of the `AnnData` object with the `scVAE` model. 
+If the dimension of the latent space according to `m.n_latent` is > 2, it calculates a UMAP embedding first. 
+In this case, if no UMAP representation is stored in `adata.scVI_latent_umap`, 
+it is calculated and registered by calling `register_umap_on_latent(adata, m)`.
+
+By default, the cells are color-coded according to the `celltypes` field of the `AnnData` object. 
+
+For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
+
+**Arguments:**
+---------------
+ - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
+ - `adata:AnnData`: data to embed with the model; `adata.countmatrix` is encoded with `m`
+
+ **Keyword arguments:**
+ -------------------
+ - `save_plot::Bool=true`: whether or not to save the plot
+ - `filename::String="UMAP_on_latent.pdf`: filename under which to save the plot. Has no effect if `save_plot==false`.
+ - `seed::Int=987`: which random seed to use for calculating UMAP (to ensure reproducibility)
+"""
+function plot_latent_representation(
+    m::scVAE, adata::AnnData; 
+    save_plot::Bool=false, 
+    filename::String="scvi_latent_representation.pdf",
+    )
+
+    if m.n_latent > 2 
+        @info "latent space dimension is $(m.n_latent) > 2, calculating a UMAP representation... "
+        latent_plot = plot_umap_on_latent(m, adata; save_plot=false)
+    else
+        plotcolor = isnothing(adata.celltypes) ? fill("#ff7f0e", size(adata.countmatrix,1)) : adata.celltypes
+
+        if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
+            @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
+            register_latent_representation!(adata, m)
+        end
+
+        latent_plot = @vlplot(:point, 
+                    title="scVI latent representation", 
+                    x = adata.obsm["scVI_latent"][:,1], 
+                    y = adata.obsm["scVI_latent"][:,2], 
+                    color = plotcolor,
+                    width = 800, height=500
+        )    
+    end
+    save_plot && save(filename, latent_plot)
+    return latent_plot
+end
+
+"""
     plot_pca_on_latent(
         m::scVAE, adata::AnnData; 
         save_plot::Bool=false, 
