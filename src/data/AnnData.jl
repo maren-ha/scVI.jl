@@ -75,7 +75,7 @@ function subset_adata(adata::AnnData, subset_inds::Tuple, dims::Symbol=:both)
     return adata_new
 end
 
-function subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange}, dims::Symbol)
+function subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, dims::Symbol)
     adata_new = copy(adata)
     subset_adata!(adata_new, subset_inds, dims)
     return adata_new
@@ -95,7 +95,7 @@ subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:cells}) = subset_adata!
 
 subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:genes}) = subset_adata!(adata, subset_inds[2], :genes)
 
-function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange}, ::Val{:cells})
+function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells})
     #adata.ncells = length(subset_inds)
     adata.countmatrix = adata.countmatrix[subset_inds,:]
     if !isnothing(adata.celltypes)
@@ -122,7 +122,7 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
     return adata
 end
 
-function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange}, ::Val{:genes})
+function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes})
     adata.countmatrix = adata.countmatrix[:,subset_inds]
     if !isnothing(adata.var)
         adata.var = adata.var[subset_inds,:]
