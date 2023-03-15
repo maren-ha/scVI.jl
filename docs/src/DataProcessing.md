@@ -42,10 +42,28 @@ normalize_total!
 normalize_total
 ```
 
+## Filtering
+
+```@docs
+filter_cells!
+```
+
+```@docs
+filter_genes!
+```
+
+```@docs
+normalize_total
+```
+
 ## Simple transformations 
 
 ```@docs
 log_transform!
+```
+
+```@docs
+logp1_transform!
 ```
 
 ```@docs
