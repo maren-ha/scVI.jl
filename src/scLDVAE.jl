@@ -302,6 +302,8 @@ function scLDVAE(n_input::Int;
         dropout_rate=dropout_rate,
         gene_likelihood=gene_likelihood,
         latent_distribution=latent_distribution,
+        library_log_means=library_log_means,
+        library_log_vars=library_log_vars,
         log_variational=log_variational,
         use_observed_lib_size=use_observed_lib_size,
         z_encoder=z_encoder,
