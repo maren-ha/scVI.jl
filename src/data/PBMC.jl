@@ -47,13 +47,13 @@ function load_pbmc(path::String = "data/")
                     layers = Dict("counts" => counts)
         )
     else
-        filename_jld2 = joinpath(path, "pbmc.jld2")
-        filename_in_scvi = string(dirname(pathof(scVI)),"/../data/pbmc.jld2")
+        filename_h5ad = joinpath(path, "pbmc.h5ad")
+        filename_in_scvi = string(dirname(pathof(scVI)),"/../data/pbmc.h5ad")
         # saved via save(filename_jld2, Dict("adata_pbmc" => adata)); save(filename_in_scvi, Dict("adata_pbmc" => adata))
-        if isfile(filename_jld2)
-            adata = jldopen(filename_jld2)["adata_pbmc"]
+        if isfile(filename_h5ad)
+            adata = readh5ad(filename_h5ad)
         elseif isfile(filename_in_scvi)
-            adata = jldopen(filename_in_scvi)["adata_pbmc"]
+            adata = readh5ad(filename_in_scvi)
         end
     end
     return adata
