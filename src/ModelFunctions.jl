@@ -204,7 +204,7 @@ Returns the mean (default) or a sample of the latent representation (can be cont
  - `cellindices=nothing`: optional; indices of cells (=rows) on which to subset the `countmatrix` before embedding it 
  - `give_mean::Bool=true`: optional; if `true`, returns the mean of the latent representation, else returns a sample. 
 """
-function get_latent_representation(m::scVAE, countmatrix::Matrix; 
+function get_latent_representation(m::scVAE, countmatrix::AbstractArray; 
     cellindices=nothing, give_mean::Bool=true
     )
     # countmatrix assumes cells x genes 
