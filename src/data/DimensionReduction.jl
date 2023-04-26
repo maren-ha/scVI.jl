@@ -15,7 +15,7 @@ end
 """
     function pca!(adata::AnnData; 
         layer::String="log_transformed", 
-        n_pcs::Int=size(adata.countmatrix,2),
+        n_pcs::Int=size(adata.X,2),
         verbose::Bool=false
     )
 

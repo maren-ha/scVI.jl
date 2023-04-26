@@ -7,7 +7,7 @@ Returns a tupe of arrays of length equal to the number of batches in `adata` as 
 containing the means and variances of the library size in each batch in `adata`. Default batch key: `:batch`, if it is not found, defaults to 1 batch.     
 """
 function init_library_size(adata::AnnData; batch_key::Symbol=:batch)
-    data = adata.countmatrix
+    data = adata.X
     #
     if !isnothing(adata.obs) && hasproperty(adata.obs, batch_key)
         batch_indices = adata.obs[!,batch_key]
@@ -76,11 +76,11 @@ end
 """
     normalize_size_factors(adata::AnnData)
 
-Normalizes the `adata.countmatrix` by dividing it by the size factors calculated with `estimate_size_factors`. 
+Normalizes the `adata.X` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Adds the normalized count matrix to `adata.layers` and returns `adata`.
 """
 function normalize_size_factors!(adata::AnnData)
-    sizefactors = estimate_size_factors(adata.countmatrix)
+    sizefactors = estimate_size_factors(adata.X)
     mat_norm = mat ./ sizefactors'
     if !isnothing(adata.layers)
         adata.layers = Dict()
@@ -107,7 +107,7 @@ Basic version of the [scanpy.pp.normalize_total function](https://github.com/scv
 - `adata`: `AnnData` object 
 - `target_sum`: if `nothing`, after normalization, each observation (cell) has a total count equal to the median of total counts for observations (cells) before normalization.
 - `key_added`: name of the field in `adata.obs` where the normalization factor is stored, set to "cell_counts" by default 
-- `layer`: optional; which layer to normalize on. If `nothing`, `adata.countmatrix` is used. 
+- `layer`: optional; which layer to normalize on. If `nothing`, `adata.X` is used. 
 
 **Returns**
 -------
@@ -154,7 +154,7 @@ function _normalize_total(adata::AnnData;
             layer::Union{Nothing, String}=nothing,
             verbose::Bool=false
     )
-    X = isnothing(layer) ? adata.countmatrix : adata.layers[layer]
+    X = isnothing(layer) ? adata.X : adata.layers[layer]
     verbose && @info "normalizing counts per cell..."
     counts_per_cell = sum(X, dims=2)
 

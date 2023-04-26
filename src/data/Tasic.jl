@@ -23,7 +23,7 @@ From these input files, a Julia `AnnData` object is created. The list of recepto
 to annotate cells as neural vs. non-neural, and annotate the neural cells as  GABA- or Glutamatergic. 
 
 These annotations together with the cell type information and the gene names and receptor/marker list are stored in Dictionaries 
-in the `obs` and `vars` fields of the `AnnData` obejct. 
+in the `obs` and `vars` fields of the `AnnData` object. 
 
 Additionally, size factors are calculated and used for normalizing the counts. 
 The normalized counts are stored in an additional `layer` named `normalized_counts`.
@@ -96,11 +96,11 @@ function load_tasic(path::String = "data/")
     @assert size(countmatrix,2) == length(vars[!,:gene_names])
 
     adata = AnnData(
-        countmatrix = countmatrix,
+        X = countmatrix,
         layers=layers,
         obs=obs,
         var=vars,
-        celltypes = String.(obs[!,:cell_type])
+        var_names = string.(vec(genenames))
     )
     return adata
 end
@@ -120,8 +120,8 @@ function subset_tasic!(adata::AnnData)
     # subset to receptors and markers and neural cells only. 
     receptorandmarker_inds = adata.var[!,:receptor_and_marker_inds]
     neuralcells = adata.obs[!,:neural_cells]
-    @assert size(adata.countmatrix) == (length(neuralcells), length(receptorandmarker_inds))
-    adata.countmatrix = adata.countmatrix[neuralcells,receptorandmarker_inds]
+    @assert size(adata.X) == (length(neuralcells), length(receptorandmarker_inds))
+    adata.X = adata.X[neuralcells,receptorandmarker_inds]
     adata.celltypes = String.(adata.celltypes[neuralcells])
     adata.obs = DataFrame(
         cell_type = adata.obs[!,:cell_type][neuralcells],

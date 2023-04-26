@@ -52,7 +52,7 @@ function filter_cells!(adata::AnnData;
     return adata
 end
 
-filter_cells(adata::AnnData; kwargs...) = filter_cells(adata.countmatrix; kwargs...)
+filter_cells(adata::AnnData; kwargs...) = filter_cells(adata.X; kwargs...)
 
 """
     function filter_cells(adata::AnnData; 
@@ -203,7 +203,7 @@ function filter_genes!(adata::AnnData;
     return adata
 end
 
-filter_genes(adata::AnnData; kwargs...) = filter_genes(adata.countmatrix; kwargs...)
+filter_genes(adata::AnnData; kwargs...) = filter_genes(adata.X; kwargs...)
 
 """
     filter_genes(adata::AnnData; 

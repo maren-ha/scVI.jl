@@ -40,9 +40,9 @@ function load_pbmc(path::String = "data/")
         @assert length(celltypes) == length(barcodes) == size(counts,2)
         counts = Float32.(counts')
 
-        adata = AnnData(countmatrix = counts, 
-                    celltypes = celltypes,
+        adata = AnnData(X = counts, 
                     obs = DataFrame(cell_type = celltypes),
+                    var_names = genenames,
                     var = DataFrame(gene_names = genenames), 
                     layers = Dict("counts" => counts)
         )

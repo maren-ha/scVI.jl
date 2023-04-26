@@ -36,7 +36,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     replace_hvgs::Bool=true,
     verbose::Bool=false
     )
-    X = !isnothing(layer) ? adata.layers[layer] : adata.countmatrix
+    X = !isnothing(layer) ? adata.layers[layer] : adata.X
     !check_nonnegative_integers(X) && @warn "flavor Seurat v3 expects raw count data, but non-integers were found"
     verbose && @info "input checks passed..."
     means, vars = mean(X, dims=1), var(X, dims=1)
@@ -171,7 +171,7 @@ from the corresponding Python implementation.
 **Arguments**
 ------------------------
 - `adata`: `AnnData` object 
-- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.countmatrix` is used. 
+- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.X` is used. 
 - `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
 - `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
 - `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
@@ -241,17 +241,17 @@ function subset_to_hvg!(adata::AnnData;
     end
 
     hvgs = adata.var[!,:highly_variable]
-    @assert size(adata.countmatrix,2) == length(hvgs)
-    adata.countmatrix = adata.countmatrix[:,hvgs]
+    @assert size(adata.X,2) == length(hvgs)
+    adata.X = adata.X[:,hvgs]
     adata.var = adata.var[hvgs,:]
-    #adata.ngenes = size(adata.countmatrix,2)
+    #adata.ngenes = size(adata.X,2)
     #for colname in names(adata.var)
     #    if length(adata.var[!,colname]) == length(hvgs)
     #        adata.var[!,colname] = adata.var[!,colname][hvgs]
     #    end
     #end
     # some basic checks 
-    @assert sum(adata.var[!,:highly_variable]) == size(adata.countmatrix,2)
+    @assert sum(adata.var[!,:highly_variable]) == size(adata.X,2)
     @assert !any(isnan.(adata.var[!,:highly_variable_rank]))
     return adata
 end

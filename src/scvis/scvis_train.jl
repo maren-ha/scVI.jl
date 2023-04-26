@@ -87,7 +87,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
 
-    ncells, ngenes = size(adata.countmatrix)
+    ncells, ngenes = size(adata.X)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
@@ -106,12 +106,12 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     end
 
     #train_inds = shuffle(train_inds)
-    #data = collect(adata.countmatrix[inds,:]' for inds in Iterators.partition(train_inds, training_args.batchsize))
-    #Ps = collect(Float32.(compute_transition_probs(rescale(adata.countmatrix[inds,:]), 30.0)) for inds in Iterators.partition(train_inds, training_args.batchsize))
-    #Ps = collect(compute_transition_probs(scVI.prcomps(adata.countmatrix[inds,:])[:,1:100]) for inds in Iterators.partition(train_inds, training_args.batchsize))
+    #data = collect(adata.X[inds,:]' for inds in Iterators.partition(train_inds, training_args.batchsize))
+    #Ps = collect(Float32.(compute_transition_probs(rescale(adata.X[inds,:]), 30.0)) for inds in Iterators.partition(train_inds, training_args.batchsize))
+    #Ps = collect(compute_transition_probs(scVI.prcomps(adata.X[inds,:])[:,1:100]) for inds in Iterators.partition(train_inds, training_args.batchsize))
     #dataloader = zip(data, Ps)
 
-    dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
+    dataloader = Flux.DataLoader(adata.X[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."
@@ -149,7 +149,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     ps = Flux.params(m)
 
-    ncells, ngenes = size(adata.countmatrix)
+    ncells, ngenes = size(adata.X)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
@@ -167,7 +167,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
         m.loss_registry["total_loss"] = []
     end
 
-    dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
+    dataloader = Flux.DataLoader(adata.X[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."
@@ -281,7 +281,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     tsne_opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     tsne_ps = Flux.params(m, tsne_net)
 
-    ncells, ngenes = size(adata.countmatrix)
+    ncells, ngenes = size(adata.X)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
@@ -299,7 +299,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
         m.loss_registry["total_loss"] = []
     end
 
-    dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
+    dataloader = Flux.DataLoader(adata.X[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."
@@ -352,7 +352,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
     tsne_opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
     tsne_ps = Flux.params(m, tsne_net)
 
-    ncells, ngenes = size(adata.countmatrix)
+    ncells, ngenes = size(adata.X)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
@@ -370,7 +370,7 @@ function train_scvis_model!(m::scVAE, adata::AnnData, training_args::TrainingArg
         m.loss_registry["total_loss"] = []
     end
 
-    dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
+    dataloader = Flux.DataLoader(adata.X[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."

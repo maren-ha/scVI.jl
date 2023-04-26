@@ -38,7 +38,7 @@ Flux.params(m::scVAE) = Flux.params(m.z_encoder, m.l_encoder, m.decoder)
 
 function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch_key::Symbol, verbose::Bool)
 
-    batch_indices = ones(Int64, size(adata.countmatrix,1))
+    batch_indices = ones(Int64, size(adata.X,1))
 
     if !m.use_observed_lib_size 
         # breaking conditions: if something is really wrong, default to using observed library size 
@@ -74,7 +74,7 @@ function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch
             @warn "either m.n_batch > 1 or length of observed library_log_means/vars vector > 1, but observed library size is used, thus ignoring potential batch effects"
         end
         verbose && @info "Using observed library size in each training batch, thus ignoring potential experimental batch effects"
-       @assert batch_indices == ones(Int64, size(adata.countmatrix,1))
+       @assert batch_indices == ones(Int64, size(adata.X,1))
     end
 
     return batch_indices
@@ -101,7 +101,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
         isnothing(layer) && error("if using Gaussian or Bernoulli generative distribution, the adata layer on which to train has to be specified explicitly")
         X = adata.layers[layer]
     else
-        X = adata.countmatrix
+        X = adata.X
     end
 
     ncells, ngenes = size(X)
@@ -123,7 +123,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
 
     batch_indices = setup_batch_indices_for_library_scaling(m, adata, batch_key, training_args.verbose)
     dataloader = Flux.DataLoader((X[train_inds,:]', batch_indices[train_inds]), batchsize=training_args.batchsize, shuffle=true)
-    # dataloader = Flux.DataLoader(adata.countmatrix[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
+    # dataloader = Flux.DataLoader(adata.X[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."
@@ -174,7 +174,7 @@ Returns the trained `scVAE` model.
 """
 function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOrMat{S}, training_args::TrainingArgs) where S <: Real
 
-    ncells, ngenes = size(adata.countmatrix)
+    ncells, ngenes = size(adata.X)
 
     @assert size(labels) == (ncells, m.n_latent)
 
@@ -189,7 +189,7 @@ function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOr
         train_inds = collect(1:ncells);
     end
 
-    dataloader = Flux.DataLoader((adata.countmatrix[train_inds,:]', labels[train_inds,:]'), batchsize=training_args.batchsize, shuffle=true)
+    dataloader = Flux.DataLoader((adata.X[train_inds,:]', labels[train_inds,:]'), batchsize=training_args.batchsize, shuffle=true)
 
     train_steps=0
     @info "Starting training for $(training_args.max_epochs) epochs..."

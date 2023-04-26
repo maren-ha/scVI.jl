@@ -144,7 +144,7 @@ write_h5ad(adata, "output.h5")
 """
 function write_h5ad(adata::AnnData, filename::String)
     file = h5open(filename, "w")
-    file["countmatrix"] = adata.countmatrix
+    file["countmatrix"] = adata.X
     for field in fieldnames(typeof(adata))
         if (field ∈ [:countmatrix, :celltypes]) || (isnothing(getfield(adata, field)))
             continue
