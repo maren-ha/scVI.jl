@@ -62,7 +62,7 @@ subset_to_hvg!(adata, n_top_genes=1200, verbose=true)
 library_log_means, library_log_vars = init_library_size(adata)
 
 # initialise scVAE model 
-m = scVAE(size(adata.countmatrix,2);
+m = scVAE(size(adata.X,2);
         library_log_means=library_log_means,
         library_log_vars=library_log_vars
 )
