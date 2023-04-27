@@ -15,7 +15,7 @@ function generative(m::scVAE, z::AbstractMatrix{S}, library::AbstractMatrix{S}) 
     #if m.dispersion == :gene # some other cases (:gene-batch, :gene-label ignored)
     #    px_r = m.px_r
     #end
-    px_r = exp.(px_r)
+    # px_r = exp.(px_r)
     return px_scale, px_r, px_rate, px_dropout
 end
 
