@@ -19,13 +19,14 @@ function log_transform!(adata::AnnData;
     if !haskey(adata.layers, layer)
         @warn "layer $(layer) not found in `adata.layers`, defaulting to log + 1 transformation on `adata.X`..."
         logp1_transform!(adata; verbose=verbose)
+        adata.layers["log_transformed"] = adata.layers["logp1_transformed"]
+        return adata 
     else
         verbose && @info "performing log transformation on layer $(layer)..."
         X = adata.layers[layer]
+        adata.layers["log_transformed"] = log.(X .+ eps(eltype(X)))
+        return adata
     end
-    
-    adata.layers["log_transformed"] = log.(X .+ eps(eltype(X)))
-    return adata
 end 
 
 """
