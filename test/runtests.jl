@@ -58,6 +58,7 @@ end
 
 @testset "PBMC.jl" begin
     # PBMC
+    @info "testing PBMC data loading + model initialization..."
     using scVI
     @info "loading data..."
     adata = load_pbmc()
@@ -74,6 +75,7 @@ end
 
 @testset "basic scVAE models" begin
     # ZINB distribution
+    @info "testing scVAE model training with ZINB distribution..."
     using scVI
     @info "loading data..."
     adata = load_pbmc()
@@ -93,6 +95,7 @@ end
     @test m.is_trained == true    
 
     # NB distribution
+    @info "testing scVAE model training with NB distribution..."
     m = scVAE(size(adata.X,2);
         library_log_means=library_log_means,
         gene_likelihood = :nb,
@@ -105,13 +108,15 @@ end
     weight_decay=Float32(1e-6),
     )
     train_model!(m, adata, training_args)
-    @test m.is_trained == true    
+    @test m.is_trained == true 
 
+    @info "testing adding a latent representation..."
     register_latent_representation!(adata, m)
     @test haskey(adata.obsm, "scVI_latent")
 end
 
 @testset "Gaussian likelihood" begin
+    @info "testing model on cortex data with Gaussian likelihood..."
     adata = load_cortex()
     subset_to_hvg!(adata, n_top_genes=1200)
     #normalize_total!(adata)
