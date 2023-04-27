@@ -117,16 +117,24 @@ subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:cells}) = subset_adata!
 
 subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:genes}) = subset_adata!(adata, subset_inds[2], :genes)
 
+#subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells}) = adata[subset_inds, :]
+
+#subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes}) = adata[:, subset_inds]
+
 function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells})
     #adata.ncells = length(subset_inds)
     adata.X = adata.X[subset_inds,:]
-    if !isnothing(adata.obs)
+    if !isnothing(adata.obs) && nrow(adata.var) > 0
         adata.obs = adata.obs[subset_inds,:]
     end
     if !isnothing(adata.layers)
-        for layer in keys(adata.layers)
-            adata.layers[layer] = adata.layers[layer][subset_inds,:]
-        end
+        new_layers = deepcopy(view(adata.layers, collect(subset_inds), collect(1:size(adata.X,2))))
+        adata.layers = new_layers
+        #layersdict = Dict(adata.layers)
+        #for layer in keys(layersdict)
+        #    layersdict[layer] = layersdict[layer][subset_inds,:]
+        #end
+        #adata.layers = layersdict
     end
     if !isnothing(adata.obsm)
         for key in keys(adata.obsm)
@@ -138,18 +146,20 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
             adata.obsp[key] = adata.obsp[key][subset_inds,subset_inds]
         end
     end
+    if !isnothing(adata.obs_names)
+        adata.obs_names = adata.obs_names[subset_inds]
+    end
     return adata
 end
 
 function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes})
     adata.X = adata.X[:,subset_inds]
-    if !isnothing(adata.var)
+    if !isnothing(adata.var) && nrow(adata.var) > 0
         adata.var = adata.var[subset_inds,:]
     end
     if !isnothing(adata.layers)
-        for layer in keys(adata.layers)
-            adata.layers[layer] = adata.layers[layer][:,subset_inds]
-        end
+        new_layers = deepcopy(view(adata.layers, collect(1:size(adata.X,1)), collect(subset_inds)))
+        adata.layers = new_layers
     end
     if !isnothing(adata.varm)
         for key in keys(adata.varm)
@@ -160,6 +170,9 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
         for key in keys(adata.varp)
             adata.varp[key] = adata.varp[key][subset_inds,subset_inds]
         end
+    end
+    if !isnothing(adata.var_names)
+        adata.var_names = adata.var_names[subset_inds]
     end
     return adata
 end
