@@ -123,18 +123,19 @@ subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:genes}) = subset_adata!
 
 function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells})
     #adata.ncells = length(subset_inds)
+
     adata.X = adata.X[subset_inds,:]
+
+    if !isnothing(adata.obs_names)
+        adata.obs_names = adata.obs_names[subset_inds]
+    end
     if !isnothing(adata.obs) && nrow(adata.var) > 0
         adata.obs = adata.obs[subset_inds,:]
     end
     if !isnothing(adata.layers)
-        new_layers = deepcopy(view(adata.layers, collect(subset_inds), collect(1:size(adata.X,2))))
-        adata.layers = new_layers
-        #layersdict = Dict(adata.layers)
-        #for layer in keys(layersdict)
-        #    layersdict[layer] = layersdict[layer][subset_inds,:]
-        #end
-        #adata.layers = layersdict
+        for key in keys(adata.layers)
+            adata.layers[key] = setindex!(adata.layers, adata.layers[key][subset_inds,:], key)
+        end
     end
     if !isnothing(adata.obsm)
         for key in keys(adata.obsm)
@@ -146,20 +147,23 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
             adata.obsp[key] = adata.obsp[key][subset_inds,subset_inds]
         end
     end
-    if !isnothing(adata.obs_names)
-        adata.obs_names = adata.obs_names[subset_inds]
-    end
     return adata
 end
 
 function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes})
+
     adata.X = adata.X[:,subset_inds]
+
+    if !isnothing(adata.var_names)
+        adata.var_names = adata.var_names[subset_inds]
+    end
     if !isnothing(adata.var) && nrow(adata.var) > 0
         adata.var = adata.var[subset_inds,:]
     end
     if !isnothing(adata.layers)
-        new_layers = deepcopy(view(adata.layers, collect(1:size(adata.X,1)), collect(subset_inds)))
-        adata.layers = new_layers
+        for key in keys(adata.layers)
+            adata.layers[key] = setindex!(adata.layers, adata.layers[key][:,subset_inds], key)
+        end
     end
     if !isnothing(adata.varm)
         for key in keys(adata.varm)
@@ -170,9 +174,6 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
         for key in keys(adata.varp)
             adata.varp[key] = adata.varp[key][subset_inds,subset_inds]
         end
-    end
-    if !isnothing(adata.var_names)
-        adata.var_names = adata.var_names[subset_inds]
     end
     return adata
 end
