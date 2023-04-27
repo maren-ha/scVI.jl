@@ -242,8 +242,10 @@ function subset_to_hvg!(adata::AnnData;
 
     hvgs = adata.var[!,:highly_variable]
     @assert size(adata.X,2) == length(hvgs)
-    adata.X = adata.X[:,hvgs]
-    adata.var = adata.var[hvgs,:]
+    subset_inds = collect(1:size(adata.X,2))[hvgs]
+    subset_adata!(adata, subset_inds, :genes)
+    #adata.X = adata.X[:,hvgs]
+    #adata.var = adata.var[hvgs,:]
     #adata.ngenes = size(adata.X,2)
     #for colname in names(adata.var)
     #    if length(adata.var[!,colname]) == length(hvgs)
