@@ -38,6 +38,8 @@ using DataFrames
     @test haskey(adata.layers, "log_transformed")
     sqrt_transform!(adata)
     @test haskey(adata.layers, "sqrt_transformed")
+    rescale!(adata)
+    @test haskey(adata.layers, "rescaled")
 
     # check HVG selection
     @info "testing HVG selection..."
@@ -58,7 +60,7 @@ end
 
 @testset "PBMC.jl" begin
     # PBMC
-    @info "testing PBMC data loading + model initialization..."
+    @info "testing PBMC data loading + VAE model initialization..."
     using scVI
     @info "loading data..."
     adata = load_pbmc()
@@ -71,6 +73,13 @@ end
     )
     print(summary(m))
     @test m.is_trained == false
+
+    @info "testing LDVAE model initialization..."
+    m = scLDVAE(size(adata.X,2);
+        library_log_means=library_log_means,
+        library_log_vars=library_log_vars, 
+    )
+    @test hasfield(typeof(m.decoder), :factor_regressor)
 end
 
 @testset "basic scVAE models" begin
@@ -112,13 +121,18 @@ end
 
     @info "testing adding a latent representation..."
     register_latent_representation!(adata, m)
+
+    @info "testing visualizations..."
     @test haskey(adata.obsm, "scVI_latent")
+    plot_umap_on_latent(m, adata);
+    @test haskey(adata.obsm, "scVI_latent_umap")
+    plot_pca_on_latent(m, adata);
 end
 
-@testset "Gaussian likelihood" begin
-    @info "testing model on cortex data with Gaussian likelihood..."
+@testset "Gaussian + Bernoulli likelihood" begin
+    @info "testing loss with Gaussian likelihood..."
     adata = load_cortex()
-    subset_to_hvg!(adata, n_top_genes=1200)
+    subset_to_hvg!(adata, n_top_genes=200)
     #normalize_total!(adata)
     log_transform!(adata)
 
@@ -126,17 +140,21 @@ end
         n_latent=2, 
         gene_likelihood=:gaussian
     )
+    lossval = scVI.loss(m, adata.X'; kl_weight=1.0f0)
+    @test isa(lossval, Float32)
 
-    training_args = TrainingArgs(
-        max_epochs=1, 
-        weight_decay=Float32(1e-6),
-        register_losses=false
+    @info "testing loss with Bernoulli likelihood..."
+    normalize_total!(adata)
+    log_transform!(adata)
+    binarized = adata.layers["log_transformed"] .> 0
+    adata.layers["binarized"] = Float32.(adata.layers["log_transformed"] .> 0)
+    m = scVAE(size(adata.layers["binarized"], 2), 
+        n_latent=2, 
+        gene_likelihood=:bernoulli
     )
+    @test m.gene_likelihood == :bernoulli
+    lossval = scVI.loss(m, adata.layers["binarized"]'; kl_weight=1.0f0)
+    @test isa(lossval, Float32)
 
-    train_model!(m, adata, training_args; layer = "log_transformed")
-    @test m.is_trained == true    
-
-    register_latent_representation!(adata, m)
-    @test haskey(adata.obsm, "scVI_latent")
 end
 
