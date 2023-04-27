@@ -69,6 +69,7 @@ end
             #use_observed_lib_size=false
     )
     print(summary(m))
+    @test m.is_trained == false
 end
 
 @testset "basic scVAE models" begin
@@ -89,7 +90,7 @@ end
         weight_decay=Float32(1e-6),
     )
     train_model!(m, adata, training_args)
-    register_latent_representation!(adata, m)
+    @test m.is_trained == true    
 
     # NB distribution
     m = scVAE(size(adata.X,2);
@@ -104,12 +105,16 @@ end
     weight_decay=Float32(1e-6),
     )
     train_model!(m, adata, training_args)
+    @test m.is_trained == true    
+
+    register_latent_representation!(adata, m)
+    @test haskey(adata.obsm, "scVI_latent")
 end
 
 @testset "Gaussian likelihood" begin
     adata = load_cortex()
     subset_to_hvg!(adata, n_top_genes=1200)
-    normalize_total!(adata)
+    #normalize_total!(adata)
     log_transform!(adata)
 
     m = scVAE(size(adata.layers["log_transformed"], 2), 
@@ -124,5 +129,9 @@ end
     )
 
     train_model!(m, adata, training_args; layer = "log_transformed")
+    @test m.is_trained == true    
+
+    register_latent_representation!(adata, m)
+    @test haskey(adata.obsm, "scVI_latent")
 end
 
