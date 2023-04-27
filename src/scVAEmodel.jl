@@ -144,6 +144,11 @@ function scVAE(n_input::Int;
         @warn "gene likelihood has to be one of `:zinb`, `:nb`, `:poisson`, `gaussian`, or `bernoulli`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
     end
 
+    #if (gene_likelihood == :gaussian) && log_variational
+    #    @warn "log-transforming the input data is not supported for Gaussian likelihood. Setting `log_variational` to `false`."
+    #    log_variational = false
+    #end
+    
     use_activation_encoder = (use_activation == :encoder || use_activation == :both) # true
     use_activation_decoder = (use_activation == :decoder || use_activation == :both) # true
 
