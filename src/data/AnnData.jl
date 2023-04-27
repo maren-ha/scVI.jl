@@ -121,7 +121,7 @@ subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:genes}) = subset_adata!
 
 #subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes}) = adata[:, subset_inds]
 
-function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells})
+function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vector{Bool}, UnitRange}, ::Val{:cells})
     #adata.ncells = length(subset_inds)
 
     adata.X = adata.X[subset_inds,:]
@@ -150,7 +150,7 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
     return adata
 end
 
-function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes})
+function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vector{Bool}, UnitRange}, ::Val{:genes})
 
     adata.X = adata.X[:,subset_inds]
 

@@ -48,7 +48,7 @@ function filter_cells!(adata::AnnData;
 
     # transform BitVector to something we can subset on
     if isa(cell_subset, BitVector)
-        cell_subset = collect(1:length(cell_subset))[cell_subset]
+        cell_subset = collect(cell_subset)
     end
 
     # filter adata in place
@@ -203,7 +203,7 @@ function filter_genes!(adata::AnnData;
 
     # transform BitVector to something we can subset on
     if isa(gene_subset, BitVector)
-        gene_subset = collect(1:length(gene_subset))[gene_subset]
+        gene_subset = collect(gene_subset)
     end
 
     # filter adata in place 
