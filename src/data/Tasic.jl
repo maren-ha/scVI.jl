@@ -121,14 +121,6 @@ function subset_tasic!(adata::AnnData)
     receptorandmarker_inds = adata.var[!,:receptor_and_marker_inds]
     neuralcells = adata.obs[!,:neural_cells]
     @assert size(adata.X) == (length(neuralcells), length(receptorandmarker_inds))
-    adata.X = adata.X[neuralcells,receptorandmarker_inds]
-    adata.celltypes = String.(adata.celltypes[neuralcells])
-    adata.obs = DataFrame(
-        cell_type = adata.obs[!,:cell_type][neuralcells],
-        GABA_vs_Gluta = adata.obs[!,:GABA_vs_Gluta][neuralcells]
-    )
-    adata.var = DataFrame(
-        gene_names = adata.var[!,:gene_names][receptorandmarker_inds]
-    )
+    subset_adata!(adata, (neuralcells, receptorandmarker_inds), :both)
     return adata
 end
