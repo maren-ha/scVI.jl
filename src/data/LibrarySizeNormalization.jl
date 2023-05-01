@@ -54,12 +54,16 @@ function estimate_size_factors(mat; locfunc=median)
     finiteloggeomeans = isfinite.(loggeomeans)
     loggeomeans = loggeomeans[finiteloggeomeans]
     logcounts = logcounts[finiteloggeomeans,:]
-    nsamples = size(logcounts, 2)
-    size_factors = fill(0.0, nsamples)
-    for i = 1:nsamples
-        size_factors[i] = exp(locfunc(logcounts[:,i] .- loggeomeans))
+    nsamples = size(logcounts, 2) 
+    size_factors = fill(1.0, nsamples)
+    if isempty(loggeomeans)
+        return size_factors
+    else
+        for i = 1:nsamples
+            size_factors[i] = exp(locfunc(logcounts[:,i] .- loggeomeans))
+        end
+        return size_factors
     end
-    return size_factors
 end
 
 """
