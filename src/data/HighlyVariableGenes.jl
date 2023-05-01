@@ -13,7 +13,7 @@ is_nonnegative_integer(x::Integer) = x ≥ 0
 is_nonnegative_integer(x) = false
 
 function check_nonnegative_integers(X::AbstractArray) 
-    if eltype(X) == Integer
+    if eltype(X) <: Integer
         return all(is_nonnegative_integer.(X)) 
     elseif any(sign.(X) .< 0)
         return false 
@@ -97,15 +97,11 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     end
 
     if inplace 
-        if isnothing(adata.var)
-            adata.var = hvg_info
+        if !isempty(intersect(names(hvg_info), names(adata.var))) && replace_hvgs # if there is already HVG information present and it should be replaced
+            other_col_inds = findall(x -> !(x ∈ names(hvg_info)), names(adata.var)) # find indices of all columns that are not contained in the new hvg_info df
+            adata.var = hcat(adata.var[!,other_col_inds], hvg_info) # keep only the cols not recalculated in the new hvg_info df, and append the hvg_info df
         else
-            if !isempty(intersect(names(hvg_info), names(adata.var))) && replace_hvgs # if there is already HVG information present and it should be replaced
-                other_col_inds = findall(x -> !(x ∈ names(hvg_info)), names(adata.var)) # find indices of all columns that are not contained in the new hvg_info df
-                adata.var = hcat(adata.var[!,other_col_inds], hvg_info) # keep only the cols not recalculated in the new hvg_info df, and append the hvg_info df
-            else
-                adata.var = hcat(adata.var, hvg_info, makeunique=true)
-            end
+            adata.var = hcat(adata.var, hvg_info, makeunique=true)
         end
         return adata
     else
