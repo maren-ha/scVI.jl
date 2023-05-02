@@ -23,6 +23,10 @@ end
     include("scVAE_models.jl")
 end
 
+@testset "scLDVAE model" begin
+    include("scLDVAE_models.jl")
+end
+
 @testset "Gaussian + Bernoulli likelihood" begin
     include("other_distributions.jl")
 end
