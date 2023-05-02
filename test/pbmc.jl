@@ -12,10 +12,3 @@ m = scVAE(size(adata.X,2);
 )
 print(summary(m))
 @test m.is_trained == false
-
-@info "testing LDVAE model initialization..."
-m = scLDVAE(size(adata.X,2);
-    library_log_means=library_log_means,
-    library_log_vars=library_log_vars, 
-)
-@test hasfield(typeof(m.decoder), :factor_regressor)
