@@ -1,4 +1,4 @@
-@info "testing PBMC data loading + VAE model initialization..."
+@info "testing Tasic data loading + VAE model initialization..."
 using scVI 
 @info "loading data..."
 path = joinpath(@__DIR__, "../data")
