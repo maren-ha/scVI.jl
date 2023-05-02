@@ -11,11 +11,6 @@ function log_transform!(adata::AnnData;
             layer::String="normalized",
             verbose::Bool=false
     )
-    if isnothing(adata.layers) 
-        verbose && @info "No layers dict in adata so far, initializing empty dictionary... "
-        adata.layers = Dict()
-    end
-
     if !haskey(adata.layers, layer)
         @warn "layer $(layer) not found in `adata.layers`, defaulting to log + 1 transformation on `adata.X`..."
         logp1_transform!(adata; verbose=verbose)
@@ -43,11 +38,6 @@ function logp1_transform!(adata::AnnData;
             layer::Union{String, Nothing}=nothing,
             verbose::Bool=false
     )
-    if isnothing(adata.layers) 
-        verbose && @info "No layers dict in adata so far, initializing empty dictionary... "
-        adata.layers = Dict()
-    end
-
     if haskey(adata.layers, layer)
         verbose && @info "performing log + 1 transformation on layer $(layer)..."
         X = adata.layers[layer]
@@ -74,11 +64,6 @@ function sqrt_transform!(adata::AnnData;
             layer::String="normalized",
             verbose::Bool=false
     )
-    if isnothing(adata.layers) 
-        verbose && @info "No layers dict in adata so far, initializing empty dictionary... "
-        adata.layers = Dict()
-    end
-
     if !haskey(adata.layers, layer)
         @warn "layer $(layer) not found in `adata.layers`, defaulting to sqrt transformation on `adata.X`..."
         X = adata.X
@@ -103,11 +88,6 @@ function rescale!(adata::AnnData;
             layer::Union{String, Nothing}=nothing,
             verbose::Bool=false
     )
-    if isnothing(adata.layers) 
-        verbose && @info "No layers dict in adata so far, initializing empty dictionary... "
-        adata.layers = Dict()
-    end
-
     if isnothing(layer)
         @info "rescaling on `adata.X...`"
         X = adata.X
