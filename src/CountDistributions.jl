@@ -124,6 +124,6 @@ function _gamma(theta, mu)
     scale = mu ./ theta
     # Important remark: Gamma is parametrized by the rate = 1/scale in Python 
     # but Gamma(α, θ)      # Gamma distribution with shape α and scale θ in Julia
-    gamma_d = Gamma(concentration, scale)
+    gamma_d = Gamma.(concentration, scale)
     return gamma_d
 end
