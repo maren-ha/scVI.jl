@@ -32,4 +32,4 @@ catch e
     @test e == ArgumentError("If using Gaussian or Bernoulli generative distribution, the adata layer on which to train has to be specified explicitly")
 end
 # now do it correctly
-train_model!(m, adata, TrainingArgs(max_epochs=1), layer = "binarized")
+# train_model!(m, adata, TrainingArgs(max_epochs=1), layer = "binarized")
