@@ -227,17 +227,17 @@ The implementation is adapted from the corresponding [`scvi tools` function](htt
 function decodersample(m::scVAE, z::AbstractMatrix{S}, library::AbstractMatrix{S}) where S <: Real 
     px_scale, theta, mu, zi_logits = generative(m, z, library)
     if m.gene_likelihood == :nb
-        return rand(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))), size(mu))
+        return rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))))
     elseif m.gene_likelihood == :zinb
         samp = rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))))
         zi_probs = logits_to_probs(zi_logits)
         is_zero = rand(Float32, size(mu)) .<= zi_probs
         samp[is_zero] .= 0.0
         return samp
-    elseif m.gene_likelihood == :Poisson
-        return rand.(Poisson.(mu), size(mu))
+    elseif m.gene_likelihood == :poisson
+        return rand.(Poisson.(mu))
     else 
-        error("Not implemented")
+        throw(ArgumentError("Not implemented"))
     end
 end
 
@@ -290,10 +290,11 @@ end
 function sample_from_prior(m::scVAE, x::AbstractMatrix{S}, n_samples::Int; sample_library_size::Bool=false) where S <: Real 
     !m.is_trained && @warn("model has not been trained yet!")
     encoder_input = m.log_variational ? log.(one(S) .+ x) : x
-    orig_library = get_library(m, x, encoder_input)
+    _, _, orig_library = get_library(m, x, encoder_input)
     # library = sample_library_size ? rand(orig_library, n_samples) : mean(orig_library)
     library = sample_library_size ? rand(Normal(mean(orig_library), std(orig_library)), n_samples) : fill(mean(orig_library), n_samples)
-    return decodersample(m, z, library)
+    z = rand(Normal(0.0f0,1.0f0), m.n_latent, n_samples)
+    return decodersample(m, z, Matrix(library'))
 end
 
 #=
