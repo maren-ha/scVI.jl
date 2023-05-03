@@ -2,6 +2,7 @@ using scVI
 using Test
 using DataFrames
 using Random
+using Distributions
 
 @testset "Preprocessing with Cortex data" begin
     include("preprocessing_with_cortex.jl")
@@ -23,6 +24,10 @@ end
     include("scVAE_models.jl")
 end
 
+@testset "Model training" begin
+    include("model_training.jl")
+end
+
 @testset "scLDVAE model" begin
     include("scLDVAE_models.jl")
 end
@@ -31,4 +36,6 @@ end
     include("other_distributions.jl")
 end
 
-
+@testset "Count distributions" begin
+    include("count_distributions.jl")
+end
