@@ -12,5 +12,6 @@ end
 
 function log_binary(x::AbstractMatrix{S}, dec_z::AbstractMatrix{S}) where S <: Real
     # binary cross-entropy between reconstruction and observed data 
+    dec_z = sigmoid.(log.(dec_z))
     return x .* log.(dec_z .+ eps(S)) .+ (one(S) .- x) .* log.(one(S) .- dec_z .+ eps(S))
 end
