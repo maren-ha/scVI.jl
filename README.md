@@ -1,6 +1,8 @@
 # README
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://maren-ha.github.io/scVI.jl/)
+[![codecov](https://codecov.io/gh/maren-ha/scVI.jl/branch/muon/graph/badge.svg?token=OXHPY0EI3E)](https://codecov.io/gh/maren-ha/scVI.jl)
+![example workflow](https://github.com/maren-ha/scVI.jl/actions/workflows/ci.yml/badge.svg)
 
 ![](logo/scvi-julia-logo.jpg)
 
@@ -109,25 +111,9 @@ This checks whether basic functionality works: loads the PBMC dataset, initialis
 ------------
 ## TODO 
 
-- [x] deploy docs
-- [ ] write tests
-- [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
+- [ ] update docs (Muon.jl integration)
+- [ ] complete runtests
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
-- [x] turn `data` and `scvis` into submodules
-- [x] fix library size integration 
-- [x] add Gaussian generative distribution
-- [x] add Bernoulli generative distribution 
-- [x] refactor data processing
-	- [x] re-write `PBMC.jl`
-	- [x] re-write `Tasic.jl`
-	- [x] add preprocessing: 
-		- [x] log-transform 
-		- [x] sqrt-transform
-		- [x] re-scaling
-		- [x] PCA
-		- [x] UMAP 
-		- [x] filtering
-	- [x]  add docstrings
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
