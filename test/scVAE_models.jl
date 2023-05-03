@@ -46,10 +46,29 @@ print(summary(m))
 training_args = TrainingArgs(
     max_epochs=1, 
     lr = 1e-4,
-    weight_decay=Float32(1e-6),
+    weight_decay=Float32(1e-6)
 )
 train_model!(m, adata, training_args)
-@test m.is_trained == true    
+@test m.is_trained == true
+
+@info "now trying with encoding lib size..."
+adata.obs.batch = rand(1:2, size(adata.X,1))
+library_log_means, library_log_vars = init_library_size(adata, batch_key=:batch)
+m = scVAE(size(adata.X,2);
+        library_log_means=library_log_means,
+        library_log_vars=library_log_vars,
+        n_latent=2, 
+        use_observed_lib_size = false
+)
+print(summary(m))
+training_args = TrainingArgs(
+    max_epochs=2, 
+    register_losses=true
+)
+train_model!(m, adata, training_args, batch_key=:batch)
+@test !isnothing(m.l_encoder)
+@test length(m.loss_registry["kl_l"]) == 2
+@test sum(m.loss_registry["kl_l"]) > 0
 
 # NB distribution
 @info "testing scVAE model training with NB distribution..."
