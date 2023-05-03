@@ -58,9 +58,9 @@ function _compute_local_library_params(m::scVAE, batch_indices::Vector{S}) where
         log library sizes in the batch the cell corresponds to.
         """
         n_batch = m.n_batch
-        local_library_log_means = onehotbatch(batch_indices, collect(1:n_batch))' * m.library_log_means
+        local_library_log_means = vec(sum(onehotbatch(batch_indices, collect(1:n_batch)) .* m.library_log_means, dims=1))
         # onehotbatch: size n_batch x batchsize, library_log_means: length n_batch 
-        local_library_log_vars = onehotbatch(batch_indices, collect(1:n_batch))' * m.library_log_vars
+        local_library_log_vars = vec(sum(onehotbatch(batch_indices, collect(1:n_batch)) .* m.library_log_vars, dims=1))
         return local_library_log_means, local_library_log_vars # length: batchsize 
 end
 
