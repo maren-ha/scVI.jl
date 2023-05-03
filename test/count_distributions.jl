@@ -2,7 +2,7 @@
 mu = rand(10, 2)
 theta = rand(10, 2)
 x = rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu)))
-@test scVI.log_nb_positive_julia(x, mu, theta) ≈ scVI.log_nb_positive(eltype(mu).(x), mu, theta)
+@test scVI.log_nb_positive_julia(x, mu, theta) ≈ scVI.log_nb_positive(eltype(mu).(x), mu, theta, 1e-15)
 
 @info "testing log_poisson function..."
 @test typeof(scVI.log_poisson(eltype(mu).(x), mu)) == typeof(mu)

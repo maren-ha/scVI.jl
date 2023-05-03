@@ -139,7 +139,7 @@ m = scVAE(size(adata.X,2);
     n_latent = 2
 )
 samp = sample_from_posterior(m, adata)
-@test size(samp) == (size(X,1), size(X,2))
+@test size(samp) == (size(adata.X',1), size(adata.X',2))
 @test isa(samp, Matrix{Int64})
 
 @info "now with zero-inflated negative binomial..."
@@ -148,7 +148,7 @@ m = scVAE(size(adata.X,2);
     n_latent = 2
 )
 samp = sample_from_posterior(m, adata)
-@test size(samp) == (size(X,1), size(X,2))
+@test size(samp) == (size(adata.X',1), size(adata.X',2))
 @test isa(samp, Matrix{Int64})
 
 @info "now with poisson..."
@@ -157,7 +157,7 @@ m = scVAE(size(adata.X,2);
     n_latent = 2
 )
 samp = sample_from_posterior(m, adata)
-@test size(samp) == (size(X,1), size(X,2))
+@test size(samp) == (size(adata.X',1), size(adata.X',2))
 @test isa(samp, Matrix{Int64})
 
 @info "now with something that's not implemented to catch the error..."

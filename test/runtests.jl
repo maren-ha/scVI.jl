@@ -4,6 +4,10 @@ using DataFrames
 using Random
 using Distributions
 
+# disable warnings
+# import Logging
+# Logging.disable_logging(Logging.Warn) 
+
 @testset "Preprocessing with Cortex data" begin
     include("preprocessing_with_cortex.jl")
 end
