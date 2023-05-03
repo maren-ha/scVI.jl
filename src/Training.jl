@@ -36,9 +36,12 @@ end
 
 Flux.params(m::scVAE) = Flux.params(m.z_encoder, m.l_encoder, m.decoder)
 
-function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch_key::Symbol, verbose::Bool)
+function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch_key::Symbol; verbose::Bool=true)
 
     batch_indices = ones(Int64, size(adata.X,1))
+    
+    l_library_means = isnothing(m.library_log_means) ? nothing : length(m.library_log_means)
+    l_unique_batch_keys = hasproperty(adata.obs, batch_key) ? length(unique(adata.obs[!,batch_key])) : nothing
 
     if !m.use_observed_lib_size 
         # breaking conditions: if something is really wrong, default to using observed library size 
@@ -48,20 +51,15 @@ function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch
         elseif !hasproperty(adata.obs, batch_key)
             @warn "batch_key $(batch_key) not found in adata.obs, defaulting to using observed library size!"
             m.use_observed_lib_size=true
-        elseif length(m.library_log_means) != length(unique(adata.obs[!,batch_key]))
-            @warn "length of $(m.library_log_means) = $(length(m.library_log_means)) does not match number of unique values in adata.obs[!,batch_key] = $(length(unique(adata.obs[!,batch_key]))), defaulting to using observed library size!"
+        elseif l_library_means != l_unique_batch_keys
+            @warn "length of $(m.library_log_means) = $(l_library_means) does not match number of unique values in adata.obs[!,batch_key] = $(l_unique_batch_keys), defaulting to using observed library size!"
             m.use_observed_lib_size=true
         else 
             verbose && @info "library size will be encoded"
-            l_library_means = length(m.library_log_means)
-            l_unique_batch_keys = length(unique(adata.obs[!,batch_key]))
             # some last checks 
             if m.n_batch != l_library_means
                 @warn "m.n_batch = $(m.n_batch) different from length(library_log_means) = $(l_library_means) -- overriding m.n_batch and setting to $(l_library_means)"
                 m.n_batch = l_library_means
-            elseif m.n_batch != l_unique_batch_keys
-                @warn "m.n_batch = $(m.n_batch) different from number of unique values in adata.obs[!,batch_key] = $(l_unique_batch_keys) -- overriding m.n_batch and setting to $(l_unique_batch_keys)"
-                m.n_batch = l_unique_batch_keys
             end
             @assert m.n_batch == l_library_means == l_unique_batch_keys
             for (id_ind, batch_id) in enumerate(unique(adata.obs[!,batch_key]))
@@ -70,7 +68,7 @@ function setup_batch_indices_for_library_scaling(m::scVAE, adata::AnnData, batch
             end
         end
     elseif m.use_observed_lib_size
-        if m.n_batch > 1 || (!isnothing(m.library_log_means) && length(m.library_log_means) > 1)
+        if m.n_batch > 1 || (!isnothing(m.library_log_means) && l_library_means > 1)
             @warn "either m.n_batch > 1 or length of observed library_log_means/vars vector > 1, but observed library size is used, thus ignoring potential batch effects"
         end
         verbose && @info "Using observed library size in each training batch, thus ignoring potential experimental batch effects"
@@ -98,7 +96,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
 
     # get matrix on which to operate 
     if m.gene_likelihood ∈ [:gaussian, :bernoulli]
-        isnothing(layer) && error("if using Gaussian or Bernoulli generative distribution, the adata layer on which to train has to be specified explicitly")
+        isnothing(layer) && throw(ArgumentError("If using Gaussian or Bernoulli generative distribution, the adata layer on which to train has to be specified explicitly"))
         X = adata.layers[layer]
     else
         X = adata.X
@@ -109,7 +107,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
     if training_args.train_test_split
         trainsize = training_args.trainsize
         validationsize = 1 - trainsize # nothing 
-        train_inds = shuffle!(collect(1:size(ncells))[1:Int(ceil(trainsize*ncells))])
+        train_inds = shuffle!(collect(1:ncells)[1:Int(ceil(trainsize*ncells))])
     else
         train_inds = collect(1:ncells);
     end
@@ -121,7 +119,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; bat
         m.loss_registry["total_loss"] = []
     end
 
-    batch_indices = setup_batch_indices_for_library_scaling(m, adata, batch_key, training_args.verbose)
+    batch_indices = setup_batch_indices_for_library_scaling(m, adata, batch_key, verbose=training_args.verbose)
     dataloader = Flux.DataLoader((X[train_inds,:]', batch_indices[train_inds]), batchsize=training_args.batchsize, shuffle=true)
     # dataloader = Flux.DataLoader(adata.X[train_inds,:]', batchsize=training_args.batchsize, shuffle=true)
 
