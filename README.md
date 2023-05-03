@@ -106,7 +106,7 @@ Runtests can be executed via
 Pkg.test("scVI")
 ```
 
-This checks whether basic functionality works: loads the PBMC dataset, initialises a `scVAE` model and start training (just 2 epochs for the sake of checking and faster runtime). Further tests to be added. 
+For details, see the `test` subfolder. For further information on code coverage, click on the badge at the top of this README or follow [this link](https://codecov.io/gh/maren-ha/scVI.jl). Some files are not yet fully covered, but this is being worked on.
 
 ------------
 ## TODO 
