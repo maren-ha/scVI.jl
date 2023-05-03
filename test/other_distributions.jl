@@ -23,3 +23,13 @@ m = scVAE(size(adata.layers["binarized"], 2),
 @test m.gene_likelihood == :bernoulli
 lossval = scVI.loss(m, adata.layers["binarized"]'; kl_weight=1.0f0)
 @test isa(lossval, Float32)
+
+@info "testing model training..."
+try 
+    train_model!(m, adata, TrainingArgs(max_epochs=1))
+catch e 
+    @test isa(e, ArgumentError)
+    @test e == ArgumentError("If using Gaussian or Bernoulli generative distribution, the adata layer on which to train has to be specified explicitly")
+end
+# now do it correctly
+train_model!(m, adata, TrainingArgs(max_epochs=1), layer = "binarized")
