@@ -77,3 +77,56 @@ pca!(adata)
 @test haskey(adata.obsm, "PCA")
 umap!(adata)
 @test haskey(adata.obsm, "umap")
+
+@info "checking corner cases for PCA and UMAP..."
+dummy_adata = AnnData(X=rand((1:10), 100, 10))
+@test !haskey(dummy_adata.obsm, "PCA")
+@test !haskey(dummy_adata.layers, "normalized")
+@test !haskey(dummy_adata.layers, "log_transformed")
+pca!(dummy_adata)
+@test haskey(dummy_adata.obsm, "PCA")
+@test haskey(dummy_adata.layers, "normalized")
+@test haskey(dummy_adata.layers, "log_transformed")
+# now checking only normalization but no log transformation
+dummy_adata = AnnData(X=rand((1:10), 100, 10))
+normalize_total!(dummy_adata)
+@test !haskey(dummy_adata.obsm, "PCA")
+@test !haskey(dummy_adata.layers, "log_transformed")
+@test haskey(dummy_adata.layers, "normalized")
+pca!(dummy_adata)
+@test haskey(dummy_adata.obsm, "PCA")
+@test haskey(dummy_adata.layers, "log_transformed")
+saved_pcs = deepcopy(dummy_adata.obsm["PCA"])
+# now checking behaviour with more PCs than genes 
+pca!(dummy_adata, n_pcs = 100)
+@test dummy_adata.obsm["PCA"] ≈ saved_pcs
+# now checking behaviour with layer that is not there 
+pca!(dummy_adata, layer = "my_custom_layer")
+@test dummy_adata.obsm["PCA"] ≈ saved_pcs
+
+# now do a similar thing for UMAP 
+dummy_adata = AnnData(X=rand((1:10), 100, 10))
+@test !haskey(dummy_adata.obsm, "PCA")
+@test !haskey(dummy_adata.obsm, "UMAP")
+@test !haskey(dummy_adata.layers, "normalized")
+@test !haskey(dummy_adata.layers, "log_transformed")
+
+# check UMAP on PCA init, where everything still has to be calculated
+umap!(dummy_adata, use_pca_init=true)
+@test haskey(dummy_adata.obsm, "PCA")
+@test haskey(dummy_adata.layers, "normalized")
+@test haskey(dummy_adata.layers, "log_transformed")
+@test haskey(dummy_adata.obsm, "umap")
+@test haskey(dummy_adata.obsp, "fuzzy_neighbor_graph")
+@test haskey(dummy_adata.obsm, "knns")
+@test haskey(dummy_adata.obsm, "knn_dists")
+
+# now with wrong layer specification
+dummy_adata = AnnData(X=rand((1:10), 100, 10))
+umap!(dummy_adata, layer = "my_custom_layer")
+@test !haskey(dummy_adata.layers, "my_custom_layer")
+@test haskey(dummy_adata.layers, "normalized")
+@test haskey(dummy_adata.layers, "log_transformed")
+@test haskey(dummy_adata.obsm, "umap")
+
+
