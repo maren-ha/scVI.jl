@@ -28,6 +28,10 @@ plot_umap_on_latent
 plot_pca_on_latent
 ```
 
+```@docs
+plot_latent_representation
+```
+
 ## Sampling from the trained model 
 
 ```@docs

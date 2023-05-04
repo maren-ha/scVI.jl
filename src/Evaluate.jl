@@ -107,7 +107,7 @@ If the dimension of the latent space according to `m.n_latent` is > 2, it calcul
 In this case, if no UMAP representation is stored in `adata.scVI_latent_umap`, 
 it is calculated and registered by calling `register_umap_on_latent(adata, m)`.
 
-By default, the cells are color-coded according to the `celltypes` field of the `AnnData` object. 
+By default, the cells are color-coded according to the `celltypes` column in `adata.obs`, if present. 
 
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 

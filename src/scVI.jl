@@ -68,8 +68,8 @@ export
     train_model!, train_supervised_model!,
     get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!,
-    plot_umap_on_latent, 
-    plot_pca_on_latent,
+    plot_umap_on_latent, plot_pca_on_latent,
+    plot_latent_representation,
     sample_from_prior, sample_from_posterior
 #
 
