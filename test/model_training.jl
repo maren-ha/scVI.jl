@@ -77,3 +77,11 @@ labels = randn(Float32, (size(adata.X,1), m.n_latent))
 train_supervised_model!(m, adata, labels, training_args)
 train_supervised_model!(m, adata, labels, TrainingArgs(max_epochs=1))
 
+# test training with tSNE loss 
+m = scVAE(size(adata.X,2);
+    gene_likelihood = :nb,
+    dispersion = :gene_cell,
+    n_latent = 2,
+)
+train_tSNE_model!(m, adata, TrainingArgs(max_epochs=1))
+@test m.is_trained == true
