@@ -13,7 +13,7 @@ is_nonnegative_integer(x::Integer) = x ≥ 0
 is_nonnegative_integer(x) = false
 
 function check_nonnegative_integers(X::AbstractArray) 
-    if eltype(X) == Integer
+    if eltype(X) <: Integer
         return all(is_nonnegative_integer.(X)) 
     elseif any(sign.(X) .< 0)
         return false 
@@ -36,7 +36,7 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     replace_hvgs::Bool=true,
     verbose::Bool=false
     )
-    X = !isnothing(layer) ? adata.layers[layer] : adata.countmatrix
+    X = !isnothing(layer) ? adata.layers[layer] : adata.X
     !check_nonnegative_integers(X) && @warn "flavor Seurat v3 expects raw count data, but non-integers were found"
     verbose && @info "input checks passed..."
     means, vars = mean(X, dims=1), var(X, dims=1)
@@ -97,15 +97,11 @@ function _highly_variable_genes_seurat_v3(adata::AnnData;
     end
 
     if inplace 
-        if isnothing(adata.var)
-            adata.var = hvg_info
+        if !isempty(intersect(names(hvg_info), names(adata.var))) && replace_hvgs # if there is already HVG information present and it should be replaced
+            other_col_inds = findall(x -> !(x ∈ names(hvg_info)), names(adata.var)) # find indices of all columns that are not contained in the new hvg_info df
+            adata.var = hcat(adata.var[!,other_col_inds], hvg_info) # keep only the cols not recalculated in the new hvg_info df, and append the hvg_info df
         else
-            if !isempty(intersect(names(hvg_info), names(adata.var))) && replace_hvgs # if there is already HVG information present and it should be replaced
-                other_col_inds = findall(x -> !(x ∈ names(hvg_info)), names(adata.var)) # find indices of all columns that are not contained in the new hvg_info df
-                adata.var = hcat(adata.var[!,other_col_inds], hvg_info) # keep only the cols not recalculated in the new hvg_info df, and append the hvg_info df
-            else
-                adata.var = hcat(adata.var, hvg_info, makeunique=true)
-            end
+            adata.var = hcat(adata.var, hvg_info, makeunique=true)
         end
         return adata
     else
@@ -171,7 +167,7 @@ from the corresponding Python implementation.
 **Arguments**
 ------------------------
 - `adata`: `AnnData` object 
-- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.countmatrix` is used. 
+- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.X` is used. 
 - `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
 - `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
 - `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details. 
@@ -241,17 +237,19 @@ function subset_to_hvg!(adata::AnnData;
     end
 
     hvgs = adata.var[!,:highly_variable]
-    @assert size(adata.countmatrix,2) == length(hvgs)
-    adata.countmatrix = adata.countmatrix[:,hvgs]
-    adata.var = adata.var[hvgs,:]
-    #adata.ngenes = size(adata.countmatrix,2)
+    @assert size(adata.X,2) == length(hvgs)
+    subset_inds = collect(hvgs)
+    subset_adata!(adata, subset_inds, :genes)
+    #adata.X = adata.X[:,hvgs]
+    #adata.var = adata.var[hvgs,:]
+    #adata.ngenes = size(adata.X,2)
     #for colname in names(adata.var)
     #    if length(adata.var[!,colname]) == length(hvgs)
     #        adata.var[!,colname] = adata.var[!,colname][hvgs]
     #    end
     #end
     # some basic checks 
-    @assert sum(adata.var[!,:highly_variable]) == size(adata.countmatrix,2)
+    @assert sum(adata.var[!,:highly_variable]) == size(adata.X,2)
     @assert !any(isnan.(adata.var[!,:highly_variable_rank]))
     return adata
 end

@@ -1,24 +1,49 @@
 using scVI
 using Test
+using DataFrames
+using Random
+using Distributions
 
-@testset "scVI.jl" begin
-    # Write your tests here.
-    # PBMC 
-    using scVI
-    @info "loading data..."
-    adata = load_pbmc()
-    @info "data loaded, initialising object... "
-    library_log_means, library_log_vars = init_library_size(adata) 
-    m = scVAE(size(adata.countmatrix,2);
-            library_log_means=library_log_means,
-            n_latent=2
-    )
-    print(summary(m))
-    training_args = TrainingArgs(
-        max_epochs=2, 
-        lr = 1e-4,
-        weight_decay=Float32(1e-6),
-    )
-    train_model!(m, adata, training_args)
-    register_latent_representation!(adata, m)
+# disable warnings
+# import Logging
+# Logging.disable_logging(Logging.Warn) 
+
+@testset "Preprocessing with Cortex data" begin
+    include("preprocessing_with_cortex.jl")
+end
+
+@testset "PBMC data" begin
+    include("pbmc.jl")
+end
+
+@testset "Tasic data" begin
+    include("tasic.jl")
+end
+
+@testset "Highly variable gene utils" begin
+    include("hvg_utils.jl")
+end
+
+@testset "Encoder and decoder" begin
+    include("encoder_decoder.jl")
+end
+
+@testset "basic scVAE models" begin
+    include("scVAE_models.jl")
+end
+
+@testset "Model training" begin
+    include("model_training.jl")
+end
+
+@testset "scLDVAE model" begin
+    include("scLDVAE_models.jl")
+end
+
+@testset "Gaussian + Bernoulli likelihood" begin
+    include("other_distributions.jl")
+end
+
+@testset "Count distributions" begin
+    include("count_distributions.jl")
 end

@@ -15,7 +15,7 @@ end
 """
     function pca!(adata::AnnData; 
         layer::String="log_transformed", 
-        n_pcs::Int=size(adata.countmatrix,2),
+        n_pcs::Int=size(adata.X,2),
         verbose::Bool=false
     )
 
@@ -27,11 +27,6 @@ function pca!(adata::AnnData;
     layer::String="log_transformed", 
     n_pcs::Int=1000, 
     verbose::Bool=true)
-
-    if isnothing(adata.layers)
-        verbose && @info "No layers dict in adata so far, initializing empty dictionary... "
-        adata.layers = Dict()
-    end
 
     if !haskey(adata.layers, layer)
         @warn "layer $(layer) not found in `adata.layers`"
@@ -59,11 +54,6 @@ function pca!(adata::AnnData;
     end
 
     pcs = prcomps(X[:,1:n_pcs])
-
-    if isnothing(adata.obsm)
-        verbose && @info "no `obsm` field in adata so far, initializing empty dictionary..."
-        adata.obsm = Dict()
-    end
 
     adata.obsm["PCA"] = pcs[:,1:n_pcs]
     return adata
@@ -101,12 +91,14 @@ function umap!(adata::AnnData;
     if use_pca_init
         pca!(adata; layer=layer, n_pcs=n_pcs, verbose=verbose)
         X = adata.obsm["PCA"]
-    elseif isnothing(adata.layers) || !haskey(adata.layers, layer)
+    elseif !haskey(adata.layers, layer)
         @warn "layer $(layer) not found in `adata.layers`, calculating log-transformed normalized counts..."
         if !haskey(adata.layers, "normalized")
             normalize_total!(adata; verbose=verbose)
         end
-        log_transform!(adata, verbose=verbose)
+        if !haskey(adata.layers, "log_transformed")
+            log_transform!(adata, layer="normalized", verbose=verbose)
+        end
         X = adata.layers["log_transformed"]
     else
         X = adata.layers[layer]
@@ -116,18 +108,10 @@ function umap!(adata::AnnData;
     umap_result = UMAP.UMAP_(X'; kwargs...)
 
     # store results
-    if isnothing(adata.obsm)
-        verbose && @info "no `obsm` field in adata so far, initializing empty dictionary..."
-        adata.obsm = Dict()
-    end
     adata.obsm["umap"] = umap_result.embedding'
     adata.obsm["knns"] = umap_result.knns'
     adata.obsm["knn_dists"] = umap_result.dists'
     
-    if isnothing(adata.obsp)
-        verbose && @info "no `obsp` field in adata so far, initializing empty dictionary..."
-        adata.obsp = Dict()
-    end
     adata.obsp["fuzzy_neighbor_graph"] = umap_result.graph
 
     return adata

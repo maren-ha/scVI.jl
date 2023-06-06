@@ -15,7 +15,7 @@ function generative(m::scVAE, z::AbstractMatrix{S}, library::AbstractMatrix{S}) 
     #if m.dispersion == :gene # some other cases (:gene-batch, :gene-label ignored)
     #    px_r = m.px_r
     #end
-    px_r = exp.(px_r)
+    # px_r = exp.(px_r)
     return px_scale, px_r, px_rate, px_dropout
 end
 
@@ -58,9 +58,9 @@ function _compute_local_library_params(m::scVAE, batch_indices::Vector{S}) where
         log library sizes in the batch the cell corresponds to.
         """
         n_batch = m.n_batch
-        local_library_log_means = onehotbatch(batch_indices, collect(1:n_batch))' * m.library_log_means
+        local_library_log_means = vec(sum(onehotbatch(batch_indices, collect(1:n_batch)) .* m.library_log_means, dims=1))
         # onehotbatch: size n_batch x batchsize, library_log_means: length n_batch 
-        local_library_log_vars = onehotbatch(batch_indices, collect(1:n_batch))' * m.library_log_vars
+        local_library_log_vars = vec(sum(onehotbatch(batch_indices, collect(1:n_batch)) .* m.library_log_vars, dims=1))
         return local_library_log_means, local_library_log_vars # length: batchsize 
 end
 
@@ -204,7 +204,7 @@ Returns the mean (default) or a sample of the latent representation (can be cont
  - `cellindices=nothing`: optional; indices of cells (=rows) on which to subset the `countmatrix` before embedding it 
  - `give_mean::Bool=true`: optional; if `true`, returns the mean of the latent representation, else returns a sample. 
 """
-function get_latent_representation(m::scVAE, countmatrix::Matrix; 
+function get_latent_representation(m::scVAE, countmatrix::AbstractArray; 
     cellindices=nothing, give_mean::Bool=true
     )
     # countmatrix assumes cells x genes 

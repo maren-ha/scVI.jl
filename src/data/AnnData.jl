@@ -1,6 +1,7 @@
 #-------------------------------------------------------------------------------------
 # AnnData struct
 #-------------------------------------------------------------------------------------
+#=
 """
     mutable struct AnnData
 
@@ -41,18 +42,37 @@ Base.@kwdef mutable struct AnnData
     celltypes=nothing
     #is_trained::Bool=false
 end
+=#
 
-Base.size(a::AnnData) = size(a.countmatrix)
-Base.size(a::AnnData, ind) = size(a.countmatrix, ind)
+#Base.size(a::AnnData) = size(a.X)
+#Base.size(a::AnnData, ind::Int) = size(a.X, ind)
 ncells(a::AnnData) = size(a, 1)
 ngenes(a::AnnData) = size(a, 2)
 
+function get_celltypes(a::AnnData)
+    celltypes = nothing
+    if !isnothing(a.obs)
+        if hasproperty(a.obs, :cell_type)
+            celltypes = a.obs.cell_type
+        elseif hasproperty(a.obs, :celltype)
+            celltypes = a.obs.celltype
+        elseif hasproperty(a.obs, :celltypes)
+            celltypes = a.obs.celltypes
+        elseif hasproperty(a.obs, :cell_types)
+            celltypes = a.obs.cell_types
+        end
+    end
+    return celltypes
+end
+
 function Base.show(io::IO, a::AnnData)
+    #ncells, ngenes = size(adata.X)
     println(io, "$(typeof(a)) object with a countmatrix with $(ncells(a)) cells and $(ngenes(a)) genes")
     !isnothing(a.layers) && println(io, "   layers dict with the following keys: $(keys(a.layers))")
     !isnothing(a.obs) && println(io, "   information about cells: $(first(a.obs,3))")
     !isnothing(a.var) && println(io, "   information about genes: $(first(a.var,3))")
-    !isnothing(a.celltypes) && println(io, "   unique celltypes: $(unique(a.celltypes))")
+    #!hasproperty(a.obs, "celltype") && println(io, "   unique celltypes: $(unique(a.obs.cell_type))")
+    #!isnothing(a.celltypes) && println(io, "   unique celltypes: $(unique(a.celltypes))")
     #a.is_trained ? println(io, "    training status: trained") : println(io, "   training status: not trained")
     nothing 
 end
@@ -63,20 +83,22 @@ end
 #adata[1:10, 1:20]
 #adata[2,3]
 
+#=
 import Base.getindex
 
 function getindex(adata::AnnData, inds...)
     adata_sub = subset_adata(adata, (inds[1], inds[2]))
 end
 
+=#
 function subset_adata(adata::AnnData, subset_inds::Tuple, dims::Symbol=:both)
-    adata_new = copy(adata)
+    adata_new = deepcopy(adata)
     subset_adata!(adata_new, subset_inds, dims)
     return adata_new
 end
 
 function subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, dims::Symbol)
-    adata_new = copy(adata)
+    adata_new = deepcopy(adata)
     subset_adata!(adata_new, subset_inds, dims)
     return adata_new
 end
@@ -95,18 +117,24 @@ subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:cells}) = subset_adata!
 
 subset_adata!(adata::AnnData, subset_inds::Tuple, ::Val{:genes}) = subset_adata!(adata, subset_inds[2], :genes)
 
-function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells})
+#subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:cells}) = adata[subset_inds, :]
+
+#subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes}) = adata[:, subset_inds]
+
+function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vector{Bool}, UnitRange}, ::Val{:cells})
     #adata.ncells = length(subset_inds)
-    adata.countmatrix = adata.countmatrix[subset_inds,:]
-    if !isnothing(adata.celltypes)
-        adata.celltypes = adata.celltypes[subset_inds]
+
+    adata.X = adata.X[subset_inds,:]
+
+    if !isnothing(adata.obs_names)
+        adata.obs_names = adata.obs_names[subset_inds]
     end
-    if !isnothing(adata.obs)
+    if !isnothing(adata.obs) && nrow(adata.var) > 0
         adata.obs = adata.obs[subset_inds,:]
     end
     if !isnothing(adata.layers)
-        for layer in keys(adata.layers)
-            adata.layers[layer] = adata.layers[layer][subset_inds,:]
+        for key in keys(adata.layers)
+            adata.layers[key] = setindex!(adata.layers, adata.layers[key][subset_inds,:], key)
         end
     end
     if !isnothing(adata.obsm)
@@ -122,14 +150,19 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
     return adata
 end
 
-function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, ::Val{:genes})
-    adata.countmatrix = adata.countmatrix[:,subset_inds]
-    if !isnothing(adata.var)
+function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vector{Bool}, UnitRange}, ::Val{:genes})
+
+    adata.X = adata.X[:,subset_inds]
+
+    if !isnothing(adata.var_names)
+        adata.var_names = adata.var_names[subset_inds]
+    end
+    if !isnothing(adata.var) && nrow(adata.var) > 0
         adata.var = adata.var[subset_inds,:]
     end
     if !isnothing(adata.layers)
-        for layer in keys(adata.layers)
-            adata.layers[layer] = adata.layers[layer][:,subset_inds]
+        for key in keys(adata.layers)
+            adata.layers[key] = setindex!(adata.layers, adata.layers[key][:,subset_inds], key)
         end
     end
     if !isnothing(adata.varm)
@@ -143,17 +176,4 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Unit
         end
     end
     return adata
-end
-
-import Base.copy
-
-function copy(adata::AnnData)
-    bdata = AnnData(countmatrix = copy(adata.countmatrix))
-    for field in fieldnames(AnnData)
-        curval = getfield(adata, field)
-        if !isnothing(curval)
-            setfield!(bdata, field, copy(curval))
-        end
-    end
-    return bdata
 end

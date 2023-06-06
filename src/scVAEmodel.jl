@@ -135,15 +135,29 @@ function scVAE(n_input::Int;
 
     if !use_observed_lib_size
         if isnothing(library_log_means) || isnothing(library_log_vars)
-            error("if not using observed library size, must provide library_log_means and library_log_vars")
+            throw(ArgumentError("If not using observed library size, must provide library_log_means and library_log_vars"))
         end
         # + some register_buffer thing I ignored for now: https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L129
     end
 
     if !(gene_likelihood ∈ [:zinb, :nb, :poisson, :gaussian, :bernoulli])
-        @warn "gene likelihood has to be one of `:zinb`, `:nb`, `:poisson`, `gaussian`, or `bernoulli`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
+        @warn "gene likelihood has to be one of `:zinb`, `:nb`, `:poisson`, `gaussian`, or `bernoulli`. Your choice $(gene_likelihood) is not supported, defaulting to `:nb`."
+        gene_likelihood = :nb
     end
 
+    l_n_hid = length(n_hidden)
+    if l_n_hid > 1
+        if l_n_hid != n_layers-1
+            @warn "number of inner hidden layers is $(l_n_hid), but number of inner layers is $(n_layers-1), needs to coincide! Defaulting to n_hidden = 128 for all layers"
+            n_hidden = 128
+        end
+    end
+
+    #if (gene_likelihood == :gaussian) && log_variational
+    #    @warn "log-transforming the input data is not supported for Gaussian likelihood. Setting `log_variational` to `false`."
+    #    log_variational = false
+    #end
+    
     use_activation_encoder = (use_activation == :encoder || use_activation == :both) # true
     use_activation_decoder = (use_activation == :decoder || use_activation == :both) # true
 

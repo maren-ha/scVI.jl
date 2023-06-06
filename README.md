@@ -1,6 +1,8 @@
 # README
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://maren-ha.github.io/scVI.jl/)
+[![codecov](https://codecov.io/gh/maren-ha/scVI.jl/branch/muon/graph/badge.svg?token=OXHPY0EI3E)](https://codecov.io/gh/maren-ha/scVI.jl)
+![example workflow](https://github.com/maren-ha/scVI.jl/actions/workflows/ci.yml/badge.svg)
 
 ![](logo/scvi-julia-logo.jpg)
 
@@ -62,7 +64,7 @@ subset_to_hvg!(adata, n_top_genes=1200, verbose=true)
 library_log_means, library_log_vars = init_library_size(adata)
 
 # initialise scVAE model 
-m = scVAE(size(adata.countmatrix,2);
+m = scVAE(size(adata.X,2);
         library_log_means=library_log_means,
         library_log_vars=library_log_vars
 )
@@ -104,30 +106,14 @@ Runtests can be executed via
 Pkg.test("scVI")
 ```
 
-This checks whether basic functionality works: loads the PBMC dataset, initialises a `scVAE` model and start training (just 2 epochs for the sake of checking and faster runtime). Further tests to be added. 
+For details, see the `test` subfolder. For further information on code coverage, click on the badge at the top of this README or follow [this link](https://codecov.io/gh/maren-ha/scVI.jl). Some files are not yet fully covered, but this is being worked on.
 
 ------------
 ## TODO 
 
-- [x] deploy docs
-- [ ] write tests
-- [ ] integration of [`Muon.jl`](https://scverse.org/Muon.jl/dev/objects/) for data handling 
+- [ ] update docs (Muon.jl integration)
+- [ ] complete runtests
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
-- [x] turn `data` and `scvis` into submodules
-- [x] fix library size integration 
-- [x] add Gaussian generative distribution
-- [x] add Bernoulli generative distribution 
-- [x] refactor data processing
-	- [x] re-write `PBMC.jl`
-	- [x] re-write `Tasic.jl`
-	- [x] add preprocessing: 
-		- [x] log-transform 
-		- [x] sqrt-transform
-		- [x] re-scaling
-		- [x] PCA
-		- [x] UMAP 
-		- [x] filtering
-	- [x]  add docstrings
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!

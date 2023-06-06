@@ -2,7 +2,7 @@
     register_latent_representation!(adata::AnnData, m::scVAE)
 
 Calculates the latent representation obtained from encoding the `countmatrix` of the `AnnData` object 
-with a trained `scVAE` model by applying the function `get_latent_representation(m, adata.countmatrix)`. 
+with a trained `scVAE` model by applying the function `get_latent_representation(m, adata.X)`. 
 Stored the latent representation in the `scVI_latent` field of the input `AnnData` object. 
 
 Returns the modified `AnnData` object.
@@ -10,7 +10,7 @@ Returns the modified `AnnData` object.
 function register_latent_representation!(adata::AnnData, m::scVAE)
     !m.is_trained && @warn("model has not been trained yet!")
     adata.obsm = isnothing(adata.obsm) ? Dict() : adata.obsm
-    adata.obsm["scVI_latent"] = get_latent_representation(m, adata.countmatrix)'
+    adata.obsm["scVI_latent"] = get_latent_representation(m, adata.X)'
     @info "latent representation added"
     return adata
 end
@@ -55,7 +55,7 @@ For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) 
 **Arguments:**
 ---------------
  - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
- - `adata:AnnData`: data to embed with the model; `adata.countmatrix` is encoded with `m`
+ - `adata:AnnData`: data to embed with the model; `adata.X` is encoded with `m`
 
  **Keyword arguments:**
  -------------------
@@ -70,7 +70,7 @@ function plot_umap_on_latent(
     seed::Int=987
     )
 
-    plotcolor = isnothing(adata.celltypes) ? fill("#ff7f0e", size(adata.countmatrix,1)) : adata.celltypes
+    plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
 
     if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
@@ -107,14 +107,14 @@ If the dimension of the latent space according to `m.n_latent` is > 2, it calcul
 In this case, if no UMAP representation is stored in `adata.scVI_latent_umap`, 
 it is calculated and registered by calling `register_umap_on_latent(adata, m)`.
 
-By default, the cells are color-coded according to the `celltypes` field of the `AnnData` object. 
+By default, the cells are color-coded according to the `celltypes` column in `adata.obs`, if present. 
 
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 
 **Arguments:**
 ---------------
  - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
- - `adata:AnnData`: data to embed with the model; `adata.countmatrix` is encoded with `m`
+ - `adata:AnnData`: data to embed with the model; `adata.X` is encoded with `m`
 
  **Keyword arguments:**
  -------------------
@@ -132,7 +132,7 @@ function plot_latent_representation(
         @info "latent space dimension is $(m.n_latent) > 2, calculating a UMAP representation... "
         latent_plot = plot_umap_on_latent(m, adata; save_plot=false)
     else
-        plotcolor = isnothing(adata.celltypes) ? fill("#ff7f0e", size(adata.countmatrix,1)) : adata.celltypes
+        plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
 
         if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
             @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
@@ -165,14 +165,12 @@ PCA is calculated using the singular value decomposition implementation in [`Lin
 
 By default, the cells are color-coded according to the `celltypes` field of the `AnnData` object. 
 
-!TODO: add fallback for missing celltype annotation (`adata.celltypes = nothing`)
-
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 
 **Arguments:**
 ---------------
 - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
-- `adata:AnnData`: data to embed with the model; `adata.countmatrix` is encoded with `m`
+- `adata:AnnData`: data to embed with the model; `adata.X` is encoded with `m`
 
 **Keyword arguments:**
 -------------------
@@ -185,7 +183,7 @@ function plot_pca_on_latent(
     filename::String="PCA_on_latent.pdf"
     )
 
-    plotcolor = isnothing(adata.celltypes) ? fill("#ff7f0e", size(adata.countmatrix,1)) : adata.celltypes
+    plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
 
     if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
         @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
@@ -229,17 +227,17 @@ The implementation is adapted from the corresponding [`scvi tools` function](htt
 function decodersample(m::scVAE, z::AbstractMatrix{S}, library::AbstractMatrix{S}) where S <: Real 
     px_scale, theta, mu, zi_logits = generative(m, z, library)
     if m.gene_likelihood == :nb
-        return rand(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))), size(mu))
+        return rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))))
     elseif m.gene_likelihood == :zinb
         samp = rand.(NegativeBinomial.(theta, theta ./ (theta .+ mu .+ eps(Float32))))
         zi_probs = logits_to_probs(zi_logits)
         is_zero = rand(Float32, size(mu)) .<= zi_probs
         samp[is_zero] .= 0.0
         return samp
-    elseif m.gene_likelihood == :Poisson
-        return rand.(Poisson.(mu), size(mu))
+    elseif m.gene_likelihood == :poisson
+        return rand.(Poisson.(mu))
     else 
-        error("Not implemented")
+        throw(ArgumentError("Not implemented"))
     end
 end
 
@@ -258,7 +256,7 @@ Returns the samples from the model.
 - `adata::AnnData`: `AnnData` object based on which to calculate the latent posterior
 """
 function sample_from_posterior(m::scVAE, adata::AnnData)
-    sample_from_posterior(m, adata.countmatrix')
+    sample_from_posterior(m, adata.X')
 end
 
 function sample_from_posterior(m::scVAE, x::AbstractMatrix{S}) where S <: Real 
@@ -286,16 +284,17 @@ Returns the samples from the model.
 - `sample_library_size::Bool=false`: whether or not to sample from the library size. If `false`, the mean of the observed library size is used. 
 """
 function sample_from_prior(m::scVAE, adata::AnnData, n_samples::Int; sample_library_size::Bool=false)
-    sample_from_prior(m, adata.countmatrix', n_samples, sample_library_size=sample_library_size)
+    sample_from_prior(m, adata.X', n_samples, sample_library_size=sample_library_size)
 end
 
 function sample_from_prior(m::scVAE, x::AbstractMatrix{S}, n_samples::Int; sample_library_size::Bool=false) where S <: Real 
     !m.is_trained && @warn("model has not been trained yet!")
     encoder_input = m.log_variational ? log.(one(S) .+ x) : x
-    orig_library = get_library(m, x, encoder_input)
+    _, _, orig_library = get_library(m, x, encoder_input)
     # library = sample_library_size ? rand(orig_library, n_samples) : mean(orig_library)
     library = sample_library_size ? rand(Normal(mean(orig_library), std(orig_library)), n_samples) : fill(mean(orig_library), n_samples)
-    return decodersample(m, z, library)
+    z = rand(Normal(0.0f0,1.0f0), m.n_latent, n_samples)
+    return decodersample(m, z, Matrix(library'))
 end
 
 #=

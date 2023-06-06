@@ -1,0 +1,21 @@
+Vip	Mybpc1
+L4	Ctxn3
+L2/3	Ptgs2
+L2	Ngb
+Pvalb	Gpx3
+Ndnf	Cxcl14
+L5a	Batf3
+SMC	Myl9
+Astro	Aqp4
+L5	Ucma
+Micro	Ctss
+Endo	Xdh
+Sst	Cbln4
+L6b	Serpinb11
+Sncg	
+Igtp	
+Oligo	96*Rik
+Smad3	
+OPC	Pdgfra
+L5b	Tph2
+L6a	Sla

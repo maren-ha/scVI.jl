@@ -91,11 +91,9 @@ function scLinearDecoder(n_input, n_output;
         #px_r= torch.nn.Parameter(torch.randn(n_input)) # 1200-element vector
         #px_r_ps = px_r.detach().numpy()
     elseif dispersion == :gene_cell
-        px_r_decoder = Dense(n_hidden, n_output)
+        px_r_decoder = Dense(n_input, n_output)
     else
-        @warn "dispersion has to be one of `:gene` or `:gene_cell`. Your choice $(dispersion) is currently not supported, defaulting to `:gene`."
-        dispersion = :gene
-        px_r_decoder = randn(Float32, n_output)
+        throw(ArgumentError("dispersion has to be one of `:gene` or `:gene_cell`. Your choice $(dispersion) is currently not supported")) 
     end
 
     return scLinearDecoder(
@@ -222,13 +220,19 @@ function scLDVAE(n_input::Int;
 
     if !use_observed_lib_size
         if isnothing(library_log_means) || isnothing(library_log_vars)
-            error("if not using observed library size, must provide library_log_means and library_log_vars")
+            throw(ArgumentError("if not using observed library size, must provide library_log_means and library_log_vars"))
         end
         # + some register_buffer thing I ignored for now: https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L129
     end
 
     if !(gene_likelihood ∈ [:zinb, :nb, :poisson])
-        @warn "gene likelihood has to be one of `:zinb`, `:nb`, or `:poisson`. Your choice $(gene_likelihood) is not supported, defaulting to `:zinb`."
+        @warn "gene likelihood has to be one of `:zinb`, `:nb`, or `:poisson`. Your choice $(gene_likelihood) is not supported, defaulting to `:nb`."
+        gene_likelihood = :nb
+    end
+
+    if !(dispersion ∈ [:gene, :gene_cell])
+        @warn "dispersion has to be one of `:gene` or `:gene_cell`. Your choice $(dispersion) is currently not supported, defaulting to `:gene`."
+        dispersion = :gene
     end
 
     use_activation_encoder = (use_activation == :encoder || use_activation == :both) # true

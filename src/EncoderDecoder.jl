@@ -409,8 +409,8 @@ apply_px_dropout_decoder(px_dropout_decoder::Nothing, px::AbstractVecOrMat{S}) w
 apply_px_dropout_decoder(px_dropout_decoder::Union{Dense, Chain}, px::AbstractVecOrMat{S}) where S <: Real = px_dropout_decoder(px)
 
 apply_px_r_decoder(px_r_decoder::Nothing, px::AbstractVecOrMat{S}) where S <: Real = nothing 
-apply_px_r_decoder(px_r_decoder::AbstractVecOrMat, px::AbstractVecOrMat{S}) where S <: Real = px_r_decoder
-apply_px_r_decoder(px_r_decoder::Dense, px::AbstractVecOrMat{S}) where S <: Real = px_r_decoder(px)
+apply_px_r_decoder(px_r_decoder::AbstractVecOrMat, px::AbstractVecOrMat{S}) where S <: Real = exp.(px_r_decoder)
+apply_px_r_decoder(px_r_decoder::Dense, px::AbstractVecOrMat{S}) where S <: Real = exp.(px_r_decoder(px))
 
 #= 
 # previous version based on making types callable 

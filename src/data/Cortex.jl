@@ -3,6 +3,7 @@
 #-------------------------------------------------------------------------------------
 
 # assumes Python adata object 
+#=
 """
     load_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
 
@@ -17,10 +18,10 @@ function load_cortex_from_h5ad(filename::String="cortex_anndata.h5ad")
     celltypes = celltype_categories[celltype_numbers]
     adata.obs[!,:celltypes] = celltypes
     rename!(adata.obs, :cell_type => :celltypes_numbers)
-    adata.celltypes = celltypes
+    adata.obs[:,celltypes] = celltypes
     return adata
 end
-
+=#
 function load_cortex_from_url(save_path::String=""; verbose::Bool=false)
 
     url = "https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt"
@@ -43,33 +44,32 @@ function load_cortex_from_url(save_path::String=""; verbose::Bool=false)
         labels[findall(x -> x == unique(clusters)[i], clusters)] .= i
     end
 
-    cellinfos = Dict(
-        "cell_type" => String.(clusters),
-        "labels" => labels,
-        "precise_labels" => Int.(precise_clusters),
-        "tissue" => String.(csvfile[1,3:end]),
-        "group" => Int.(csvfile[2,3:end]),
-        "totalmRNA" => Int.(csvfile[3,3:end]),
-        "well" => Int.(csvfile[4,3:end]),
-        "sex" => Int.(csvfile[5,3:end]),
-        "age" => Int.(csvfile[6,3:end]),
-        "diameter" => Float32.(csvfile[7,3:end]),
-        "cell_id" => String.(csvfile[8,3:end])
+    cellinfos = DataFrame(
+        cell_type = String.(clusters),
+        labels = labels,
+        precise_labels = Int.(precise_clusters),
+        tissue = String.(csvfile[1,3:end]),
+        group = Int.(csvfile[2,3:end]),
+        totalmRNA = Int.(csvfile[3,3:end]),
+        well = Int.(csvfile[4,3:end]),
+        sex = Int.(csvfile[5,3:end]),
+        age = Int.(csvfile[6,3:end]),
+        diameter = Float32.(csvfile[7,3:end]),
+        cell_id = String.(csvfile[8,3:end])
     )
 
-    geneinfos = Dict(
-        "gene_names" => gene_names
+    geneinfos = DataFrame(
+        gene_names = gene_names
     )
 
     @assert size(countmatrix,1) == length(clusters)
     @assert size(countmatrix,2) == length(gene_names)
 
     verbose && @info "populating AnnData object..."
-    adata = AnnData(
-        countmatrix = countmatrix,
-        obs = DataFrame(cellinfos), 
-        var = DataFrame(geneinfos), 
-        celltypes = cellinfos["cell_type"], 
+    adata = Muon.AnnData(
+        X = countmatrix, 
+        obs = cellinfos,
+        var_names = gene_names,
         layers = Dict("counts" => countmatrix)
     )
     return adata
@@ -110,8 +110,7 @@ function load_cortex(path::String="data/"; verbose::Bool=false)
     filename = joinpath(path, "cortex_anndata.h5ad")
     if isfile(filename)
         #adata = load_cortex_from_h5ad(filename)
-        adata = read_h5ad(filename)
-        adata.celltypes = adata.obs[!,:cell_type]
+        adata = Muon.readh5ad(filename, backed=false)
     else
         !isdir(path) && mkdir(path)
         adata = load_cortex_from_url(path, verbose=verbose)

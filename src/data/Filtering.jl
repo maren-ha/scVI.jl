@@ -46,13 +46,17 @@ function filter_cells!(adata::AnnData;
         adata.obs[!,:n_genes] = number_per_cell
     end
 
-    # filter adata in place 
-    subset_adata!(adata, cell_subset, :cells)
+    # transform BitVector to something we can subset on
+    if isa(cell_subset, BitVector)
+        cell_subset = collect(cell_subset)
+    end
 
+    # filter adata in place
+    adata = subset_adata!(adata, cell_subset, :cells)
     return adata
 end
 
-filter_cells(adata::AnnData; kwargs...) = filter_cells(adata.countmatrix; kwargs...)
+filter_cells(adata::AnnData; kwargs...) = filter_cells(adata.X; kwargs...)
 
 """
     function filter_cells(adata::AnnData; 
@@ -197,13 +201,18 @@ function filter_genes!(adata::AnnData;
         adata.var[!,:n_cells] = number_per_gene
     end
 
+    # transform BitVector to something we can subset on
+    if isa(gene_subset, BitVector)
+        gene_subset = collect(gene_subset)
+    end
+
     # filter adata in place 
     subset_adata!(adata, gene_subset, :genes)
 
     return adata
 end
 
-filter_genes(adata::AnnData; kwargs...) = filter_genes(adata.countmatrix; kwargs...)
+filter_genes(adata::AnnData; kwargs...) = filter_genes(adata.X; kwargs...)
 
 """
     filter_genes(adata::AnnData; 
@@ -270,8 +279,8 @@ function filter_genes(
             if max_cells !== nothing || max_counts !== nothing
                 msg *= (max_cells === nothing ? "with more than $max_counts counts" : "in more than $max_cells cells")
             end
+            @info msg
         end        
-        @info msg
     end
 
     return gene_subset, number_per_gene
