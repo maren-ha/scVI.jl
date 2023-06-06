@@ -24,6 +24,10 @@ end
     include("hvg_utils.jl")
 end
 
+@testset "Encoder and decoder" begin
+    include("encoder_decoder.jl")
+end
+
 @testset "basic scVAE models" begin
     include("scVAE_models.jl")
 end
