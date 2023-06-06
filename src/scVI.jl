@@ -42,6 +42,7 @@ export
 
 # core package functionality 
 using Distributions
+using Distances 
 using Flux
 using Flux:onehotbatch
 using Random 
@@ -62,10 +63,12 @@ include("ModelFunctions.jl")
 include("Training.jl")
 include("Evaluate.jl")
 
+include("tSNEPenalty.jl")
+
 export
     scVAE, scEncoder, scDecoder, scLinearDecoder, scLDVAE,
     TrainingArgs, 
-    train_model!, train_supervised_model!,
+    train_model!, train_supervised_model!, train_tSNE_model!,
     get_latent_representation, get_loadings,
     register_latent_representation!, register_umap_on_latent!,
     plot_umap_on_latent, plot_pca_on_latent,
