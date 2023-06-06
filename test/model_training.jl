@@ -85,3 +85,12 @@ m = scVAE(size(adata.X,2);
 )
 train_tSNE_model!(m, adata, TrainingArgs(max_epochs=1))
 @test m.is_trained == true
+
+train_tSNE_model!(m, adata, TrainingArgs(max_epochs=1, progress=false, verbose=true, register_losses = true, train_test_split=true))
+@test m.is_trained == true
+@test length(m.loss_registry) == 5
+@test length(m.loss_registry["reconstruction"]) == 1
+@test length(m.loss_registry["total_loss"]) == 1
+@test length(m.loss_registry["kl_z"]) == 1
+@test length(m.loss_registry["kl_l"]) == 1
+@test length(m.loss_registry["tSNE_loss"]) == 1

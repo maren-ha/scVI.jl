@@ -136,7 +136,8 @@ function loss(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indice
     return lossval + 100.0f0*tsne_penalty
 end
 
-function register_losses!(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indices::Vector{Int}; kl_weight::Float32=1.0f0) where S <: Real 
+function register_losses!(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indices::Vector{Int}; 
+    kl_weight::Float32=1.0f0, cheat::Bool=true, cheat_scale::Float32=12.0f0) where S <: Real 
     z, qz_m, qz_v, ql_m, ql_v, library = inference(m, x)
     px_scale, px_r, px_rate, px_dropout = generative(m, z, library)
     kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
@@ -242,7 +243,7 @@ function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs
             end
             train_steps += 1
         end
-        training_args.register_losses && register_losses!(m, Float32.(X[train_inds,:]', P[train_inds, train_inds], batch_indices); kl_weight=kl_weight)
+        training_args.register_losses && register_losses!(m, Float32.(X[train_inds,:]'), P[train_inds, train_inds], batch_indices[train_inds]; kl_weight=kl_weight)
     end
     @info "training complete!"
     m.is_trained = true
