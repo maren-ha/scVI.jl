@@ -117,9 +117,9 @@ function loss(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indice
     px_scale, px_r, px_rate, px_dropout = scVI.generative(m, z, library)
     kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
 
-    kl_divergence_l = get_kl_divergence_l(m, ql_m, ql_v, batch_indices)
+    kl_divergence_l = scVI.get_kl_divergence_l(m, ql_m, ql_v, batch_indices)
 
-    reconst_loss = get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
+    reconst_loss = scVI.get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
     kl_local_for_warmup = kl_divergence_z
     kl_local_no_warmup = kl_divergence_l
     weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
@@ -129,11 +129,15 @@ function loss(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indice
         P = P .* cheat_scale/sum(P) # normalize + early exaggeration
         sum_P = cheat_scale
     end
-    tsne_penalty = compute_kldiv(z, P, sum_P)
-    #println(tsne_penalty)
+    tsne_penalty = scVI.compute_kldiv(z, P, sum_P)
+    println(tsne_penalty)
 
-    lossval = mean(reconst_loss + weighted_kl_local)
-    return lossval + 100.0f0*tsne_penalty
+    #graph_loss = sum(z*(Diagonal(vec(sum(P, dims=1))) .- P)*z')
+    #0.5.*sum(P[i,j].*(z[:,i] .- z[:,j]).^2 for i in 1:size(P,1), j in 1:size(P,2))
+    #println(graph_loss)
+
+    lossval = mean(reconst_loss + weighted_kl_local) 
+    return lossval + 150.0f0*tsne_penalty #+ 1.0f0 * graph_loss
 end
 
 function register_losses!(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indices::Vector{Int}; 
