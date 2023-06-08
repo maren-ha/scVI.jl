@@ -28,10 +28,7 @@ It is then stored in the `scVI_latent_umap` field of the input `AnnData` object.
 Returns the modified `AnnData` object.    
 """
 function register_umap_on_latent!(adata::AnnData, m::scVAE)
-    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
-        @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-        register_latent_representation!(adata, m)
-    end
+    register_latent_representation!(adata, m)
     adata.obsm["scVI_latent_umap"] = umap(adata.obsm["scVI_latent"]', 2; min_dist=0.3)'
     @info "UMAP of latent representation added"
     return adata
@@ -72,16 +69,8 @@ function plot_umap_on_latent(
 
     plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
 
-    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
-        @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-        register_latent_representation!(adata, m)
-    end
-
-    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent_umap")
-        @info "no UMAP of latent representation saved in AnnData object, calculating it now..."
-        Random.seed!(seed)
-        register_umap_on_latent!(adata, m)
-    end
+    register_latent_representation!(adata, m)
+    register_umap_on_latent!(adata, m)
 
     umap_plot = @vlplot(:point, 
                         title="UMAP of scVI latent representation", 
@@ -133,11 +122,7 @@ function plot_latent_representation(
         latent_plot = plot_umap_on_latent(m, adata; save_plot=false)
     else
         plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
-
-        if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
-            @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-            register_latent_representation!(adata, m)
-        end
+        register_latent_representation!(adata, m)
 
         latent_plot = @vlplot(:point, 
                     title="scVI latent representation", 
@@ -184,11 +169,8 @@ function plot_pca_on_latent(
     )
 
     plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
+    register_latent_representation!(adata, m)
 
-    if isnothing(adata.obsm) || !haskey(adata.obsm, "scVI_latent")
-        @info "no latent representation saved in AnnData object, calculating based on scVAE model..."
-        register_latent_representation!(adata, m)
-    end
 
     pca_input = adata.obsm["scVI_latent"]
     pcs = prcomps(pca_input)
