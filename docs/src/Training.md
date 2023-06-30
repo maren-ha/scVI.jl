@@ -11,3 +11,7 @@ train_model!
 ```@docs 
 train_supervised_model!
 ```
+
+```@docs
+train_tsne_model!
+```

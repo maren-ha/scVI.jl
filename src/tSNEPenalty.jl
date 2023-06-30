@@ -112,17 +112,17 @@ function compute_kldiv(z, P, sum_P)
     return last_kldiv
 end
 
-function loss(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indices::Vector{Int}; kl_weight::Float32=1.0f0, cheat::Bool=true, cheat_scale::Float32 = 12.0f0) where S <: Real 
+function loss(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indices::Vector{Int}; 
+    kl_weight::Float32=1.0f0, tsne_weight::Float32=150.0f0, cheat::Bool=true, cheat_scale::Float32 = 12.0f0) where S <: Real 
+    
     z, qz_m, qz_v, ql_m, ql_v, library = scVI.inference(m, x)
     px_scale, px_r, px_rate, px_dropout = scVI.generative(m, z, library)
-    kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
 
+    kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) 
     kl_divergence_l = scVI.get_kl_divergence_l(m, ql_m, ql_v, batch_indices)
 
-    reconst_loss = scVI.get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
-    kl_local_for_warmup = kl_divergence_z
-    kl_local_no_warmup = kl_divergence_l
-    weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
+    reconstruction_loss = scVI.get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
+    weighted_kl = kl_weight .* kl_divergence_z .+ kl_divergence_l
 
     P = P[1:size(P,2),:] .+ P[1:size(P,2),:]'
     if cheat
@@ -130,28 +130,26 @@ function loss(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indice
         sum_P = cheat_scale
     end
     tsne_penalty = scVI.compute_kldiv(z, P, sum_P)
-    println(tsne_penalty)
+    # println(tsne_penalty)
 
     #graph_loss = sum(z*(Diagonal(vec(sum(P, dims=1))) .- P)*z')
     #0.5.*sum(P[i,j].*(z[:,i] .- z[:,j]).^2 for i in 1:size(P,1), j in 1:size(P,2))
     #println(graph_loss)
 
-    lossval = mean(reconst_loss + weighted_kl_local) 
-    return lossval + 150.0f0*tsne_penalty #+ 1.0f0 * graph_loss
+    lossval = mean(reconstruction_loss + weighted_kl) 
+    return lossval + tsne_weight * tsne_penalty #+ 1.0f0 * graph_loss
 end
 
 function register_losses!(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, batch_indices::Vector{Int}; 
-    kl_weight::Float32=1.0f0, cheat::Bool=true, cheat_scale::Float32=12.0f0) where S <: Real 
+    kl_weight::Float32=1.0f0, tsne_weight::Float32=150.0f0, cheat::Bool=true, cheat_scale::Float32=12.0f0) where S <: Real 
     z, qz_m, qz_v, ql_m, ql_v, library = inference(m, x)
     px_scale, px_r, px_rate, px_dropout = generative(m, z, library)
     kl_divergence_z = -0.5f0 .* sum(1.0f0 .+ log.(qz_v) - qz_m.^2 .- qz_v, dims=1) # 2 
 
     kl_divergence_l = get_kl_divergence_l(m, ql_m, ql_v, batch_indices)
 
-    reconst_loss = get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
-    kl_local_for_warmup = kl_divergence_z
-    kl_local_no_warmup = kl_divergence_l
-    weighted_kl_local = kl_weight .* kl_local_for_warmup .+ kl_local_no_warmup
+    reconstruction_loss = get_reconstruction_loss(m, x, px_rate, px_r, px_dropout)
+    weighted_kl_local = kl_weight .* kl_divergence_z .+ kl_divergence_l
 
     P = P[1:size(P,2),:] .+ P[1:size(P,2),:]'
     if cheat
@@ -160,19 +158,50 @@ function register_losses!(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, 
     end
     tsne_penalty = compute_kldiv(z, P, sum_P)
 
-    lossval = mean(reconst_loss + weighted_kl_local) + 100.0f0*tsne_penalty
+    lossval = mean(reconst_loss + weighted_kl_local) + tsne_weight*tsne_penalty
 
     push!(m.loss_registry["kl_z"], mean(kl_divergence_z))
     push!(m.loss_registry["kl_l"], mean(kl_divergence_l))
-    push!(m.loss_registry["reconstruction"], mean(reconst_loss))
+    push!(m.loss_registry["reconstruction"], mean(reconstruction_loss))
     push!(m.loss_registry["tSNE_loss"], tsne_penalty)
     push!(m.loss_registry["total_loss"], lossval)
     return m
 end
 
+"""
+    train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; 
+        layer::Union{String, Nothing}=nothing, 
+        batch_key::Symbol=:batch,
+        tsne_weight::Float32=150.0f0,
+        perplexity::Number=30.0, 
+        cheat_scale::Number=12.0, 
+        cheat::Bool=true)
+
+Train a scVAE model with tSNE loss, i.e., with an additional component that penalizes 
+the KL divergence between the distributions of high-dimensional pairwise similarities 
+of data points and the low-dimensional similarities of the latent space embeddings, 
+calculated analogous to the objective in a standard tSNE model.
+
+# Arguments
+- `m::scVAE`: the model to train
+- `adata::AnnData`: the data on which to train the model
+- `training_args::TrainingArgs`: the training arguments controlling the training behaviour
+- `batch_key::Symbol=:batch`: the key in `adata.obs` on which to split the data in batches for the library encoder. 
+    If `m.use_observed_lib_size==true`, this argument is ignored.
+- layer::Union{String, Nothing}=nothing`: the layer in `adata.layers` on which to train the model. 
+    If `m.gene_likelihood ∈ [:gaussian, :bernoulli]`, this argument is mandatory.
+- `tsne_weight::Float32`: weight of tSNE loss
+- `perplexity::Number`: perplexity of tSNE
+- `cheat_scale::Number`: scale of tSNE loss
+- `cheat::Bool`: whether to use early exaggeration
+
+# Returns
+- `m::scVAE`: trained scVAE model
+"""
 function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; 
     layer::Union{String, Nothing}=nothing, 
     batch_key::Symbol=:batch,
+    tsne_weight::Float32=150.0f0,
     perplexity::Number=30.0, 
     cheat_scale::Number=12.0, 
     cheat::Bool=true)
@@ -236,7 +265,8 @@ function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs
             batch_inds = batch_indices[inds]
             Pmat = P[inds, inds]
             curloss, back = Flux.pullback(ps) do 
-                loss(m, d, Pmat, batch_inds; kl_weight=kl_weight, cheat=cheat)
+                loss(m, d, Pmat, batch_inds; 
+                    kl_weight=kl_weight, tsne_weight=tsne_weight, cheat_scale=cheat_scale, cheat=cheat)
             end
             grad = back(1f0)
             Flux.Optimise.update!(opt, ps, grad)
@@ -247,7 +277,8 @@ function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs
             end
             train_steps += 1
         end
-        training_args.register_losses && register_losses!(m, Float32.(X[train_inds,:]'), P[train_inds, train_inds], batch_indices[train_inds]; kl_weight=kl_weight)
+        training_args.register_losses && register_losses!(m, Float32.(X[train_inds,:]'), P[train_inds, train_inds], batch_indices[train_inds]; 
+            kl_weight=kl_weight, tsne_weight=tsne_weight, cheat_scale=cheat_scale, cheat=cheat)
     end
     @info "training complete!"
     m.is_trained = true
