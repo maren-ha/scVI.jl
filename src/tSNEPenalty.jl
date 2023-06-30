@@ -158,7 +158,7 @@ function register_losses!(m::scVAE, x::AbstractMatrix{S}, P::AbstractMatrix{S}, 
     end
     tsne_penalty = compute_kldiv(z, P, sum_P)
 
-    lossval = mean(reconst_loss + weighted_kl_local) + tsne_weight*tsne_penalty
+    lossval = mean(reconstruction_loss + weighted_kl_local) + tsne_weight*tsne_penalty
 
     push!(m.loss_registry["kl_z"], mean(kl_divergence_z))
     push!(m.loss_registry["kl_l"], mean(kl_divergence_l))
@@ -174,7 +174,7 @@ end
         batch_key::Symbol=:batch,
         tsne_weight::Float32=150.0f0,
         perplexity::Number=30.0, 
-        cheat_scale::Number=12.0, 
+        cheat_scale::Float32=12.0f0, 
         cheat::Bool=true)
 
 Train a scVAE model with tSNE loss, i.e., with an additional component that penalizes 
@@ -203,7 +203,7 @@ function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs
     batch_key::Symbol=:batch,
     tsne_weight::Float32=150.0f0,
     perplexity::Number=30.0, 
-    cheat_scale::Number=12.0, 
+    cheat_scale::Float32=12.0f0, 
     cheat::Bool=true)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
