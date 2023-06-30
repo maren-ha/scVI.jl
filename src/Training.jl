@@ -87,7 +87,17 @@ initialises a `Flux.DataLoader` storing the data in the countmatrix of the `AnnD
 Updates the model parameters via stochastic gradient for the specified number of epochs, 
 optionally prints out progress and current loss values. 
 
-Returns the trained `scVAE` model.
+# Arguments
+- `m::scVAE`: the model to train
+- `adata::AnnData`: the data on which to train the model
+- `training_args::TrainingArgs`: the training arguments controlling the training behaviour
+- `batch_key::Symbol=:batch`: the key in `adata.obs` on which to split the data in batches for the library encoder. 
+    If `m.use_observed_lib_size==true`, this argument is ignored.
+- layer::Union{String, Nothing}=nothing`: the layer in `adata.layers` on which to train the model. 
+    If `m.gene_likelihood ∈ [:gaussian, :bernoulli]`, this argument is mandatory.
+
+# Returns 
+- the trained `scVAE` model.
 """
 function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs; batch_key::Symbol=:batch, layer::Union{String, Nothing}=nothing)
 
