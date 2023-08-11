@@ -84,11 +84,10 @@ Normalizes the `adata.X` by dividing it by the size factors calculated with `est
 Adds the normalized count matrix to `adata.layers` and returns `adata`.
 """
 function normalize_size_factors!(adata::AnnData)
-    sizefactors = estimate_size_factors(adata.X)
-    mat_norm = mat ./ sizefactors'
-    if !isnothing(adata.layers)
-        adata.layers = Dict()
-    end
+    mat_norm = normalize_size_factors(adata.X)
+    #if !isnothing(adata.layers)
+    #    adata.layers = Dict()
+    #end
     adata.layers["size_factor_normalized"] = mat_norm
     return adata
 end
