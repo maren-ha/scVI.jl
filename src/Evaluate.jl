@@ -1,42 +1,44 @@
 """
-    register_latent_representation!(adata::AnnData, m::scVAE)
+    register_latent_representation!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent")
 
 Calculates the latent representation obtained from encoding the `countmatrix` of the `AnnData` object 
 with a trained `scVAE` model by applying the function `get_latent_representation(m, adata.X)`. 
-Stored the latent representation in the `scVI_latent` field of the input `AnnData` object. 
+Stored the latent representation in the `obsm` field of the input `AnnData` object as `name_latent`
 
 Returns the modified `AnnData` object.
 """
-function register_latent_representation!(adata::AnnData, m::scVAE)
+function register_latent_representation!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent")
     !m.is_trained && @warn("model has not been trained yet!")
-    adata.obsm = isnothing(adata.obsm) ? Dict() : adata.obsm
-    adata.obsm["scVI_latent"] = get_latent_representation(m, adata.X)'
-    @info "latent representation added"
+    #adata.obsm = isnothing(adata.obsm) ? Dict() : adata.obsm
+    adata.obsm[name_latent] = get_latent_representation(m, adata.X)'
+    @info "latent representation added as $(name_latent)"
     return adata
 end
 
 """
-    register_umap_on_latent!(adata::AnnData, m::scVAE)
+    register_umap_on_latent!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent", name_umap::String="scVI_latent_umap")
 
 Calculates a UMAP (Uniform Manifold Projection and Embedding, [McInnes et al. 2018](https://arxiv.org/abs/1802.03426)) embedding of the latent representation obtained from encoding the `countmatrix` of the `AnnData` object 
-with a trained `scVAE` model. If a latent representation is already stored in `adata.scVI_latent`, this is used for calculating 
+with a trained `scVAE` model. If a latent representation is already stored in `adata.name_latent`, this is used for calculating 
 the UMAP, if not, a latent representation is calculated and registered by calling `register_latent_representation!(adata, m)`. 
 
 The UMAP is calculated using the Julia package [UMAP.jl](https://github.com/dillondaudert/UMAP.jl) with default parameters. 
-It is then stored in the `scVI_latent_umap` field of the input `AnnData` object. 
+It is then stored in the `name_umap` field of the input `AnnData` object. 
 
 Returns the modified `AnnData` object.    
 """
-function register_umap_on_latent!(adata::AnnData, m::scVAE)
-    register_latent_representation!(adata, m)
-    adata.obsm["scVI_latent_umap"] = umap(adata.obsm["scVI_latent"]', 2; min_dist=0.3)'
-    @info "UMAP of latent representation added"
+function register_umap_on_latent!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent", name_umap::String="scVI_latent_umap")
+    register_latent_representation!(adata, m, name_latent = name_latent)
+    adata.obsm[name_umap] = umap(adata.obsm[name]', 2; min_dist=0.3)'
+    @info "UMAP of latent representation added as $(name_umap)"
     return adata
 end
 
 """
     function plot_umap_on_latent(
         m::scVAE, adata::AnnData; 
+        name_latent::String="scVI_latent",
+        name_latent_umap::String="scVI_latent_umap",    
         save_plot::Bool=false, 
         seed::Int=987, 
         filename::String="UMAP_on_latent.pdf"
@@ -56,12 +58,16 @@ For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) 
 
  **Keyword arguments:**
  -------------------
+- `name_latent::String="scVI_latent"`: name of the field in `adata.obsm` where the latent representation is stored
+- `name_latent_umap::String="scVI_latent_umap"`: name of the field in `adata.obsm` where the UMAP representation is stored
  - `save_plot::Bool=true`: whether or not to save the plot
  - `filename::String="UMAP_on_latent.pdf`: filename under which to save the plot. Has no effect if `save_plot==false`.
  - `seed::Int=987`: which random seed to use for calculating UMAP (to ensure reproducibility)
 """
 function plot_umap_on_latent(
     m::scVAE, adata::AnnData; 
+    name_latent::String="scVI_latent",
+    name_latent_umap::String="scVI_latent_umap",
     save_plot::Bool=false, 
     filename::String="UMAP_on_latent.pdf",
     seed::Int=987
@@ -69,13 +75,13 @@ function plot_umap_on_latent(
 
     plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
 
-    register_latent_representation!(adata, m)
-    register_umap_on_latent!(adata, m)
+    register_latent_representation!(adata, m, name_latent=name_latent)
+    register_umap_on_latent!(adata, m, name_latent=name_latent, name_umap=name_latent_umap)
 
     umap_plot = @vlplot(:point, 
                         title="UMAP of scVI latent representation", 
-                        x = adata.obsm["scVI_latent_umap"][:,1], 
-                        y = adata.obsm["scVI_latent_umap"][:,2], 
+                        x = adata.obsm[name_latent_umap][:,1], 
+                        y = adata.obsm[name_latent_umap][:,2], 
                         color = plotcolor,
                         width = 800, height=500
     )
@@ -86,6 +92,8 @@ end
 """
     function plot_latent_representation(
         m::scVAE, adata::AnnData; 
+        name_latent::String="scVI_latent",
+        plot_title::String="scVI latent representation",
         save_plot::Bool=false, 
         seed::Int=987, 
         filename::String="UMAP_on_latent.pdf"
@@ -107,27 +115,31 @@ For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) 
 
  **Keyword arguments:**
  -------------------
+ - `name_latent::String="scVI_latent"`: name of the field in `adata.obsm` where the latent representation is stored 
+ - `plot_title::String="scVI latent representation"`: title of the plot
  - `save_plot::Bool=true`: whether or not to save the plot
  - `filename::String="UMAP_on_latent.pdf`: filename under which to save the plot. Has no effect if `save_plot==false`.
  - `seed::Int=987`: which random seed to use for calculating UMAP (to ensure reproducibility)
 """
 function plot_latent_representation(
     m::scVAE, adata::AnnData; 
+    name_latent::String="scVI_latent",
+    plot_title::String="scVI latent representation",
     save_plot::Bool=false, 
     filename::String="scvi_latent_representation.pdf",
     )
 
     if m.n_latent > 2 
         @info "latent space dimension is $(m.n_latent) > 2, calculating a UMAP representation... "
-        latent_plot = plot_umap_on_latent(m, adata; save_plot=false)
+        latent_plot = plot_umap_on_latent(m, adata; name_latent=name_latent, save_plot=false)
     else
         plotcolor = isnothing(get_celltypes(adata)) ? fill("#ff7f0e", size(adata.X,1)) : get_celltypes(adata)
-        register_latent_representation!(adata, m)
+        register_latent_representation!(adata, m, name_latent=name_latent)
 
         latent_plot = @vlplot(:point, 
-                    title="scVI latent representation", 
-                    x = adata.obsm["scVI_latent"][:,1], 
-                    y = adata.obsm["scVI_latent"][:,2], 
+                    title=plot_title, 
+                    x = adata.obsm[name_latent][:,1], 
+                    y = adata.obsm[name_latent][:,2], 
                     color = plotcolor,
                     width = 800, height=500
         )    
