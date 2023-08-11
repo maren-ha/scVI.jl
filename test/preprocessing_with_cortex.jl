@@ -22,6 +22,18 @@ subset_adata!(adata, collect(1:100), :genes)
 # reloading data 
 adata = load_cortex()
 
+# check plotting
+@info "testing plotting..."
+pcaplot = plot_pca(adata)
+pcaplot = plot_pca(adata, color_by="")
+@test !isnothing(pcaplot)
+@test haskey(adata.layers, "normalized")
+@test haskey(adata.layers, "log_transformed")
+@test haskey(adata.obsm, "PCA")
+
+umapplot = plot_umap(adata)
+@test !isnothing(umapplot)
+
 # check transformations 
 @info "testing transformations..."
 adata.layers["counts"] = adata.X

@@ -110,4 +110,5 @@ function plot_umap(
                         width = 800, height=500
     )
     save_plot && save(filename, umap_plot)
+    return umap_plot
 end
