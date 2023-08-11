@@ -11,6 +11,8 @@ using Muon
 using Muon:AnnData
 using StatsBase
 using UMAP 
+# evaluation: UMAP, PCA and plots  
+using VegaLite
 
 include("data/AnnData.jl")
 #include("data/FileIO.jl")
@@ -51,9 +53,6 @@ using Random
 using ProgressMeter
 using SpecialFunctions # for loggamma
 using StatsBase
-
-# evaluation: UMAP, PCA and plots  
-using VegaLite
 
 include("Utils.jl")
 include("EncoderDecoder.jl")
