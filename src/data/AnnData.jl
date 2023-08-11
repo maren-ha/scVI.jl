@@ -68,9 +68,9 @@ end
 function Base.show(io::IO, a::AnnData)
     #ncells, ngenes = size(adata.X)
     println(io, "$(typeof(a)) object with a countmatrix with $(ncells(a)) cells and $(ngenes(a)) genes")
-    !isnothing(a.layers) && println(io, "   layers dict with the following keys: $(keys(a.layers))")
-    !isnothing(a.obs) && println(io, "   information about cells: $(first(a.obs,3))")
-    !isnothing(a.var) && println(io, "   information about genes: $(first(a.var,3))")
+    length(a.layers) > 0 && println(io, "   layers dict with the following keys: $(keys(a.layers))")
+    nrow(a.obs) > 0 && println(io, "   information about cells: $(first(a.obs,3))")
+    nrow(a.var) > 0 && println(io, "   information about genes: $(first(a.var,3))")
     #!hasproperty(a.obs, "celltype") && println(io, "   unique celltypes: $(unique(a.obs.cell_type))")
     #!isnothing(a.celltypes) && println(io, "   unique celltypes: $(unique(a.celltypes))")
     #a.is_trained ? println(io, "    training status: trained") : println(io, "   training status: not trained")
@@ -126,27 +126,30 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vect
 
     adata.X = adata.X[subset_inds,:]
 
-    if !isnothing(adata.obs_names)
-        adata.obs_names = adata.obs_names[subset_inds]
-    end
-    if !isnothing(adata.obs) && nrow(adata.var) > 0
+    adata.obs_names = adata.obs_names[subset_inds]
+
+    if nrow(adata.obs) > 0 && nrow(adata.var) > 0
         adata.obs = adata.obs[subset_inds,:]
     end
-    if !isnothing(adata.layers)
+
+    if length(adata.layers) > 0
         for key in keys(adata.layers)
             adata.layers[key] = setindex!(adata.layers, adata.layers[key][subset_inds,:], key)
         end
     end
-    if !isnothing(adata.obsm)
+
+    if length(adata.obsm) > 0
         for key in keys(adata.obsm)
             adata.obsm[key] = adata.obsm[key][subset_inds,:]
         end
     end
-    if !isnothing(adata.obsp)
+
+    if length(adata.obsp) > 0
         for key in keys(adata.obsp)
             adata.obsp[key] = adata.obsp[key][subset_inds,subset_inds]
         end
     end
+
     return adata
 end
 
@@ -154,26 +157,31 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vect
 
     adata.X = adata.X[:,subset_inds]
 
-    if !isnothing(adata.var_names)
+    if length(adata.var_names) > 0
         adata.var_names = adata.var_names[subset_inds]
     end
-    if !isnothing(adata.var) && nrow(adata.var) > 0
+
+    if nrow(adata.var) > 0 && nrow(adata.var) > 0
         adata.var = adata.var[subset_inds,:]
     end
-    if !isnothing(adata.layers)
+
+    if length(adata.layers) > 0
         for key in keys(adata.layers)
             adata.layers[key] = setindex!(adata.layers, adata.layers[key][:,subset_inds], key)
         end
     end
-    if !isnothing(adata.varm)
+
+    if length(adata.varm) > 0
         for key in keys(adata.varm)
             adata.varm[key] = adata.varm[key][:,subset_inds]
         end
     end
-    if !isnothing(adata.varp)
+
+    if length(adata.varp) > 0
         for key in keys(adata.varp)
             adata.varp[key] = adata.varp[key][subset_inds,subset_inds]
         end
     end
+
     return adata
 end
