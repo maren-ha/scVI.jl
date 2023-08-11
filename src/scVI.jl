@@ -19,6 +19,7 @@ include("data/Filtering.jl")
 include("data/HighlyVariableGenes.jl")
 include("data/LibrarySizeNormalization.jl")
 include("data/Transformations.jl")
+include("data/Plotting.jl")
 include("data/Cortex.jl")
 include("data/PBMC.jl")
 include("data/Tasic.jl")
@@ -35,6 +36,7 @@ export
     normalize_total!, normalize_total, rescale!, 
     log_transform!, logp1_transform!, sqrt_transform!,
     rescale!, pca!, umap!,
+    plot_pca, plot_umap,
     load_cortex_from_h5ad, load_cortex_from_url, load_cortex, 
     load_pbmc, 
     load_tasic, subset_tasic!
