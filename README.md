@@ -111,8 +111,9 @@ For details, see the `test` subfolder. For further information on code coverage,
 ------------
 ## TODO 
 
-- [ ] update docs (Muon.jl integration)
-- [ ] complete runtests
+
+- [ ] add runtests for `plot_umap` and `plot_pca`
+- [ ] fix low code cov files
 - [ ] support `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
 
