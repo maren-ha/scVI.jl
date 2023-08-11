@@ -97,7 +97,7 @@ function subset_adata(adata::AnnData, subset_inds::Tuple, dims::Symbol=:both)
     return adata_new
 end
 
-function subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, BitVector}, dims::Symbol)
+function subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, Vector{Bool}}, dims::Symbol)
     adata_new = deepcopy(adata)
     subset_adata!(adata_new, subset_inds, dims)
     return adata_new
