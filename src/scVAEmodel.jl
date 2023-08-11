@@ -145,6 +145,11 @@ function scVAE(n_input::Int;
         gene_likelihood = :nb
     end
 
+    #if gene_likelihood  == :gaussian && log_variational
+    #    @warn "log-transforming the input data is not supported for a Gaussian likelihood, setting `log_variational` to `false`."
+    #    log_variational = false
+    #end
+
     l_n_hid = length(n_hidden)
     if l_n_hid > 1
         if l_n_hid != n_layers-1
