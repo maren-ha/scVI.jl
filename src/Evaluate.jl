@@ -29,7 +29,7 @@ Returns the modified `AnnData` object.
 """
 function register_umap_on_latent!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent", name_umap::String="scVI_latent_umap")
     register_latent_representation!(adata, m, name_latent = name_latent)
-    adata.obsm[name_umap] = umap(adata.obsm[name]', 2; min_dist=0.3)'
+    adata.obsm[name_umap] = umap(adata.obsm[name_latent]', 2; min_dist=0.3)'
     @info "UMAP of latent representation added as $(name_umap)"
     return adata
 end
