@@ -8,6 +8,10 @@ using Distributions
 # import Logging
 # Logging.disable_logging(Logging.Warn) 
 
+@testset "Basic AnnData operations" begin
+    include("anndata.jl")
+end
+
 @testset "Preprocessing with Cortex data" begin
     include("preprocessing_with_cortex.jl")
 end
