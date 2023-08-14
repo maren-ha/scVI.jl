@@ -1,7 +1,7 @@
 # README
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://maren-ha.github.io/scVI.jl/)
-[![codecov](https://codecov.io/gh/maren-ha/scVI.jl/branch/muon/graph/badge.svg?token=OXHPY0EI3E)](https://codecov.io/gh/maren-ha/scVI.jl)
+[![codecov](https://codecov.io/gh/maren-ha/scVI.jl/branch/main/graph/badge.svg?token=OXHPY0EI3E)](https://codecov.io/gh/maren-ha/scVI.jl)
 ![example workflow](https://github.com/maren-ha/scVI.jl/actions/workflows/ci.yml/badge.svg)
 
 ![](logo/scvi-julia-logo.jpg)
