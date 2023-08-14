@@ -128,7 +128,7 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vect
 
     adata.obs_names = adata.obs_names[subset_inds]
 
-    if nrow(adata.obs) > 0 && nrow(adata.var) > 0
+    if nrow(adata.obs) > 0 #&& nrow(adata.var) > 0
         adata.obs = adata.obs[subset_inds,:]
     end
 
@@ -161,7 +161,7 @@ function subset_adata!(adata::AnnData, subset_inds::Union{Int, Vector{Int}, Vect
         adata.var_names = adata.var_names[subset_inds]
     end
 
-    if nrow(adata.var) > 0 && nrow(adata.var) > 0
+    if nrow(adata.var) > 0 #&& nrow(adata.var) > 0
         adata.var = adata.var[subset_inds,:]
     end
 
