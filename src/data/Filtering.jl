@@ -102,8 +102,8 @@ function filter_cells(countmatrix::AbstractMatrix;
                             "`min_cells`, `max_counts`, `max_cells` per call."))
     end
 
-    min_number = isnothing(min_genes) ? min_counts : min:genes 
-    max_number = isnothing(max_genes) ? max_counts : max:genes 
+    min_number = isnothing(min_genes) ? min_counts : min_genes 
+    max_number = isnothing(max_genes) ? max_counts : max_genes 
 
     # if filtering based on min number of genes expressed, count how many genes are expressed
     if isnothing(min_genes) && isnothing(max_genes)
@@ -279,8 +279,10 @@ function filter_genes(
             if max_cells !== nothing || max_counts !== nothing
                 msg *= (max_cells === nothing ? "with more than $max_counts counts" : "in more than $max_cells cells")
             end
-            @info msg
-        end        
+        else
+            msg = "no genes passed the filtering threshold"
+        end
+        @info msg
     end
 
     return gene_subset, number_per_gene
