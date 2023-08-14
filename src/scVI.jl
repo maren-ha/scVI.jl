@@ -33,6 +33,7 @@ export
     read_h5ad, write_h5ad,
     init_library_size,
     filter_cells, filter_cells!, filter_genes, filter_genes!,
+    plot_histogram, 
     highly_variable_genes, highly_variable_genes!, subset_to_hvg!,
     estimate_size_factors, normalize_size_factors, normalize_size_factors!, 
     normalize_total!, normalize_total, rescale!, 
