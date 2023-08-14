@@ -52,11 +52,10 @@ function get_kl_divergence_l(::Val{false}, m::scVAE, ql_m::Union{Nothing, Abstra
 end
 
 function _compute_local_library_params(m::scVAE, batch_indices::Vector{S}) where S <: Real 
-        """Computes local library parameters.
-        Compute two vectors of length = length(batch_indices) where each
-        element corresponds to the mean and variances, respectively, of the
-        log library sizes in the batch the cell corresponds to.
-        """
+        # Computes local library parameters.
+        # Compute two vectors of length = length(batch_indices) where each
+        # element corresponds to the mean and variances, respectively, of the
+        # log library sizes in the batch the cell corresponds to.
         n_batch = m.n_batch
         local_library_log_means = vec(sum(onehotbatch(batch_indices, collect(1:n_batch)) .* m.library_log_means, dims=1))
         # onehotbatch: size n_batch x batchsize, library_log_means: length n_batch 
