@@ -23,7 +23,7 @@ try
     filter_cells(adata, min_genes=1000, max_genes=10)
 catch e
     #@test e isa ArgumentError
-    @test e == ArgumentError("Only provide one of the optional parameters `min_counts`, `min_cells`, `max_counts`, `max_cells` per call.")
+    @test e == ArgumentError("Only provide one of the optional parameters `min_counts`, `min_genes`, `max_counts`, `max_genes` per call.")
 end
 
 filter_cells!(adata, max_counts=10000)
