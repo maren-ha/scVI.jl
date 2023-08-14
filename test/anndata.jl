@@ -25,3 +25,9 @@ bdata = subset_adata(orig_adata, [1,1], :genes)
 
 show(orig_adata)
 
+rename!(adata.obs, :cell_type => :celltype)
+@test get_celltypes(adata) == ["a", "b", "c"]
+rename!(adata.obs, :celltype => :celltypes)
+@test get_celltypes(adata) == ["a", "b", "c"]
+rename!(adata.obs, :celltypes => :cell_types)
+@test get_celltypes(adata) == ["a", "b", "c"]
