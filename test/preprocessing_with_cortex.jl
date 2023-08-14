@@ -4,20 +4,76 @@ adata = load_cortex()
 
 # test basic AnnData funcs, filtering + subsetting
 @info "testing basic AnnData funcs, filtering + subsetting..."
-@test size(adata.X,1) == 3005
-@test size(adata.X,2) == 19972
+@test scVI.ncells(adata) == size(adata.X,1) == 3005
+@test scVI.ngenes(adata) == size(adata.X,2) == 19972
+
+# filter_cells
+cell_subset, number_per_cell = filter_cells(adata, min_genes=1000)
+@test sum(.!cell_subset) == 23
+cell_subset, number_per_cell = filter_cells(adata, max_genes=5000)
+@test sum(.!cell_subset) == 694
+cell_subset, number_per_cell = filter_cells(adata, min_counts=10000)
+@test sum(.!cell_subset) == 1205
+cell_subset, number_per_cell = filter_cells(adata, max_counts=10000)
+@test sum(.!cell_subset) == 1800
+cell_subset, number_per_cell = filter_cells(adata, max_counts=1000000)
+@test sum(.!cell_subset) == 0
+
+try 
+    filter_cells(adata, min_genes=1000, max_genes=10)
+catch e
+    #@test e isa ArgumentError
+    @test e == ArgumentError("Only provide one of the optional parameters `min_counts`, `min_cells`, `max_counts`, `max_cells` per call.")
+end
 
 filter_cells!(adata, max_counts=10000)
 @test size(adata.X,1) == 1205
 
+filter_cells!(adata, min_genes = 1000)
+@test size(adata.X,1) == 1182
+
+# filter_genes 
+gene_subset, number_per_gene = filter_genes(adata, min_cells=1000)
+@test sum(.!gene_subset) == 19882
+gene_subset, number_per_gene = filter_genes(adata, max_cells=1000)
+@test sum(.!gene_subset) == 90
+gene_subset, number_per_gene = filter_genes(adata, min_counts=50)
+@test sum(.!gene_subset) == 8641
+gene_subset, number_per_gene = filter_genes(adata, max_counts=1000)
+@test sum(.!gene_subset) == 1430
+gene_subset, number_per_gene = filter_genes(adata, max_counts=10000000)
+@test sum(.!gene_subset) == 0
+
+try 
+    filter_genes(adata, min_cells=1000, max_counts=10)
+catch e
+    #@test e isa ArgumentError
+    @test e == ArgumentError("Only provide one of the optional parameters `min_counts`, `min_cells`, `max_counts`, `max_cells` per call.")
+end
+
 filter_genes!(adata, min_counts=10)
-@test size(adata.X,2) == 14385
+@test size(adata.X,2) == 14368
 
-subset_adata!(adata, collect(1:100), :cells)
-@test size(adata.X,1) == 100
+filter_genes!(adata, max_cells=300)
+@test size(adata.X,2) == 11414
 
-subset_adata!(adata, collect(1:100), :genes)
-@test size(adata.X,2) == 100
+# subset_adata
+subset_adata!(adata, collect(1:300), :cells)
+@test size(adata.X,1) == 300
+@test nrow(adata.obs) == 300
+subset_adata!(adata, (collect(1:200), collect(1:200)), :cells)
+@test size(adata.X,1) == 200
+@test nrow(adata.obs) == 200
+
+subset_adata!(adata, collect(1:300), :genes)
+@test size(adata.X,2) == 300
+subset_adata!(adata, (collect(1:100), collect(1:200)), :genes)
+@test size(adata.X,2) == 200
+@test size(adata.X,1) == 200
+
+smaller_adata = subset_adata(adata, (1:150, 1:100), :both)
+@test size(smaller_adata.X,1) == 150
+@test size(smaller_adata.X,2) == 100
 
 # reloading data 
 adata = load_cortex()
@@ -26,12 +82,14 @@ adata = load_cortex()
 @info "testing plotting..."
 pcaplot = plot_pca(adata)
 pcaplot = plot_pca(adata, color_by="")
+pcaplot = plot_pca(adata, color_by="age")
 @test !isnothing(pcaplot)
 @test haskey(adata.layers, "normalized")
 @test haskey(adata.layers, "log_transformed")
 @test haskey(adata.obsm, "PCA")
 
 umapplot = plot_umap(adata)
+pcaplot = plot_umap(adata, color_by="age")
 @test !isnothing(umapplot)
 
 # check transformations 
@@ -44,7 +102,6 @@ logp1_transform!(adata, verbose=true)
 logp1_transform!(adata, layer="counts", verbose=true)
 @test haskey(adata.layers, "logp1_transformed")
 log_transform!(adata)
-#@test adata.layers["log_transformed"] == adata.layers["logp1_transformed"]
 
 # normalization
 normalize_total!(adata)
@@ -140,5 +197,3 @@ umap!(dummy_adata, layer = "my_custom_layer")
 @test haskey(dummy_adata.layers, "normalized")
 @test haskey(dummy_adata.layers, "log_transformed")
 @test haskey(dummy_adata.obsm, "umap")
-
-
