@@ -8,6 +8,22 @@ For details on the Julia implementation in `Muon.jl`, see the [documentation](ht
 
 For more details on the original Python implementation of the `anndata` object, see the [documentation](https://anndata.readthedocs.io/en/latest/) and [preprint](https://doi.org/10.1101/2021.12.16.473007).
 
+```@docs
+get_celltypes
+```
+
+```@docs
+subset_adata(adata::AnnData, subset_inds::Tuple, dims::Symbol=:both)
+```
+
+```@docs
+subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, Vector{Bool}}, dims::Symbol)
+```
+
+```@docs
+subset_adata!(adata::AnnData, subset_inds, dims::Symbol)
+```
+
 ## Library size and normalization
 
 ```@docs
@@ -107,6 +123,20 @@ subset_to_hvg!(adata::AnnData;
         batch_key::Union{String,Nothing} = nothing,
         span::Float64=0.3
     )
+```
+
+## Plotting 
+
+```@docs
+plot_pca
+```
+
+```@docs
+plot_umap
+```
+
+```@docs
+plot_histogram
 ```
 
 ## Loading built-in datasets 
