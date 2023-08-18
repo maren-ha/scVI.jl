@@ -139,6 +139,14 @@ plot_umap
 plot_histogram
 ```
 
+```@docs
+highest_expressed_genes
+```
+
+```@docs
+plot_highly_variable_genes
+```
+
 ## Loading built-in datasets 
 
 There are currently three datasets for which the package supplies built-in convenience functions for loading, processing and creating corresponding `AnnData` objects. They can be downloaded from this [Google Drive `data` folder](https://drive.google.com/drive/folders/1JYNypxWnQhigEJ37jOiEwv7fzGW71jC8?usp=sharing). The folder contains all three datasets, namely 

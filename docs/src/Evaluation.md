@@ -45,5 +45,5 @@ sample_from_posterior
 Both prior and posterior sampling are based on the following more low-level function, which is not exported but can be called as `scVI.decodersample`:
 
 ```@docs
-decodersample
+scVI.decodersample
 ```

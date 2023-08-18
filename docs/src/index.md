@@ -18,7 +18,7 @@ This is the documentation for the Julia version implementing basic functionality
 - support for negative binomial generative distribution w/o zero-inflation, Poisson distribution, Gaussian and Bernoulli distribution
 - different ways of specifying the dispersion parameter 
 - library size encoding 
-- representing data as a Julia `AnnData` object based on [Muon.jl](https://scverse.org/Muon.jl/dev/) fully analogous to Python's [anndata]((https://anndata.readthedocs.io/en/latest/)) object + standard slicing and subsetting operations
+- representing data as a Julia `AnnData` object based on [Muon.jl](https://scverse.org/Muon.jl/dev/) fully analogous to Python's [anndata](https://anndata.readthedocs.io/en/latest/) object + standard slicing and subsetting operations
 - preprocessing functions operating directly on the `AnnData` object analogous to [scanpy](https://scanpy.readthedocs.io/en/stable/) functions: filtering, highly variable gene seletion, transformations, dimension reduction, etc. 
 - several built-in datasets (see below)
 - training routines supporting a wide range of customizable hyperparameters including a freely definable layer structure
