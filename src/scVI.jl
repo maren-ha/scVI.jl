@@ -40,6 +40,7 @@ export
     log_transform!, logp1_transform!, sqrt_transform!,
     rescale!, pca!, umap!,
     plot_pca, plot_umap,
+    plot_highly_variable_genes, highest_expressed_genes,
     load_cortex_from_h5ad, load_cortex_from_url, load_cortex, 
     load_pbmc, 
     load_tasic, subset_tasic!
