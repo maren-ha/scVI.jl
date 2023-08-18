@@ -17,14 +17,17 @@ The scVI model was first proposed in [Lopez R, Regier J, Cole MB *et al.* Deep g
 More on the much more extensive Python package ecosystem `scvi-tools` can be found on the 
 [website](https://scvi-tools.org) and in the corresponding paper [Gayoso A, Lopez R, Xing G. *et al.* A Python library for probabilistic analysis of single-cell omics data. *Nat Biotechnol* **40**, 163–166 (2022)](https://doi.org/10.1038/s41587-021-01206-w). 
 
-This is the documentation for the Julia version implementing basic functionality, including the following (non-exhausive list): 
+This is the documentation for the Julia version implementing basic functionality, including: 
 
 - standard and linearly decoded VAE models 
-- support for negative binomial generative distribution with and without zero-inflation 
+- support for negative binomial generative distribution w/o zero-inflation, Poisson distribution, Gaussian and Bernoulli distribution
 - different ways of specifying the dispersion parameter 
-- store data in a (very basic) Julia version of the Python [`AnnData`](https://anndata.readthedocs.io/en/latest/) objects 
-- several built-in datasets 
-- training routines supporting a wide range of customisable hyperparameters
+- library size encoding 
+- representing data as a Julia `AnnData` object based on [Muon.jl](https://scverse.org/Muon.jl/dev/) fully analogous to Python's [anndata]((https://anndata.readthedocs.io/en/latest/)) object + standard slicing and subsetting operations
+- preprocessing functions operating directly on the `AnnData` object analogous to [scanpy](https://scanpy.readthedocs.io/en/stable/) functions: filtering, highly variable gene seletion, transformations, dimension reduction, etc. 
+- several built-in datasets (see below)
+- training routines supporting a wide range of customizable hyperparameters including a freely definable layer structure
+- easily customizable loss functions for shaping the latent space, e.g., to resemble a t-SNE or UMAP embedding
 
 ## Getting started 
 
@@ -112,10 +115,10 @@ For details, see the `test` subfolder. For further information on code coverage,
 ------------
 ## TODO 
 
-
 - [ ] add runtests for `plot_umap` and `plot_pca`
 - [ ] fix low code cov files
-- [ ] support `gene_batch` and `gene_label` dispersion 
+- [ ] `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
+- [ ] visualization of highly variable genes, dispersion, highest expressed genes
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
