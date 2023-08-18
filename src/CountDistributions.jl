@@ -11,16 +11,14 @@ LogGammaTerms(x, theta) = @. loggamma(x + theta) - loggamma(theta) - loggamma(on
 
 Log likelihood (scalar) of a minibatch according to a zinb model.
 
-Parameters
-----------
-x: Data
-mu: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
-theta: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
-pi: logit of the dropout parameter (real support) (shape: minibatch x vars)
-eps: numerical stability constant
+# Arguments
+- `x`: data
+- `mu`: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
+- `theta`: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
+- `zi`: logit of the dropout parameter (real support) (shape: minibatch x vars)
+- `eps`: numerical stability constant
 
-Notes
------
+# Notes
 We parametrize the bernoulli using the logits, hence the softplus functions appearing.
 """
 function log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
@@ -45,12 +43,11 @@ end
 
 Log likelihood (scalar) of a minibatch according to a nb model.
 
-Parameters
-----------
-x: Data
-mu: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
-theta: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
-eps: numerical stability constant
+# Arguments
+- `x`: data
+- `mu`: mean of the negative binomial (has to be positive support) (shape: minibatch x vars)
+- `theta`: inverse dispersion parameter (has to be positive support) (shape: minibatch x vars)
+- `eps`: numerical stability constant
 """
 function log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, eps::S=S(1e-8)) where S <: Real
     if length(size(theta)) == 1
@@ -66,11 +63,10 @@ end
 
 Log likelihood (scalar) of a minibatch according to a Poisson model.
 
-Parameters
-----------
-x: Data
-mu: mean=variance of the Poisson distribution (has to be positive support) (shape: minibatch x vars)
-eps: numerical stability constant
+# Arguments
+- `x`: data
+- `mu`: mean=variance of the Poisson distribution (has to be positive support) (shape: minibatch x vars)
+- `eps`: numerical stability constant
 """
 function log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
     return logpdf.(Poisson.(mu), x)
@@ -80,14 +76,14 @@ end
     _convert_mean_disp_to_counts_logits(mu, theta, eps=1e-6)
 
 NB parameterizations conversion.
-Parameters
-----------
-mu: mean of the NB distribution.
-theta: inverse overdispersion.
-eps: constant used for numerical log stability. (Default value = 1e-6)
-Returns
--------
-the number of failures until the experiment is stopped and the success probability.
+
+# Arguments
+- `mu`: mean of the NB distribution.
+- `theta`: inverse overdispersion.
+- `eps`: constant used for numerical log stability. (Default value = 1e-6)
+
+# Returns
+- the number of failures until the experiment is stopped and the success probability.
 """
 function _convert_mean_disp_to_counts_logits(mu, theta, eps=1e-6)
     logits = log.(mu .+ eps) .- log.(theta .+ eps) 
@@ -99,13 +95,13 @@ end
     _convert_counts_logits_to_mean_disp(total_count, logits)
 
 NB parameterizations conversion.
-Parameters
-----------
-total_count: Number of failures until the experiment is stopped.
-logits: success logits.
-Returns
--------
-the mean and inverse overdispersion of the NB distribution.
+
+# Arguments
+- `total_count`: Number of failures until the experiment is stopped.
+- `logits`: success logits.
+
+# Returns
+- the mean and inverse overdispersion of the NB distribution.
 """
 function _convert_counts_logits_to_mean_disp(total_count, logits)
     theta = total_count

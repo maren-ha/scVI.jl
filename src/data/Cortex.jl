@@ -95,7 +95,12 @@ Alternatively, if the `h5ad` file is not found in the folder, the data is downlo
 processed analogous to the [`scvi-tools` processing](https://github.com/scverse/scvi-tools/blob/master/scvi/data/_built_in_data/_cortex.py), 
 and subsequently stored to a Julia `AnnData` object. This is handled by the function `init_cortex_from_url`. 
 
-Returns the Julia `AnnData` object.
+# Arguments 
+- `path::String`: path to the folder where the file is stored
+- `verbose::Bool`: whether to print progress information
+
+# Returns
+- the Julia `AnnData` object.
 
 **Example** 
 ---------------------------

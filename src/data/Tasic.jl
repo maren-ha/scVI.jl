@@ -28,10 +28,13 @@ in the `obs` and `vars` fields of the `AnnData` object.
 Additionally, size factors are calculated and used for normalizing the counts. 
 The normalized counts are stored in an additional `layer` named `normalized_counts`.
 
-Returns the Julia `AnnData` object.
+# Arguments
+- `path`: path to the folder containing the input files (default: "data/")
 
-**Example** 
----------------------------
+# Returns
+- the Julia `AnnData` object.
+
+# Example
     julia> load_tasic()
         AnnData object with a countmatrix with 1679 cells and 15119 genes
         layers dict with the following keys: ["normalized_counts", "counts"]
@@ -114,7 +117,11 @@ and the receptor and marker genes provided as annotation.
 Specifically, the count matrix and the normalized count matrix are subset to these cells and genes, 
 and the dictionaries with information about cells and genes in `adata.obs` and `adata.vars` are also subset accordingly. 
 
-Returns the modified `AnnData` object.
+# Arguments
+- `adata`: `AnnData` object initialized from the Tasic data
+
+# Returns 
+- the modified `AnnData` object.
 """
 function subset_tasic!(adata::AnnData)
     # subset to receptors and markers and neural cells only. 

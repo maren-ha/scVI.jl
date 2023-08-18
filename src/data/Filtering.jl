@@ -22,7 +22,6 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 `max_counts`, `max_genes` per call.
 
 # Arguments
-----------
 - `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
 - `min_counts`: Minimum number of counts required for a cell to pass filtering.
 - `min_genes`: Minimum number of genes expressed required for a cell to pass filtering.
@@ -30,7 +29,6 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 - `max_genes`: Maximum number of genes expressed required for a cell to pass filtering
 
 # Keyword arguments
--------------------
 - `verbose`: whether to print info and status messages
 - `plot_before`: whether to plot the histogram of cells before filtering
 - `log_transform_plot`: whether to log-transform the counts of cells for plotting 
@@ -41,7 +39,6 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 - `plot_filename_after`: filename to save the histogram of cells after filtering
 
 # Returns
--------
 - the filtered `AnnData` object
 """
 function filter_cells!(adata::AnnData; 
@@ -136,7 +133,6 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 `max_counts`, `max_genes` per call.
 
 # Arguments
-----------
 - `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
 - `min_counts`: Minimum number of counts required for a cell to pass filtering.
 - `min_genes`: Minimum number of genes expressed required for a cell to pass filtering.
@@ -144,7 +140,6 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 - `max_genes`: Maximum number of genes expressed required for a cell to pass filtering.
 
 # Keyword arguments
--------------------
 - `verbose`: whether to print info and status messages
 - `make_plot`: whether to plot the histogram of cells before filtering
 - `log_transform_plot`: whether to log-transform the counts of cells for plotting
@@ -152,7 +147,6 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 - `plot_filename`: filename to save the histogram of cells before filtering
 
 # Returns
--------
 - `cells_subset`: BitVector index mask that does filtering; `true` means that the
     cell is kept, `false` means the cell is removed.
 - `number_per_cell`: Depending on what was thresholded (`counts` or `genes`),
@@ -275,7 +269,6 @@ Only provide one of the optional parameters `min_counts`, `min_cells`,
 `max_counts`, `max_cells` per call.
 
 # Arguments
-----------
 - `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond
 to cells and columns to genes.
 - `min_counts`: Minimum number of counts required for a gene to pass filtering.
@@ -284,7 +277,6 @@ to cells and columns to genes.
 - `max_cells`: Maximum number of cells expressed required for a gene to pass filtering.
 
 # Keyword arguments
--------------------
 - `verbose`: whether to print info and status messages
 - `plot_before`: whether to plot the histogram of genes before filtering
 - `log_transform_plot`: whether to log-transform the counts of genes for plotting 
@@ -295,7 +287,6 @@ to cells and columns to genes.
 - `plot_filename_after`: filename to save the histogram of genes after filtering
     
 Returns
--------
 - the filtered `AnnData` object
 """
 function filter_genes!(adata::AnnData; 
@@ -391,7 +382,6 @@ Only provide one of the optional parameters `min_counts`, `min_cells`,
 This is the out-of-place version; for details on the input arguments, see the in-place version `filter_genes!`
 
 # Arguments
-----------
 - `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
 - `min_counts`: Minimum number of counts required for a gene to pass filtering.
 - `min_cells`: Minimum number of cells in which it is expressed required for a gene to pass filtering.
@@ -399,7 +389,6 @@ This is the out-of-place version; for details on the input arguments, see the in
 - `max_cells`: Maximum number of cells in which it is expressed required for a gene to pass filtering.
 
 # Keyword arguments
--------------------
 - `verbose`: whether to print info and status messages
 - `make_plot`: whether to plot the histogram of cells before filtering
 - `log_transform_plot`: whether to log-transform the counts of cells for plotting
@@ -407,7 +396,6 @@ This is the out-of-place version; for details on the input arguments, see the in
 - `plot_filename`: filename to save the histogram of cells before filtering
 
 # Returns
--------
 - `gene_subset`: BitVector index mask that does filtering; `true` means that the
     gene is kept, `false` means the cell is removed.
 - `number_per_gene`: Depending on what was thresholded (`counts` or `cells`),

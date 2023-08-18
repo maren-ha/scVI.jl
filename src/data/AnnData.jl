@@ -106,7 +106,13 @@ end
 Subset an `AnnData` object by indices passed as a tuple of vectors of integers, UnitRanges, or vectors of Booleans.
 If `dims` is set to :both, the first element of `subset_inds` is used to subset cells and the second element is used to subset genes.
 
-Returns a copy of the `AnnData` object with the subsetted data.
+# Arguments
+- `adata`: `AnnData` object to subset
+- `subset_inds`: tuple of vectors of integers, UnitRanges, or vectors of Booleans
+- `dims`: dimension to subset, either `:cells`, `:genes`, or `:both`
+
+# Returns
+- a copy of the `AnnData` object with the subsetted data
 """
 function subset_adata(adata::AnnData, subset_inds::Tuple, dims::Symbol=:both)
     adata_new = deepcopy(adata)
@@ -120,7 +126,13 @@ end
 Subset an `AnnData` object by indices passed as a vector of integers or booleans or as a UnitRange. 
 The `dims` argument can be set to either `:cells` or `:genes` to specify which dimension to subset. 
 
-Returns a copy of the `AnnData` object with the subsetted data.
+# Arguments
+- `adata`: `AnnData` object to subset
+- `subset_inds`: vector of integers or booleans or UnitRange
+- `dims`: dimension to subset, either `:cells` or `:genes`
+
+# Returns
+- a copy of the `AnnData` object with the subsetted data
 """
 function subset_adata(adata::AnnData, subset_inds::Union{Int, Vector{Int}, UnitRange, Vector{Bool}}, dims::Symbol)
     adata_new = deepcopy(adata)
@@ -135,6 +147,14 @@ In-place version of `subset_adata`, see `?subset_adata` for more details.
 
 For `subset_inds`, either a tuple of vectors or ranges can be passed with `dims` set to :both, for subsetting 
 both cells and genes, or a single vector or range can be passed with `dims` set to either :cells or :genes.
+
+# Arguments
+- `adata`: `AnnData` object to subset
+- `subset_inds`: tuple of vectors of integers, UnitRanges, or vectors of Booleans or vector of integers or booleans or UnitRange
+- `dims`: dimension to subset, either `:cells`, `:genes`, or `:both`
+
+# Returns
+- the `AnnData` object with the subsetted data
 """
 function subset_adata!(adata::AnnData, subset_inds, dims::Symbol)
     return subset_adata!(adata, subset_inds, Val(dims))

@@ -5,7 +5,16 @@
 
 Log-transforms the data. Looks for a layer of normalized counts in `adata.layers["normalized"]`. 
 If the layer is not there, it uses `adata.X`. 
-Returns the adata object with the log-transformed values in a new layer `"log_transformed"`. 
+
+# Arguments
+- `adata`: the `AnnData` object to be modified
+
+# Keyword arguments
+- `layer`: the layer to be used for PCA (default: "log_transformed")
+- `verbose`: whether to print progress messages (default: false)
+
+# Returns
+- the adata object with the log-transformed values in a new layer `"log_transformed"`. 
 """
 function log_transform!(adata::AnnData; 
             layer::String="normalized",
@@ -32,7 +41,16 @@ end
 Log-transforms the (count) data, adding a pseudocount of 1. 
 Uses the X in `adata.X` by default, but other layers can be passed
 using the `layer` keyword. 
-Returns the adata object with the log-transformed values in a new layer `"logp1_transformed"`. 
+
+# Arguments
+- `adata`: the `AnnData` object to be modified
+
+# Keyword arguments
+- `layer`: the layer to be used for log + 1 transformation
+- `verbose`: whether to print progress messages (default: false)
+
+# Returns
+- the adata object with the log-transformed values in a new layer `"logp1_transformed"`. 
 """
 function logp1_transform!(adata::AnnData; 
             layer::Union{String, Nothing}=nothing,
@@ -58,7 +76,16 @@ end
 
 Sqrt-transforms the data. Looks for a layer of normalized counts in `adata.layers["normalized"]`. 
 If the layer is not there, it uses `adata.X`. 
-Returns the adata object with the sqrt-transformed values in a new layer `"sqrt_transformed"`. 
+
+# Arguments
+- `adata`: the `AnnData` object to be modified
+
+# Keyword arguments
+- `layer`: the layer to be used for the transformation
+- `verbose`: whether to print progress messages (default: false)
+
+# Returns
+- the adata object with the sqrt-transformed values in a new layer `"sqrt_transformed"`. 
 """
 function sqrt_transform!(adata::AnnData; 
             layer::String="normalized",
@@ -82,7 +109,16 @@ end
         verbose::Bool=false)
 
 Rescales the data to zero mean and unit variance in each gene, using the specified layer. If none is provided, it uses `adata.X`. 
-Returns the adata object with the rescales values in a new layer `"rescaled"`. 
+
+# Arguments
+- `adata`: the `AnnData` object to be modified
+
+# Keyword arguments
+- `layer`: the layer to be used for the transformation
+- `verbose`: whether to print progress messages (default: false)
+
+# Returns
+- the adata object with the rescales values in a new layer `"rescaled"`. 
 """
 function rescale!(adata::AnnData; 
             layer::Union{String, Nothing}=nothing,

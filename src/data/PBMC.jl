@@ -18,10 +18,13 @@ From these input files, a Julia `AnnData` object is created. The countmatrix con
 cell barcodes and gene names. The gene name and celltype information is stored in the `vars` and `obs` 
 dictionaries of the `AnnData` object, respectively. 
 
-Returns the Julia `AnnData` object.
+# Arguments
+- `path`: path to the folder containing the input files (default: "data/")
 
-**Example** 
----------------------------
+# Returns
+- the Julia `AnnData` object.
+
+# Example
     julia> load_pbmc()
         AnnData object with a countmatrix with 7480 cells and 200 genes
         unique celltypes: ["B-cells", "CD4+ T-cells", "Monocytes", "CD8+ T-cells", "NK cells", "NA", "HSC", "Erythrocytes"]

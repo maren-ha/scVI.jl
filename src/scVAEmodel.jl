@@ -12,26 +12,25 @@ Julia implementation of the single-cell Variational Autoencoder model correspond
 Collects all information on the model parameters such as distribution choices and stores the model encoder and decoder. 
 Can be constructed using keywords. 
 
-**Keyword arguments**
--------------------------
- - `n_input::Ind`: input dimension = number of genes/features
- - `n_batch::Int=0`: number of batches in the data 
- - `n_hidden::Int=128`: number of hidden units to use in each hidden layer 
- - `n_latent::Int=10`: dimension of latent space 
- - `n_layers::Int=1`: number of hidden layers in encoder and decoder 
- - `dispersion::Symbol=:gene`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
- - `is_trained::Bool=false`: indicating whether the model has been trained or not
- - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
- - `gene_likelihood::Symbol=:zinb`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
- - `latent_distribution::Symbol=:normal`: whether or not to log-transform the input data in the encoder (for numerical stability)
- -  `library_log_means::Union{Nothing, Vector{Float32}}`: log-transformed means of library size; has to be provided when not using observed library size, but encoding it
- -  `library_log_vars::Union{Nothing, Vector{Float32}}`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
- - `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
- - `loss_registry::Dict=Dict()`: dictionary in which to record the values of the different loss components (reconstruction error, KL divergence(s)) during training 
- - `use_observed_lib_size::Bool=true`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
- - `z_encoder::scEncoder`: Encoder struct of the VAE model for latent representation; see `scEncoder`
- - `l_encoder::Union{Nothing, scEncoder}`: Encoder struct of the VAE model for the library size (if `use_observed_lib_size==false`), see `scEncoder`
- - `decoder::AbstractDecoder`: Decoder struct of the VAE model; see `scDecoder`
+# Fields for construction
+- `n_input::Ind`: input dimension = number of genes/features
+- `n_batch::Int=0`: number of batches in the data 
+- `n_hidden::Int=128`: number of hidden units to use in each hidden layer 
+- `n_latent::Int=10`: dimension of latent space 
+- `n_layers::Int=1`: number of hidden layers in encoder and decoder 
+- `dispersion::Symbol=:gene`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+- `is_trained::Bool=false`: indicating whether the model has been trained or not
+- `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+- `gene_likelihood::Symbol=:zinb`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+- `latent_distribution::Symbol=:normal`: whether or not to log-transform the input data in the encoder (for numerical stability)
+-  `library_log_means::Union{Nothing, Vector{Float32}}`: log-transformed means of library size; has to be provided when not using observed library size, but encoding it
+-  `library_log_vars::Union{Nothing, Vector{Float32}}`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
+- `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
+- `loss_registry::Dict=Dict()`: dictionary in which to record the values of the different loss components (reconstruction error, KL divergence(s)) during training 
+- `use_observed_lib_size::Bool=true`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
+- `z_encoder::scEncoder`: Encoder struct of the VAE model for latent representation; see `scEncoder`
+- `l_encoder::Union{Nothing, scEncoder}`: Encoder struct of the VAE model for the library size (if `use_observed_lib_size==false`), see `scEncoder`
+- `decoder::AbstractDecoder`: Decoder struct of the VAE model; see `scDecoder`
 """
 Base.@kwdef mutable struct scVAE
     n_input::Int
@@ -81,32 +80,33 @@ end
 Constructor for the `scVAE` model struct. Initialises an `scVAE` model with the parameters specified in the input arguments. 
 Basic Julia implementation of the [`scvi-tools` VAE object](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L22). 
 
-**Arguments:**
-------------------------
+# Arguments
 - `n_input`: input dimension = number of genes/features
 
-**Keyword arguments**
--------------------------
- - `activation_fn`: function to use as activation in all neural network layers of encoder and decoder 
- - `bias`: whether or not to use bias parameters in the neural network layers of encoder and decoder
- - `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
- - `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
- - `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
- - `library_log_means`: log-transformed means of library size; has to be provided when not using observed library size, but encoding it
- - `library_log_vars`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
- - `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
- - `n_batch`: number of batches in the data 
- - `n_hidden`: number of hidden units to use in each hidden layer (if an `Int` is passed, this number is used in all hidden layers, 
-     alternatively an array of `Int`s can be passed, in which case the kth element corresponds to the number of units in the kth layer.
- - `n_latent`: dimension of latent space 
- - `n_layers`: number of hidden layers in encoder and decoder 
- - `use_activation`: whether or not to use an activation function in the neural network layers of encoder and decoder; if `false`, overrides choice in `actication_fn`
- - `use_batch_norm`: whether to apply batch normalization in the encoder/decoder layers; can be one of `:encoder`, `:decoder`, `both`, `:none`
- - `use_layer_norm`: whether to apply layer normalization in the encoder/decoder layers; can be one of `:encoder`, `:decoder`, `both`, `:none`
- - `use_observed_lib_size`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
- - `var_activation`: whether or not to use an activation function for the variance layer in the encoder
- - `var_eps`: numerical stability constant to add to the variance in the reparameterisation of the latent representation
- - `seed`: random seed to use for initialization of model parameters; to ensure reproducibility. 
+# Keyword arguments
+- `activation_fn`: function to use as activation in all neural network layers of encoder and decoder 
+- `bias`: whether or not to use bias parameters in the neural network layers of encoder and decoder
+- `dispersion`: can be either `:gene` or `:gene-cell`. The Python `scvi-tools` options `:gene-batch` and `gene-label` are planned, but not supported yet. 
+- `dropout_rate`: Dropout to use in the encoder and decoder layers. Setting the rate to 0.0 corresponds to no dropout. 
+- `gene_likelihood`: which generative distribution to parameterize in the decoder. Can be one of `:nb` (negative binomial), `:zinb` (zero-inflated negative binomial), or `:poisson` (Poisson). 
+- `library_log_means`: log-transformed means of library size; has to be provided when not using observed library size, but encoding it
+- `library_log_vars`: log-transformed variances of library size; has to be provided when not using observed library size, but encoding it
+- `log_variational`: whether or not to log-transform the input data in the encoder (for numerical stability)
+- `n_batch`: number of batches in the data 
+- `n_hidden`: number of hidden units to use in each hidden layer (if an `Int` is passed, this number is used in all hidden layers, 
+    alternatively an array of `Int`s can be passed, in which case the kth element corresponds to the number of units in the kth layer.
+- `n_latent`: dimension of latent space 
+- `n_layers`: number of hidden layers in encoder and decoder 
+- `use_activation`: whether or not to use an activation function in the neural network layers of encoder and decoder; if `false`, overrides choice in `actication_fn`
+- `use_batch_norm`: whether to apply batch normalization in the encoder/decoder layers; can be one of `:encoder`, `:decoder`, `both`, `:none`
+- `use_layer_norm`: whether to apply layer normalization in the encoder/decoder layers; can be one of `:encoder`, `:decoder`, `both`, `:none`
+- `use_observed_lib_size`: whether or not to use the observed library size (if `false`, library size is calculated by a dedicated encoder)
+- `var_activation`: whether or not to use an activation function for the variance layer in the encoder
+- `var_eps`: numerical stability constant to add to the variance in the reparameterisation of the latent representation
+- `seed`: random seed to use for initialization of model parameters; to ensure reproducibility. 
+
+# Returns
+- `scVAE` object
 """
 function scVAE(n_input::Int;
     activation_fn::Function=relu, # to be used in all FC_layers instances

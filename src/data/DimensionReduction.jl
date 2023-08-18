@@ -21,7 +21,18 @@ end
 
 Performs a PCA on the specified layer of an `AnnData` object and stores the results in `adata.obsm`. 
 Uses all variables of the layer by default, but the number of PCs to be stored can also be specified with the `n_pcs` keyword. 
-Returns the modified `AnnData` object. 
+If the layer is not found, the log-transformed normalized counts are calculated and used.
+
+# Arguments
+- `adata`: the `AnnData` object to be modified
+
+# Keyword arguments
+- `layer`: the layer to be used for PCA (default: "log_transformed")
+- `n_pcs`: the number of PCs to be stored (default: all variables)
+- `verbose`: whether to print progress messages (default: false)
+
+# Returns
+- the modified `AnnData` object
 """
 function pca!(adata::AnnData; 
     layer::String="log_transformed", 
@@ -79,7 +90,18 @@ The fields of the resulting `UMAP_` struct are stored as follows:
     - the KNNs of each cell in `adata.obsm["knns"]`, 
     - the distances of each cell to its KNNs in `adata.obsm["knn_dists"]`
 
-Returns the modified AnnData object. 
+# Arguments
+- `adata`: the `AnnData` object to be modified
+
+# Keyword arguments
+- `layer`: the layer to be used for UMAP (default: "log_transformed")
+- `use_pca_init`: whether to use a PCA representation for UMAP (default: false)
+- `n_pcs`: the number of PCs to be used for UMAP (default: 100)
+- `verbose`: whether to print progress messages (default: false)
+- `kwargs`: keyword arguments for `UMAP.UMAP_`
+
+# Returns
+- the modified `AnnData` object
 """
 function umap!(adata::AnnData; 
     layer::String="log_transformed", 

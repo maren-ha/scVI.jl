@@ -5,6 +5,15 @@ Computes and returns library size based on `AnnData` object. \n
 Based on the `scvi-tools` function from [here](https://github.com/scverse/scvi-tools/blob/04389f74f3e94d7d2986f93eac85cb4543a8608f/scvi/model/_utils.py#L229) \n
 Returns a tupe of arrays of length equal to the number of batches in `adata` as stored in `adata.obs[!,:batch_key]`, 
 containing the means and variances of the library size in each batch in `adata`. Default batch key: `:batch`, if it is not found, defaults to 1 batch.     
+
+# Arguments
+- `adata`: `AnnData` object
+
+# Keyword arguments
+- `batch_key`: the key in `adata.obs` that stores the batch information (default: `:batch`)
+
+# Returns
+- a tuple of arrays of length equal to the number of batches in `adata` as stored in `adata.obs[!,:batch_key]`, corresponding to the log library means and vars per batch
 """
 function init_library_size(adata::AnnData; batch_key::Symbol=:batch)
     data = adata.X
@@ -47,6 +56,15 @@ Estimates size factors to use for normalization, based on the corresponding Seur
 Assumes a countmatrix `mat` in cell x gene format as input, returns a vector of size factors. 
 
 For details, please see the Seurat documentation. 
+
+# Arguments
+- `mat`: countmatrix in cell x gene format
+
+# Keyword arguments
+- `locfunc`: the function to use for calculating the location parameter (default: `median`)
+
+# Returns
+- a vector of size factors
 """
 function estimate_size_factors(mat; locfunc=median)
     logcounts = log.(mat)
@@ -71,6 +89,12 @@ end
 
 Normalizes the countdata in `mat` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Assumes a countmatrix `mat` in cell x gene format as input, returns the normalized matrix.
+
+# Arguments
+- `mat`: countmatrix in cell x gene format
+
+# Returns
+- the normalized countmatrix
 """
 function normalize_size_factors(mat::AbstractMatrix)
     sizefactors = estimate_size_factors(mat)
@@ -82,6 +106,12 @@ end
 
 Normalizes the `adata.X` by dividing it by the size factors calculated with `estimate_size_factors`. 
 Adds the normalized count matrix to `adata.layers` and returns `adata`.
+
+# Arguments
+- `adata`: `AnnData` object
+
+# Returns
+- the modified `AnnData` object
 """
 function normalize_size_factors!(adata::AnnData)
     mat_norm = normalize_size_factors(adata.X)
@@ -105,16 +135,16 @@ If choosing `target_sum=1e6`, this is CPM normalization.
 
 Basic version of the [scanpy.pp.normalize_total function](https://github.com/scverse/scanpy/blob/ed3b277b2f498e3cab04c9416aaddf97eec8c3e2/scanpy/preprocessing/_normalization.py#L45-L241)
 
-**Arguments**
-------------------------
+# Arguments
 - `adata`: `AnnData` object 
+
+# Keyword arguments
 - `target_sum`: if `nothing`, after normalization, each observation (cell) has a total count equal to the median of total counts for observations (cells) before normalization.
 - `key_added`: name of the field in `adata.obs` where the normalization factor is stored, set to "cell_counts" by default 
 - `layer`: optional; which layer to normalize on. If `nothing`, `adata.X` is used. 
 
-**Returns**
--------
-Returns `adata` with normalized version of the original `adata.X` in `adata.layers` and the size factors in `adata.obs`. 
+# Returns 
+- the `adata` object with normalized version of the original `adata.X` in `adata.layers` and the size factors in `adata.obs`. 
 """
 function normalize_total!(adata::AnnData; 
             target_sum::Union{Nothing, Real}=nothing, 
@@ -142,6 +172,17 @@ end
 Normalizes counts per cell, specifically normalize each cell by total counts over all genes,
 so that every cell has the same total count after normalization. See `normalize_total!` for details. 
 Unlike the in-place version, this function returns a dictionary with the normalized counts and scaled counts per cell. 
+
+# Arguments
+- `adata`: `AnnData` object
+
+# Keyword arguments
+- `target_sum`: if `nothing`, after normalization, each observation (cell) has a total count equal to the median of total counts for observations (cells) before normalization.
+- `key_added`: name of the field in `adata.obs` where the normalization factor is stored, set to "cell_counts" by default
+- `verbose`: whether to print progress messages (default: false)
+
+# Returns
+- a dictionary with the normalized counts and scaled counts per cell
 """
 function normalize_total(adata::AnnData; 
             target_sum::Union{Nothing, Real}=1e4, 

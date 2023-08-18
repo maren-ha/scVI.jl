@@ -164,9 +164,10 @@ Results are almost identical to the `scanpy` function. The differences have been
 the local regression for the mean-variance relationship implemented in the Loess.jl package, that differs slightly 
 from the corresponding Python implementation. 
 
-**Arguments**
-------------------------
+# Arguments
 - `adata`: `AnnData` object 
+
+# Keyword arguments
 - `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.X` is used. 
 - `n_top_genes`: optional; desired number of highly variable genes. Default: 2000. 
 - `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch. 
@@ -174,15 +175,14 @@ from the corresponding Python implementation.
 - `replace_hvgs`: whether or not to replace the hvg information if there are already hvgs calculated. If false, the new values are added with a "_1" suffix. Default:true,
 - `verbose`: whether or not to print info on current status
 
-**Returns**
-------------------------
-Returns a dictionary containing information on the highly variable genes, specifically containing the following keys is added: 
- - `highly_variable`: vector of `Bool`s indicating which genes are highly variable
- - `highly_variable_rank`: rank of the highly variable genes according to (corrected) variance 
- - `means`: vector with means of each gene
- - `variances`: vector with variances of each gene 
- - `variances_norm`: normalized variances of each gene 
- - `highly_variable_nbatches`: if there are batches in the dataset, logs the number of batches in which each highly variable gene was actually detected as highly variable. 
+# Returns
+- a dictionary containing information on the highly variable genes, specifically containing the following keys is added: 
+    - `highly_variable`: vector of `Bool`s indicating which genes are highly variable
+    - `highly_variable_rank`: rank of the highly variable genes according to (corrected) variance 
+    - `means`: vector with means of each gene
+    - `variances`: vector with variances of each gene 
+    - `variances_norm`: normalized variances of each gene 
+    - `highly_variable_nbatches`: if there are batches in the dataset, logs the number of batches in which each highly variable gene was actually detected as highly variable. 
 """
 function highly_variable_genes(adata::AnnData; 
     layer::Union{String,Nothing} = nothing,
@@ -215,7 +215,18 @@ end
 Calculates highly variable genes with `highly_variable_genes!` and subsets the `AnnData` object to the calculated HVGs. 
 For description of input arguments, see `highly_variable_genes!`
 
-Returns: `adata` object subset to the calculated HVGs, both in the countmatrix/layer data used for HVG calculation and in the `adata.var` dictionary.
+# Arguments
+- `adata`: `AnnData` object
+
+# Keyword arguments
+- `layer`: optional; which layer to use for calculating the HVGs. Function assumes this is a layer of counts. If `layer` is not provided, `adata.X` is used.
+- `n_top_genes`: optional; desired number of highly variable genes. Default: 2000.
+- `batch_key`: optional; key where to look for the batch indices in `adata.obs`. If not provided, data is treated as one batch.
+- `span`: span to use in the loess fit for the mean-variance local regression. See the Loess.jl docs for details.
+- `verbose`: whether or not to print info on current status
+
+# Returns 
+- `adata` object subset to the calculated HVGs, both in the countmatrix/layer data used for HVG calculation and in the `adata.var` dictionary.
 """
 function subset_to_hvg!(adata::AnnData;
     layer::Union{String,Nothing} = nothing,

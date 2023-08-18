@@ -3,9 +3,17 @@
 
 Calculates the latent representation obtained from encoding the `countmatrix` of the `AnnData` object 
 with a trained `scVAE` model by applying the function `get_latent_representation(m, adata.X)`. 
-Stored the latent representation in the `obsm` field of the input `AnnData` object as `name_latent`
+Stored the latent representation in the `obsm` field of the input `AnnData` object as `name_latent`. 
 
-Returns the modified `AnnData` object.
+# Arguments
+- `adata::AnnData`: `AnnData` object to which to add the latent representation
+- `m::scVAE`: trained `scVAE` model to use for encoding the data
+
+# Keyword arguments
+- `name_latent::String="scVI_latent"`: name of the field in `adata.obsm` where the latent representation is stored
+
+# Returns 
+- the modified `AnnData` object.
 """
 function register_latent_representation!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent")
     !m.is_trained && @warn("model has not been trained yet!")
@@ -25,7 +33,16 @@ the UMAP, if not, a latent representation is calculated and registered by callin
 The UMAP is calculated using the Julia package [UMAP.jl](https://github.com/dillondaudert/UMAP.jl) with default parameters. 
 It is then stored in the `name_umap` field of the input `AnnData` object. 
 
-Returns the modified `AnnData` object.    
+# Arguments
+- `adata::AnnData`: `AnnData` object to which to add the UMAP representation
+- `m::scVAE`: trained `scVAE` model to use for encoding the data
+
+# Keyword arguments
+- `name_latent::String="scVI_latent"`: name of the field in `adata.obsm` where the latent representation is stored
+- `name_umap::String="scVI_latent_umap"`: name of the field in `adata.obsm` where the UMAP representation is stored
+
+# Returns
+- the modified `AnnData` object.    
 """
 function register_umap_on_latent!(adata::AnnData, m::scVAE; name_latent::String="scVI_latent", name_umap::String="scVI_latent_umap")
     register_latent_representation!(adata, m, name_latent = name_latent)
@@ -51,18 +68,19 @@ By default, the cells are color-coded according to the `celltypes` field of the 
 
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 
-**Arguments:**
----------------
+# Arguments
  - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
  - `adata:AnnData`: data to embed with the model; `adata.X` is encoded with `m`
 
- **Keyword arguments:**
- -------------------
+# Keyword arguments
 - `name_latent::String="scVI_latent"`: name of the field in `adata.obsm` where the latent representation is stored
 - `name_latent_umap::String="scVI_latent_umap"`: name of the field in `adata.obsm` where the UMAP representation is stored
  - `save_plot::Bool=true`: whether or not to save the plot
  - `filename::String="UMAP_on_latent.pdf`: filename under which to save the plot. Has no effect if `save_plot==false`.
  - `seed::Int=987`: which random seed to use for calculating UMAP (to ensure reproducibility)
+
+# Returns
+- the plot
 """
 function plot_umap_on_latent(
     m::scVAE, adata::AnnData; 
@@ -108,18 +126,19 @@ By default, the cells are color-coded according to the `celltypes` column in `ad
 
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 
-**Arguments:**
----------------
+# Arguments
  - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
  - `adata:AnnData`: data to embed with the model; `adata.X` is encoded with `m`
 
- **Keyword arguments:**
- -------------------
+# Keyword arguments
  - `name_latent::String="scVI_latent"`: name of the field in `adata.obsm` where the latent representation is stored 
  - `plot_title::String="scVI latent representation"`: title of the plot
  - `save_plot::Bool=true`: whether or not to save the plot
  - `filename::String="UMAP_on_latent.pdf`: filename under which to save the plot. Has no effect if `save_plot==false`.
  - `seed::Int=987`: which random seed to use for calculating UMAP (to ensure reproducibility)
+
+# Returns
+- the plot
 """
 function plot_latent_representation(
     m::scVAE, adata::AnnData; 
@@ -164,15 +183,16 @@ By default, the cells are color-coded according to the `celltypes` field of the 
 
 For plotting, the [VegaLite.jl](https://www.queryverse.org/VegaLite.jl/stable/) package is used.
 
-**Arguments:**
----------------
+# Arguments
 - `m::scVAE`: trained `scVAE` model to use for embedding the data with the model encoder
 - `adata:AnnData`: data to embed with the model; `adata.X` is encoded with `m`
 
-**Keyword arguments:**
--------------------
+# Keyword arguments
 - `save_plot::Bool=true`: whether or not to save the plot
 - `filename::String="UMAP_on_latent.pdf`: filename under which to save the plot. Has no effect if `save_plot==false`.
+
+# Returns
+- the plot
 """
 function plot_pca_on_latent(
     m::scVAE, adata::AnnData; 
@@ -212,11 +232,13 @@ Depending on whether `z` is sampled from the prior or posterior, the function ca
 The distribution ((zero-inflated) negative binomial or Poisson) is parametrised by `mu`, `theta` and `zi` (logits of dropout parameter). 
 The implementation is adapted from the corresponding [`scvi tools` function](https://github.com/YosefLab/scvi-tools/blob/f0a3ba6e11053069fd1857d2381083e5492fa8b8/scvi/distributions/_negative_binomial.py#L420)
 
-**Arguments:** 
------------------
- - `m::scVAE`: `scVAE` model from which the decoder is used for sampling
- - `z::AbstractMatrix`: values of the latent representation to use as input for the decoder 
- - `library::AbstractMatrix`: library size values that are used for scaling in the decoder (either corresponding to the observed or the model-encoded library size) 
+# Arguments
+- `m::scVAE`: `scVAE` model from which the decoder is used for sampling
+- `z::AbstractMatrix`: values of the latent representation to use as input for the decoder 
+- `library::AbstractMatrix`: library size values that are used for scaling in the decoder (either corresponding to the observed or the model-encoded library size) 
+
+# Returns
+- matrix of samples from the generative distribution defined by the decoder of the `scVAE` model
 """
 function decodersample(m::scVAE, z::AbstractMatrix{S}, library::AbstractMatrix{S}) where S <: Real 
     px_scale, theta, mu, zi_logits = generative(m, z, library)
@@ -244,10 +266,12 @@ Subsequently samples from the generative distribution defined by the decoder bas
 
 Returns the samples from the model. 
 
-**Arguments:**
---------------
+# Arguments
 - `m::scVAE`: trained `scVAE` model from which to sample
 - `adata::AnnData`: `AnnData` object based on which to calculate the latent posterior
+
+# Returns
+- matrix of posterior samples from the model
 """
 function sample_from_posterior(m::scVAE, adata::AnnData)
     sample_from_posterior(m, adata.X')
@@ -268,14 +292,16 @@ Subsequently draws `n_samples` from the generative distribution defined by the d
 
 Returns the samples from the model. 
 
-**Arguments:**
---------------
+# Arguments
 - `m::scVAE`: trained `scVAE` model from which to sample
 - `adata::AnnData`: `AnnData` object based on which to calculate the library size
 - `n_samples::Int`: number of samples to draw
 
-**Keyword arguments:**
+# Keyword arguments
 - `sample_library_size::Bool=false`: whether or not to sample from the library size. If `false`, the mean of the observed library size is used. 
+
+# Returns
+- matrix of prior samples from the model
 """
 function sample_from_prior(m::scVAE, adata::AnnData, n_samples::Int; sample_library_size::Bool=false)
     sample_from_prior(m, adata.X', n_samples, sample_library_size=sample_library_size)
