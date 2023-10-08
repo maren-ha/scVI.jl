@@ -9,7 +9,7 @@ LogGammaTerms(x, theta) = @. loggamma(x + theta) - loggamma(theta) - loggamma(on
 """
     log_zinb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, zi::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
 
-Log likelihood (scalar) of a minibatch according to a zinb model.
+Log likelihood (scalar) of a minibatch according to a zero-inflated negative binomial generative model.
 
 # Arguments
 - `x`: data
@@ -41,7 +41,7 @@ end
 """
     log_nb_positive(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, theta::AbstractVecOrMat{S}, eps::S=S(1e-8)) where S <: Real
 
-Log likelihood (scalar) of a minibatch according to a nb model.
+Log likelihood (scalar) of a minibatch according to a negative binomial generative model.
 
 # Arguments
 - `x`: data
@@ -61,7 +61,7 @@ end
 """
     log_poisson(x::AbstractMatrix{S}, mu::AbstractMatrix{S}, eps::S=S(1e-8)) where S <: Real
 
-Log likelihood (scalar) of a minibatch according to a Poisson model.
+Log likelihood (scalar) of a minibatch according to a Poisson generative model.
 
 # Arguments
 - `x`: data
