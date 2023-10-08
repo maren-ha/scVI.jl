@@ -10,7 +10,7 @@ adata = load_pbmc(joinpath(@__DIR__, "data"))
 @test nrow(adata.var) == 5
 
 @info "loading larger dataset from main package `data` folder..."
-adata = load_pbmc()
+adata = load_pbmc("wrongpath")
 @info "data loaded, initialising object... "
 library_log_means, library_log_vars = init_library_size(adata) 
 m = scVAE(size(adata.X,2);
