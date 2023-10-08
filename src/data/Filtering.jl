@@ -56,6 +56,8 @@ function filter_cells!(adata::AnnData;
     plot_filename_after::String="cell_histogram_after_filtering.pdf"
     )
 
+    options = [min_genes, min_counts, max_genes, max_counts]
+
     # Filter the data matrix and annotate it
 
     cell_subset, number_per_cell = filter_cells(adata, 
@@ -98,11 +100,11 @@ function filter_cells!(adata::AnnData;
             end    
         end
         
-        p = plot_histogram(countmatrix, :cell, counts_number; 
+        p = plot_histogram(adata.X, :cell, counts_number; 
             cutoff = cutoff,
             log_transform = log_transform_plot,
             save_plot = save_plot_after, 
-            plot_filename = plot_filename_after
+            filename = plot_filename_after
         )
         display(p)
     end
@@ -113,7 +115,7 @@ end
 filter_cells(adata::AnnData; kwargs...) = filter_cells(adata.X; kwargs...)
 
 """
-    function filter_cells(adata::AnnData; 
+    function filter_cells(countmatrix::AbstractMatrix; 
         min_counts::Union{Int, Nothing}=nothing, 
         min_genes::Union{Int, Nothing}=nothing, 
         max_counts::Union{Int, Nothing}=nothing, 
@@ -133,7 +135,7 @@ Only provide one of the optional parameters `min_counts`, `min_genes`,
 `max_counts`, `max_genes` per call.
 
 # Arguments
-- `adata`: `AnnData` object of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
+- `countmatrix`: countmatrix of shape `n_obs` × `n_vars`. Rows correspond to cells and columns to genes.
 - `min_counts`: Minimum number of counts required for a cell to pass filtering.
 - `min_genes`: Minimum number of genes expressed required for a cell to pass filtering.
 - `max_counts`: Maximum number of counts required for a cell to pass filtering.
@@ -156,12 +158,12 @@ function filter_cells(countmatrix::AbstractMatrix;
     min_counts::Union{Int, Nothing}=nothing, 
     min_genes::Union{Int, Nothing}=nothing, 
     max_counts::Union{Int, Nothing}=nothing, 
-    max_genes::Union{Int, Nothing}=nothing, 
+    max_genes::Union{Int, Nothing}=nothing,
     verbose::Bool=true,
     make_plot::Bool=false,
     log_transform_plot::Bool=false,
     save_plot::Bool=false,
-    plot_filename::String="gene_filtering_histogram.pdf"
+    plot_filename::String="cell_filtering_histogram.pdf"
     )    
     # Check that only one filtering option is provided
     options = [min_genes, min_counts, max_genes, max_counts]
@@ -234,7 +236,7 @@ function filter_cells(countmatrix::AbstractMatrix;
             cutoff = cutoff,
             log_transform = log_transform_plot,
             save_plot = save_plot, 
-            plot_filename = plot_filename
+            filename = plot_filename
         )
         display(p)
     end
@@ -304,6 +306,7 @@ function filter_genes!(adata::AnnData;
     plot_filename_after::String="gene_histogram_after_filtering.pdf"
 )
 
+    options = [min_cells, min_counts, max_cells, max_counts]
     # Filter the data matrix and annotate it
 
     gene_subset, number_per_gene = filter_genes(adata, 
@@ -346,11 +349,11 @@ function filter_genes!(adata::AnnData;
             end    
         end
         
-        p = plot_histogram(countmatrix, :gene, counts_number; 
+        p = plot_histogram(adata.X, :gene, counts_number; 
             cutoff = cutoff,
             log_transform = log_transform_plot,
             save_plot = save_plot_after, 
-            plot_filename = plot_filename_after
+            filename = plot_filename_after
         )
         display(p)
     end
@@ -406,7 +409,7 @@ function filter_genes(
     min_counts::Union{Int, Nothing}=nothing, 
     min_cells::Union{Int, Nothing}=nothing, 
     max_counts::Union{Int, Nothing}=nothing, 
-    max_cells::Union{Int, Nothing}=nothing, 
+    max_cells::Union{Int, Nothing}=nothing,
     verbose::Bool=true,
     make_plot::Bool=false,
     log_transform_plot::Bool=false,
@@ -474,7 +477,7 @@ function filter_genes(
             cutoff = cutoff,
             log_transform = log_transform_plot,
             save_plot = save_plot, 
-            plot_filename = plot_filename
+            filename = plot_filename
         )
         display(p)
     end
