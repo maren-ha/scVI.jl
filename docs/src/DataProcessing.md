@@ -1,6 +1,6 @@
 # Data processing
 
-## `AnnData` object ind I/O
+## `AnnData` object and I/O
 
 The `AnnData` struct is imported from [`Muon.jl`](https://github.com/scverse/Muon.jl). The package provides read and write functions for `.h5ad` and `.h5mu` files, the typical H5-based format for storing Python `anndata` objects. The `AnnData` object stores datasets together with metadata, such as information on the variables (genes in scRNA-seq data) and observations (cells), as well as different kinds of annotations and transformations of the original count matrix, such as PCA or UMAP embeddings, or graphs of observations or variables. 
 
