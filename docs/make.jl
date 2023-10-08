@@ -5,6 +5,7 @@ makedocs(
     sitename = "scVI",
     authors = "Maren Hackenberg",
     format = Documenter.HTML(prettyurls=false, edit_link="origin/main"),
+    warnonly = true,
     modules = [scVI],
     pages = [
     "Getting started" => "index.md",
