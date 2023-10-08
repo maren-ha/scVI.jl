@@ -76,6 +76,15 @@ scVI.log_nb_positive
 scVI.log_poisson
 ```
 
+```@docs
+scVI.log_normal
+```
+
+```@docs
+scVI.log_binary
+```
+
+
 ## VAE model 
 
 The implementation is a basic version of the [`scvi-tools` VAE object](https://github.com/scverse/scvi-tools/blob/b33b42a04403842591c04e414c8bb4099eaf7006/scvi/module/_vae.py#L22). 
