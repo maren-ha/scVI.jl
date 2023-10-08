@@ -1,4 +1,6 @@
 """
+    Hbeta!(P::AbstractVector, D::AbstractVector, beta::Number)
+
 Compute the point perplexities `P` given its squared distances to the other points `D`
 and the precision of Gaussian distribution `beta`.
 """

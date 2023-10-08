@@ -12,29 +12,11 @@ The model is based on adding a t-SNE objective to the VAE loss function (i.e., t
 Similar to the usual t-SNE objective, a matrix transition of transition probabilities has to be calculated. For this, individual perplexities have to be calculated. 
 
 ```@docs
-compute_transition_probs
+Hbeta!
 ```
 
 ```@docs
-compute_differentiable_transition_probs
+perplexities
 ```
 
 Based on these transition probabilities, the t-SNE loss component is calculated and integrated with the standard ELBO. 
-
-```@docs
-tsne_repel
-```
-
-```@docs
-tsne_loss
-```
-
-```@docs
-scvis_loss
-```
-
-There are different versions how this can be used to train scvis models. 
-
-```@docs
-train_scvis_model!
-```
