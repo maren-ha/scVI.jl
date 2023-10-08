@@ -8,11 +8,11 @@ adata = load_cortex()
 @test scVI.ngenes(adata) == size(adata.X,2) == 19972
 
 # filter_cells
-cell_subset, number_per_cell = filter_cells(adata, min_genes=1000)
+cell_subset, number_per_cell = filter_cells(adata, min_genes=1000, make_plot=true)
 @test sum(.!cell_subset) == 23
 cell_subset, number_per_cell = filter_cells(adata, max_genes=5000)
 @test sum(.!cell_subset) == 694
-cell_subset, number_per_cell = filter_cells(adata, min_counts=10000)
+cell_subset, number_per_cell = filter_cells(adata, min_counts=10000, make_plot=true)
 @test sum(.!cell_subset) == 1205
 cell_subset, number_per_cell = filter_cells(adata, max_counts=10000)
 @test sum(.!cell_subset) == 1800
@@ -29,17 +29,21 @@ end
 filter_cells!(adata, max_counts=10000)
 @test size(adata.X,1) == 1205
 
-filter_cells!(adata, min_genes = 1000)
+adata = load_cortex()
+filter_cells!(adata, max_counts=10000, plot_before=true, plot_after=true)
+@test size(adata.X,1) == 1205
+
+filter_cells!(adata, min_genes = 1000, plot_before=true, plot_after=true)
 @test size(adata.X,1) == 1182
 
 # filter_genes 
-gene_subset, number_per_gene = filter_genes(adata, min_cells=1000)
+gene_subset, number_per_gene = filter_genes(adata, min_cells=1000, make_plot=true)
 @test sum(.!gene_subset) == 19882
 gene_subset, number_per_gene = filter_genes(adata, max_cells=1000)
 @test sum(.!gene_subset) == 90
 gene_subset, number_per_gene = filter_genes(adata, min_counts=50)
 @test sum(.!gene_subset) == 8641
-gene_subset, number_per_gene = filter_genes(adata, max_counts=1000)
+gene_subset, number_per_gene = filter_genes(adata, max_counts=1000, make_plot=true)
 @test sum(.!gene_subset) == 1430
 gene_subset, number_per_gene = filter_genes(adata, max_counts=10000000)
 @test sum(.!gene_subset) == 0
@@ -51,10 +55,10 @@ catch e
     @test e == ArgumentError("Only provide one of the optional parameters `min_counts`, `min_cells`, `max_counts`, `max_cells` per call.")
 end
 
-filter_genes!(adata, min_counts=10)
+filter_genes!(adata, min_counts=10, plot_before=true, plot_after=true)
 @test size(adata.X,2) == 14368
 
-filter_genes!(adata, max_cells=300)
+filter_genes!(adata, max_cells=300, plot_before=true, plot_after=true)
 @test size(adata.X,2) == 11414
 
 # subset_adata
@@ -80,6 +84,26 @@ adata = load_cortex()
 
 # check plotting
 @info "testing plotting..."
+
+@info "histogram of cell/gene counts"
+histoplot = plot_histogram(adata, :cell, :counts, log_transform=true)
+histoplot = plot_histogram(adata, :gene, :number)
+
+@info "highest expressed genes"
+high_genes_plot = plot_highest_expressed_genes(adata)
+high_genes_plot = plot_highest_expressed_genes(adata, gene_symbols = "mysymbols")
+
+@info "highly variable genes"
+try
+    plot_highly_variable_genes(adata)
+catch e
+    @test e isa ArgumentError
+    @test e == ArgumentError("No highly variable genes found. Please run `highly_variable_genes!` on the `AnnData` object first.")
+end
+subset_to_hvg!(adata, n_top_genes=200)
+plot_highly_variable_genes(adata)
+
+@info "PCA and UMAP"
 pcaplot = plot_pca(adata)
 pcaplot = plot_pca(adata, color_by="")
 pcaplot = plot_pca(adata, color_by="age")
@@ -128,6 +152,9 @@ rescale!(adata)
 @test haskey(adata.layers, "rescaled")
 
 # check HVG selection
+@info "re-loading adata..."
+adata = load_cortex()
+
 @info "testing HVG selection..."
 hvgdf = highly_variable_genes(adata, n_top_genes=1200)
 @test sum(hvgdf[!,"highly_variable"]) == 1200
