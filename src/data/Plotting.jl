@@ -62,7 +62,7 @@ function plot_histogram(countmatrix::AbstractMatrix,
             vals_to_plot = log.(vals_to_plot)
             xtitle = "log counts per $(string(cell_gene))"
         else
-            vals_to_plot = counts_per_gene
+            #vals_to_plot = counts_per_gene
             xtitle = "counts per $(string(cell_gene))"
         end
     elseif counts_number == :number
@@ -99,7 +99,7 @@ end
 #-------------------------------------------------------------------------------------
 
 """
-    highest_expressed_genes(adata::AnnData; 
+    plot_highest_expressed_genes(adata::AnnData; 
         n_top::Int=30, 
         gene_symbols::Union{String, Nothing}=nothing,
         save_plot::Bool=false,
@@ -121,9 +121,7 @@ The `n_top` genes with the highest mean fraction over all cells are plotted as b
 # Returns
 - the plot object
 """
-highest_expressed_genes(adata::AnnData; kwargs...) = highest_expressed_genes(adata.X, kwargs...)
-
-function highest_expressed_genes(countmatrix::AbstractMatrix;
+function plot_highest_expressed_genes(adata::AnnData;
     n_top::Int=30, 
     gene_symbols::Union{String, Nothing}=nothing,
     save_plot::Bool=false,
@@ -144,6 +142,7 @@ function highest_expressed_genes(countmatrix::AbstractMatrix;
     end
 
     # compute fraction of counts assigned to each gene
+    countmatrix = adata.X
     frac_counts = countmatrix ./ sum(countmatrix, dims=1)
     mean_frac_counts = vec(mean(frac_counts, dims=2))
     gene_inds = sortperm(mean_frac_counts, rev=true)[1:n_top]
@@ -187,9 +186,8 @@ function plot_highly_variable_genes(adata::AnnData;
     filename::String="highly_variable_genes.pdf"
     )
 
-    if !haspropery(adata.var, "highly_variable")
-        throw(ArgumentError("No highly variable genes found. 
-        Please run `highly_variable_genes!` on the `AnnData` object first."))
+    if !hasproperty(adata.var, "highly_variable")
+        throw(ArgumentError("No highly variable genes found. Please run `highly_variable_genes!` on the `AnnData` object first."))
     end
 
     gene_subset = adata.var.highly_variable
@@ -204,7 +202,7 @@ function plot_highly_variable_genes(adata::AnnData;
         vars_norm = log10.(vars_norm)
     end
 
-    @vlplot() +
+    hvg_plot = @vlplot() +
     [
         @vlplot(:point,
             x = {means, type = "quantitative"},
@@ -219,7 +217,9 @@ function plot_highly_variable_genes(adata::AnnData;
         )
     ]
 
-    save_plot && save(filename, plot)
+    save_plot && save(filename, hvg_plot)
+
+    return hvg_plot
 
 end
 #-------------------------------------------------------------------------------------
