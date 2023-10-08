@@ -140,7 +140,7 @@ plot_histogram
 ```
 
 ```@docs
-highest_expressed_genes
+plot_highest_expressed_genes
 ```
 
 ```@docs
@@ -158,10 +158,6 @@ There are currently three datasets for which the package supplies built-in conve
 I recommend downloading the complete GoogleDrive folder and having it as a subfolder named `data` in the current working directory. Then, in any Julia script in the parent directory, the functions `load_cortex()`, `load_pbmc()` and `load_tasic()` can be called without arguments, because the default `path` where these functions look for the respective dataset is exactly that subfolder named `data`.  
 
 ### Cortex data 
-
-```@docs
-load_cortex_from_h5ad
-```
 
 ```@docs 
 load_cortex
