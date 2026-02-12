@@ -117,6 +117,6 @@ For details, see the `test` subfolder. For further information on code coverage,
 
 - [ ] `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
-- [ ] add optimiser choice to trainingargs
+- [ ] add optimiser choice to `trainingargs`
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
