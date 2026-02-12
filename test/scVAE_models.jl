@@ -96,7 +96,7 @@ register_latent_representation!(adata, m)
 @info "testing visualizations..."
 @test haskey(adata.obsm, "scVI_latent")
 plot_umap_on_latent(m, adata);
-@test haskey(adata.obsm, "scVI_latent_umap")
+@test haskey(adata.obsm, "umap_on_scVI_latent")
 plot_pca_on_latent(m, adata);
 
 @info "testing adding dimension reduction + plotting with automatic registration of the latent representation..."

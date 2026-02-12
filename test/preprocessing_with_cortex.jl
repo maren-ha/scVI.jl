@@ -219,7 +219,7 @@ umap!(dummy_adata, use_pca_init=true)
 
 # now with wrong layer specification
 dummy_adata = AnnData(X=rand((1:10), 100, 10))
-umap!(dummy_adata, layer = "my_custom_layer")
+umap!(dummy_adata, use_rep = "my_custom_layer")
 @test !haskey(dummy_adata.layers, "my_custom_layer")
 @test haskey(dummy_adata.layers, "normalized")
 @test haskey(dummy_adata.layers, "log_transformed")
