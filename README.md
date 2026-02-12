@@ -115,10 +115,8 @@ For details, see the `test` subfolder. For further information on code coverage,
 ------------
 ## TODO 
 
-- [x] add runtests for `plot_umap` and `plot_pca`
-- [x] fix low code cov files
 - [ ] `gene_batch` and `gene_label` dispersion 
 - [ ] support categorical covariates (e.g., batch information)
-- [x] visualization of highly variable genes, dispersion, highest expressed genes
+- [ ] add optimiser choice to trainingargs
 
 Contributions, reporting of bugs and unexpected behaviour, missing functionalities, etc. are all very welcome, please do get in touch!
