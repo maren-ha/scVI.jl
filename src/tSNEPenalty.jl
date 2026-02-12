@@ -209,7 +209,7 @@ function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs
     cheat::Bool=true)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
-    ps = Flux.params(m)
+    opt_state = Flux.setup(opt, m)
 
     # get tSNE similarity matrix 
     if !haskey(adata.layers, "rescaled")
@@ -266,12 +266,11 @@ function train_tSNE_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs
             d = X[inds,:]'
             batch_inds = batch_indices[inds]
             Pmat = P[inds, inds]
-            curloss, back = Flux.pullback(ps) do 
+            curloss, grads = Flux.withgradient(m) do m 
                 loss(m, d, Pmat, batch_inds; 
                     kl_weight=kl_weight, tsne_weight=tsne_weight, cheat_scale=cheat_scale, cheat=cheat)
             end
-            grad = back(1f0)
-            Flux.Optimise.update!(opt, ps, grad)
+            Flux.update!(opt_state, m, grads[1])
             if training_args.progress
                 next!(progress; showvalues=[(:loss, curloss)]) 
             elseif (train_steps % training_args.verbose_freq == 0) && training_args.verbose

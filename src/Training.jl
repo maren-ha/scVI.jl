@@ -105,7 +105,7 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs;
     batch_key::Symbol=:batch, layer::Union{String, Nothing}=nothing)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
-    ps = Flux.params(m)
+    opt_state = Flux.setup(opt, m)
 
     # get matrix on which to operate 
     if m.gene_likelihood ∈ [:gaussian, :bernoulli]
@@ -143,11 +143,10 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs;
     for epoch in 1:training_args.max_epochs
         kl_weight = get_kl_weight(training_args.n_epochs_kl_warmup, training_args.n_steps_kl_warmup, epoch, 0)
         for d in dataloader
-            curloss, back = Flux.pullback(ps) do 
-                loss(m, d; kl_weight=kl_weight)    
+            curloss, grads = Flux.withgradient(m) do m 
+                loss(m, d; kl_weight=kl_weight)  
             end
-            grad = back(1f0)
-            Flux.Optimise.update!(opt, ps, grad)
+            Flux.update!(opt_state, m, grads[1])
             if training_args.progress
                 next!(progress; showvalues=[(:loss, curloss)]) 
             elseif (train_steps % training_args.verbose_freq == 0) && training_args.verbose
@@ -159,7 +158,6 @@ function train_model!(m::scVAE, adata::AnnData, training_args::TrainingArgs;
     end
     @info "training complete!"
     m.is_trained = true
-    #adata.is_trained = true
     return m, adata
 end
 
@@ -197,7 +195,7 @@ function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOr
     @assert size(labels) == (ncells, m.n_latent)
 
     opt = Flux.Optimiser(Flux.Optimise.WeightDecay(training_args.weight_decay), ADAM(training_args.lr))
-    ps = Flux.params(m)
+    opt_state = Flux.setup(opt, m)
 
     if training_args.train_test_split
         trainsize = training_args.trainsize
@@ -218,11 +216,10 @@ function train_supervised_model!(m::scVAE, adata::AnnData, labels::AbstractVecOr
     for epoch in 1:training_args.max_epochs
         kl_weight = get_kl_weight(training_args.n_epochs_kl_warmup, training_args.n_steps_kl_warmup, epoch, 0)
         for d in dataloader
-            curloss, back = Flux.pullback(ps) do 
-                supervised_loss(m, d...; kl_weight=kl_weight)    
+            curloss, grads = Flux.withgradient(m) do m 
+                supervised_loss(m, d...; kl_weight=kl_weight)
             end
-            grad = back(1f0)
-            Flux.Optimise.update!(opt, ps, grad)
+            Flux.update!(opt_state, m, grads[1])
             if training_args.progress
                 next!(progress; showvalues=[(:loss, curloss)]) 
             elseif (train_steps % training_args.verbose_freq == 0) && training_args.verbose
