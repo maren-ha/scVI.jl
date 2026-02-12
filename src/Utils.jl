@@ -43,7 +43,7 @@ function FCLayers(
     layerlist = [
         Chain(
             Dense(layerdims[i], layerdims[i+1], bias=bias),
-            use_batch_norm ? BatchNorm(layerdims[i+1], momentum = Float32(0.01), ϵ = Float32(0.001)) : identity,
+            use_batch_norm ? BatchNorm(layerdims[i+1], momentum = Float32(0.01), eps = Float32(0.001)) : identity,
             use_layer_norm ? LayerNorm(layerdims[i+1], affine=false) : identity,
             x -> activation_fn.(x),
             Dropout(dropout_rate) # if dropout_rate > 0 
@@ -55,3 +55,6 @@ function FCLayers(
 
     return fc_layers
 end
+
+check_layer_exists(adata, use_rep) = haskey(adata.layers, use_rep)
+check_obsm_exists(adata, use_rep) = haskey(adata.obsm, use_rep)
