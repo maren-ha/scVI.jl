@@ -72,7 +72,8 @@ end
 
 """
     function umap!(adata::AnnData; 
-        layer::String="log_transformed", 
+        use_rep::String="log_transformed", 
+        umap_name_suffix::String="",
         use_pca_init::Bool=false, 
         n_pcs::Int=100, 
         verbose::Bool=true, 
@@ -81,20 +82,20 @@ end
 Performs UMAP on the specified layer of an `AnnData` object. 
 If the layer is not found, the log-transformed normalized counts are calculated and used. 
 Optionally, UMAP can be run on a PCA representation, the number of PCs can be specified (default=100). 
-For customizing the behaviour or UMAP, see the keyword arguments of the `UMAP.UMAP_` function. 
+For customizing the behaviour or UMAP, see the keyword arguments of the `UMAP.fit` function. 
 They can all be passed via the `kwargs`. 
 
-The fields of the resulting `UMAP_` struct are stored as follows: 
-    - the UMAP embedding in `adata.obsm["umap"]`, 
-    - the fuzzy simplicial knn graph in adata.obsp["fuzzy_neighbor_graph"], 
-    - the KNNs of each cell in `adata.obsm["knns"]`, 
-    - the distances of each cell to its KNNs in `adata.obsm["knn_dists"]`
+The fields of the resulting `UMAPResult` struct are stored as follows: 
+    - the UMAP embedding in `adata.obsm["umap\$(umap_name_suffix)"]`, 
+    - the fuzzy simplicial knn graph in adata.obsp["fuzzy_neighbor_graph\$(umap_name_suffix)"], 
+    - the KNNs of each cell in `adata.obsm["knns\$(umap_name_suffix)"]`, 
+    - the distances of each cell to its KNNs in `adata.obsm["knn_dists\$(umap_name_suffix)"]`
 
 # Arguments
 - `adata`: the `AnnData` object to be modified
 
 # Keyword arguments
-- `layer`: the layer to be used for UMAP (default: "log_transformed")
+- `use_rep`: the layer or obsm field to be used for UMAP (default: "log_transformed")
 - `use_pca_init`: whether to use a PCA representation for UMAP (default: false)
 - `n_pcs`: the number of PCs to be used for UMAP (default: 100)
 - `verbose`: whether to print progress messages (default: false)
@@ -104,37 +105,52 @@ The fields of the resulting `UMAP_` struct are stored as follows:
 - the modified `AnnData` object
 """
 function umap!(adata::AnnData; 
-    layer::String="log_transformed", 
+    use_rep::String="log_transformed", 
+    umap_name_suffix::String="",
     use_pca_init::Bool=false, 
     n_pcs::Int=100, 
     verbose::Bool=true, 
     kwargs...)
     
     if use_pca_init
-        pca!(adata; layer=layer, n_pcs=n_pcs, verbose=verbose)
+        pca!(adata; layer=use_rep, n_pcs=n_pcs, verbose=verbose)
         X = adata.obsm["PCA"]
-    elseif !haskey(adata.layers, layer)
-        @warn "layer $(layer) not found in `adata.layers`, calculating log-transformed normalized counts..."
-        if !haskey(adata.layers, "normalized")
-            normalize_total!(adata; verbose=verbose)
-        end
-        if !haskey(adata.layers, "log_transformed")
-            log_transform!(adata, layer="normalized", verbose=verbose)
-        end
-        X = adata.layers["log_transformed"]
     else
-        X = adata.layers[layer]
+        check_layer = check_layer_exists(adata, use_rep)
+        check_obsm = check_obsm_exists(adata, use_rep)
+        if check_layer && check_obsm
+            @warn "both layer and obsm with name $(use_rep) found, using layer by default for UMAP calculation, but you can specify otherwise by renaming and changing the `use_rep` argument"
+            if haskey(adata.layers, use_rep)
+                X = adata.layers[use_rep]
+            else
+                X = adata.obsm[use_rep]
+            end
+        elseif check_layer
+            X = adata.layers[use_rep]
+        elseif check_obsm
+            X = adata.obsm[use_rep]
+        else
+            @warn "layer or obsm field with name $(use_rep) not found, calculating log-transformed normalized counts..."
+            if !haskey(adata.layers, "normalized")
+                normalize_total!(adata; verbose=verbose)
+            end
+            if !haskey(adata.layers, "log_transformed")
+                log_transform!(adata, layer="normalized", verbose=verbose)
+            end
+            X = adata.layers["log_transformed"]
+        end
     end
     # calculate UMAP
 
-    umap_result = UMAP.UMAP_(X'; kwargs...)
+    umap_result = UMAP.fit(X'; kwargs...)
 
     # store results
-    adata.obsm["umap"] = umap_result.embedding'
-    adata.obsm["knns"] = umap_result.knns'
-    adata.obsm["knn_dists"] = umap_result.dists'
+    adata.obsm["umap$(umap_name_suffix)"] = Matrix(hcat(umap_result.embedding...)')
+    knns, dists = umap_result.knns_dists
+    adata.obsm["knns$(umap_name_suffix)"] = Matrix(knns')
+    adata.obsm["knn_dists$(umap_name_suffix)"] = Matrix(dists')
     
-    adata.obsp["fuzzy_neighbor_graph"] = umap_result.graph
+    adata.obsp["fuzzy_neighbor_graph$(umap_name_suffix)"] = umap_result.graph
 
     return adata
 end
